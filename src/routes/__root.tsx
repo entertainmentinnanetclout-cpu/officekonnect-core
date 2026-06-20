@@ -6,8 +6,12 @@ import {
   useRouter,
   HeadContent,
   Scripts,
+  useNavigate,
+  useLocation,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { Toaster } from "@/components/ui/sonner";
+import { useAuth } from "@/hooks/use-auth";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -77,14 +81,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "OfficeKonnect" },
+      { name: "description", content: "Professional Office Productivity Platform" },
+      { property: "og:title", content: "OfficeKonnect" },
+      { property: "og:description", content: "Professional Office Productivity Platform" },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
@@ -115,11 +116,38 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const { user, isLoading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const isAuthPage = location.pathname.startsWith("/auth");
+    const isPublicPage = ["/", "/pricing", "/privacy", "/terms", "/contact"].includes(location.pathname);
+
+    if (!user && !isAuthPage && !isPublicPage) {
+      navigate({ to: "/auth/login" });
+    } else if (user && isAuthPage) {
+      navigate({ to: "/dashboard" });
+    }
+  }, [user, isLoading, location.pathname, navigate]);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="h-12 w-12 animate-pulse rounded-xl bg-primary" />
+          <div className="h-4 w-32 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <Toaster position="top-right" />
     </QueryClientProvider>
   );
 }
