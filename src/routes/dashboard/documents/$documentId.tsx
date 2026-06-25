@@ -13,7 +13,8 @@ import {
   MoreVertical,
   History,
   FileDigit,
-  Loader2
+  Loader2,
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
