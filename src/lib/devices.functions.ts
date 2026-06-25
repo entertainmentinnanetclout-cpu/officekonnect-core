@@ -6,9 +6,9 @@ export const registerDevice = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
     (d: {
-      platform: "ios" | "android" | "web" | "desktop";
+      platform: "ios" | "android" | "web" | "macos" | "windows" | "linux";
       pushToken: string;
-      pushProvider: "fcm" | "apns" | "web_push" | "none";
+      pushProvider: "fcm" | "apns" | "web_push" | "expo";
       deviceName?: string;
       appVersion?: string;
     }) => d,
