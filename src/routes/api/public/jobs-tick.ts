@@ -13,7 +13,6 @@ export const Route = createFileRoute("/api/public/jobs-tick")({
         const { dispatchJob } = await import("@/lib/jobs/worker.server");
 
         const { data: jobs, error } = await supabaseAdmin.rpc("claim_jobs", {
-          p_kinds: null,
           p_limit: 5,
         });
         if (error) return Response.json({ error: error.message }, { status: 500 });
