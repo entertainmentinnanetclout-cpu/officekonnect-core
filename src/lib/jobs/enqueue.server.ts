@@ -23,7 +23,7 @@ export async function enqueueJob(
       workspace_id: args.workspaceId,
       created_by: args.userId,
       kind: args.kind,
-      input: args.input,
+      input: args.input as never,
       entity_type: args.entityType ?? null,
       entity_id: args.entityId ?? null,
       provider: args.provider ?? null,
