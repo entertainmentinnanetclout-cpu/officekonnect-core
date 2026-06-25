@@ -60,7 +60,7 @@ export const enqueueImportContacts = createServerFn({ method: "POST" })
     return enqueueJob(supabase, {
       workspaceId,
       userId,
-      kind: "contacts_import",
+      kind: "contact_import",
       input: data as unknown as Record<string, unknown>,
     });
   });
@@ -74,7 +74,7 @@ export const enqueueExportContacts = createServerFn({ method: "POST" })
     return enqueueJob(supabase, {
       workspaceId,
       userId,
-      kind: "contacts_export",
+      kind: "contact_export",
       input: data as unknown as Record<string, unknown>,
     });
   });
