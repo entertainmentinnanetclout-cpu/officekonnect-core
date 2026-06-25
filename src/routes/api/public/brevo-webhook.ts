@@ -50,7 +50,7 @@ export const Route = createFileRoute("/api/public/brevo-webhook")({
 
           await supabaseAdmin
             .from("campaign_recipients")
-            .update(update)
+            .update(update as never)
             .eq("message_id", messageId);
         }
         return Response.json({ ok: true });

@@ -24,6 +24,7 @@ import { Route as DashboardDocumentsIndexRouteImport } from './routes/dashboard/
 import { Route as DashboardContactsIndexRouteImport } from './routes/dashboard/contacts/index'
 import { Route as DashboardDocumentsDocumentIdRouteImport } from './routes/dashboard/documents/$documentId'
 import { Route as ApiPublicJobsTickRouteImport } from './routes/api/public/jobs-tick'
+import { Route as ApiPublicBrevoWebhookRouteImport } from './routes/api/public/brevo-webhook'
 
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
@@ -101,6 +102,11 @@ const ApiPublicJobsTickRoute = ApiPublicJobsTickRouteImport.update({
   path: '/api/public/jobs-tick',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBrevoWebhookRoute = ApiPublicBrevoWebhookRouteImport.update({
+  id: '/api/public/brevo-webhook',
+  path: '/api/public/brevo-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -111,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/api/public/brevo-webhook': typeof ApiPublicBrevoWebhookRoute
   '/api/public/jobs-tick': typeof ApiPublicJobsTickRoute
   '/dashboard/documents/$documentId': typeof DashboardDocumentsDocumentIdRoute
   '/dashboard/contacts/': typeof DashboardContactsIndexRoute
@@ -127,6 +134,7 @@ export interface FileRoutesByTo {
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/api/public/brevo-webhook': typeof ApiPublicBrevoWebhookRoute
   '/api/public/jobs-tick': typeof ApiPublicJobsTickRoute
   '/dashboard/documents/$documentId': typeof DashboardDocumentsDocumentIdRoute
   '/dashboard/contacts': typeof DashboardContactsIndexRoute
@@ -145,6 +153,7 @@ export interface FileRoutesById {
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/api/public/brevo-webhook': typeof ApiPublicBrevoWebhookRoute
   '/api/public/jobs-tick': typeof ApiPublicJobsTickRoute
   '/dashboard/documents/$documentId': typeof DashboardDocumentsDocumentIdRoute
   '/dashboard/contacts/': typeof DashboardContactsIndexRoute
@@ -164,6 +173,7 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/register'
     | '/dashboard/'
+    | '/api/public/brevo-webhook'
     | '/api/public/jobs-tick'
     | '/dashboard/documents/$documentId'
     | '/dashboard/contacts/'
@@ -180,6 +190,7 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/register'
     | '/dashboard'
+    | '/api/public/brevo-webhook'
     | '/api/public/jobs-tick'
     | '/dashboard/documents/$documentId'
     | '/dashboard/contacts'
@@ -197,6 +208,7 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/register'
     | '/dashboard/'
+    | '/api/public/brevo-webhook'
     | '/api/public/jobs-tick'
     | '/dashboard/documents/$documentId'
     | '/dashboard/contacts/'
@@ -210,6 +222,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRouteWithChildren
   DashboardRoute: typeof DashboardRouteWithChildren
+  ApiPublicBrevoWebhookRoute: typeof ApiPublicBrevoWebhookRoute
   ApiPublicJobsTickRoute: typeof ApiPublicJobsTickRoute
 }
 
@@ -320,6 +333,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicJobsTickRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/brevo-webhook': {
+      id: '/api/public/brevo-webhook'
+      path: '/api/public/brevo-webhook'
+      fullPath: '/api/public/brevo-webhook'
+      preLoaderRoute: typeof ApiPublicBrevoWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -367,6 +387,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRouteWithChildren,
   DashboardRoute: DashboardRouteWithChildren,
+  ApiPublicBrevoWebhookRoute: ApiPublicBrevoWebhookRoute,
   ApiPublicJobsTickRoute: ApiPublicJobsTickRoute,
 }
 export const routeTree = rootRouteImport
