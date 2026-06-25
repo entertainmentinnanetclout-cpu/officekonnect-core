@@ -6,7 +6,7 @@ import { enqueueJob } from "@/lib/jobs/enqueue.server";
 export const saveSignature = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (d: { name: string; storagePath: string; signatureType: string; isDefault?: boolean }) => d,
+    (d: { name: string; signatureImageUrl: string; storagePath?: string; isDefault?: boolean }) => d,
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -16,16 +16,16 @@ export const saveSignature = createServerFn({ method: "POST" })
         .from("user_signatures")
         .update({ is_default: false })
         .eq("workspace_id", workspaceId)
-        .eq("user_id", userId);
+        .eq("created_by", userId);
     }
     const { data: sig, error } = await supabase
       .from("user_signatures")
       .insert({
         workspace_id: workspaceId,
-        user_id: userId,
+        created_by: userId,
         name: data.name,
-        storage_path: data.storagePath,
-        signature_type: data.signatureType,
+        signature_image_url: data.signatureImageUrl,
+        storage_path: data.storagePath ?? null,
         is_default: !!data.isDefault,
       })
       .select("*")
