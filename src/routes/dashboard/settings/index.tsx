@@ -56,7 +56,7 @@ function SettingsIndex() {
       const { error } = await supabase
         .from("profiles")
         .update(values)
-        .eq("id", user?.id);
+        .eq("id", user?.id ?? "");
       if (error) throw error;
     },
     onSuccess: () => {
