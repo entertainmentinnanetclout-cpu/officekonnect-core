@@ -13,7 +13,8 @@ import {
   MoreVertical,
   History,
   FileDigit,
-  Loader2
+  Loader2,
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -96,7 +97,7 @@ function DocumentDetail() {
             <h1 className="max-w-[300px] truncate text-xl font-bold tracking-tight sm:max-w-md">{document.title}</h1>
             <p className="text-xs text-slate-500">
               {document.file_type?.split('/')[1]?.toUpperCase() ?? 'DOCUMENT'} •
-              {(document.file_size / 1024 / 1024).toFixed(2)} MB •
+              {((document.file_size ?? 0) / 1024 / 1024).toFixed(2)} MB •
               Status: <span className="font-medium text-primary uppercase">{document.document_status}</span>
             </p>
           </div>

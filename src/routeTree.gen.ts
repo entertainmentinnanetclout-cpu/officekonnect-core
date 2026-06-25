@@ -23,6 +23,8 @@ import { Route as DashboardMailIndexRouteImport } from './routes/dashboard/mail/
 import { Route as DashboardDocumentsIndexRouteImport } from './routes/dashboard/documents/index'
 import { Route as DashboardContactsIndexRouteImport } from './routes/dashboard/contacts/index'
 import { Route as DashboardDocumentsDocumentIdRouteImport } from './routes/dashboard/documents/$documentId'
+import { Route as ApiPublicJobsTickRouteImport } from './routes/api/public/jobs-tick'
+import { Route as ApiPublicBrevoWebhookRouteImport } from './routes/api/public/brevo-webhook'
 
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
@@ -95,6 +97,16 @@ const DashboardDocumentsDocumentIdRoute =
     path: '/documents/$documentId',
     getParentRoute: () => DashboardRoute,
   } as any)
+const ApiPublicJobsTickRoute = ApiPublicJobsTickRouteImport.update({
+  id: '/api/public/jobs-tick',
+  path: '/api/public/jobs-tick',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicBrevoWebhookRoute = ApiPublicBrevoWebhookRouteImport.update({
+  id: '/api/public/brevo-webhook',
+  path: '/api/public/brevo-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -105,6 +117,8 @@ export interface FileRoutesByFullPath {
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/api/public/brevo-webhook': typeof ApiPublicBrevoWebhookRoute
+  '/api/public/jobs-tick': typeof ApiPublicJobsTickRoute
   '/dashboard/documents/$documentId': typeof DashboardDocumentsDocumentIdRoute
   '/dashboard/contacts/': typeof DashboardContactsIndexRoute
   '/dashboard/documents/': typeof DashboardDocumentsIndexRoute
@@ -120,6 +134,8 @@ export interface FileRoutesByTo {
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/api/public/brevo-webhook': typeof ApiPublicBrevoWebhookRoute
+  '/api/public/jobs-tick': typeof ApiPublicJobsTickRoute
   '/dashboard/documents/$documentId': typeof DashboardDocumentsDocumentIdRoute
   '/dashboard/contacts': typeof DashboardContactsIndexRoute
   '/dashboard/documents': typeof DashboardDocumentsIndexRoute
@@ -137,6 +153,8 @@ export interface FileRoutesById {
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/api/public/brevo-webhook': typeof ApiPublicBrevoWebhookRoute
+  '/api/public/jobs-tick': typeof ApiPublicJobsTickRoute
   '/dashboard/documents/$documentId': typeof DashboardDocumentsDocumentIdRoute
   '/dashboard/contacts/': typeof DashboardContactsIndexRoute
   '/dashboard/documents/': typeof DashboardDocumentsIndexRoute
@@ -155,6 +173,8 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/register'
     | '/dashboard/'
+    | '/api/public/brevo-webhook'
+    | '/api/public/jobs-tick'
     | '/dashboard/documents/$documentId'
     | '/dashboard/contacts/'
     | '/dashboard/documents/'
@@ -170,6 +190,8 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/register'
     | '/dashboard'
+    | '/api/public/brevo-webhook'
+    | '/api/public/jobs-tick'
     | '/dashboard/documents/$documentId'
     | '/dashboard/contacts'
     | '/dashboard/documents'
@@ -186,6 +208,8 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/register'
     | '/dashboard/'
+    | '/api/public/brevo-webhook'
+    | '/api/public/jobs-tick'
     | '/dashboard/documents/$documentId'
     | '/dashboard/contacts/'
     | '/dashboard/documents/'
@@ -198,6 +222,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRouteWithChildren
   DashboardRoute: typeof DashboardRouteWithChildren
+  ApiPublicBrevoWebhookRoute: typeof ApiPublicBrevoWebhookRoute
+  ApiPublicJobsTickRoute: typeof ApiPublicJobsTickRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -300,6 +326,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardDocumentsDocumentIdRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/api/public/jobs-tick': {
+      id: '/api/public/jobs-tick'
+      path: '/api/public/jobs-tick'
+      fullPath: '/api/public/jobs-tick'
+      preLoaderRoute: typeof ApiPublicJobsTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/brevo-webhook': {
+      id: '/api/public/brevo-webhook'
+      path: '/api/public/brevo-webhook'
+      fullPath: '/api/public/brevo-webhook'
+      preLoaderRoute: typeof ApiPublicBrevoWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -347,17 +387,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRouteWithChildren,
   DashboardRoute: DashboardRouteWithChildren,
+  ApiPublicBrevoWebhookRoute: ApiPublicBrevoWebhookRoute,
+  ApiPublicJobsTickRoute: ApiPublicJobsTickRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
