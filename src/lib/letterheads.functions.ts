@@ -8,11 +8,10 @@ export const saveLetterhead = createServerFn({ method: "POST" })
   .inputValidator(
     (d: {
       name: string;
-      companyName?: string;
+      companyDetails?: Record<string, unknown>;
       logoUrl?: string;
-      headerHtml?: string;
-      footerHtml?: string;
-      settings?: Record<string, unknown>;
+      headerContent?: string;
+      footerContent?: string;
     }) => d,
   )
   .handler(async ({ data, context }) => {
@@ -24,11 +23,10 @@ export const saveLetterhead = createServerFn({ method: "POST" })
         workspace_id: workspaceId,
         created_by: userId,
         name: data.name,
-        company_name: data.companyName ?? null,
+        company_details: (data.companyDetails ?? {}) as never,
         logo_url: data.logoUrl ?? null,
-        header_html: data.headerHtml ?? null,
-        footer_html: data.footerHtml ?? null,
-        settings: (data.settings ?? {}) as never,
+        header_content: data.headerContent ?? null,
+        footer_content: data.footerContent ?? null,
       })
       .select("*")
       .single();
