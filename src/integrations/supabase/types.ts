@@ -920,6 +920,236 @@ export type Database = {
           },
         ]
       }
+      signing_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          ip: string | null
+          metadata: Json
+          request_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          ip?: string | null
+          metadata?: Json
+          request_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          ip?: string | null
+          metadata?: Json
+          request_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signing_events_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "signing_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signing_fields: {
+        Row: {
+          created_at: string
+          h: number
+          id: string
+          page: number
+          participant_id: string
+          request_id: string
+          required: boolean
+          rotation: number
+          signed_at: string | null
+          signed_signature_id: string | null
+          type: Database["public"]["Enums"]["signing_field_type"]
+          updated_at: string
+          value: string | null
+          w: number
+          x: number
+          y: number
+        }
+        Insert: {
+          created_at?: string
+          h?: number
+          id?: string
+          page?: number
+          participant_id: string
+          request_id: string
+          required?: boolean
+          rotation?: number
+          signed_at?: string | null
+          signed_signature_id?: string | null
+          type?: Database["public"]["Enums"]["signing_field_type"]
+          updated_at?: string
+          value?: string | null
+          w?: number
+          x?: number
+          y?: number
+        }
+        Update: {
+          created_at?: string
+          h?: number
+          id?: string
+          page?: number
+          participant_id?: string
+          request_id?: string
+          required?: boolean
+          rotation?: number
+          signed_at?: string | null
+          signed_signature_id?: string | null
+          type?: Database["public"]["Enums"]["signing_field_type"]
+          updated_at?: string
+          value?: string | null
+          w?: number
+          x?: number
+          y?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signing_fields_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "signing_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signing_fields_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "signing_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signing_fields_signed_signature_id_fkey"
+            columns: ["signed_signature_id"]
+            isOneToOne: false
+            referencedRelation: "user_signatures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signing_participants: {
+        Row: {
+          created_at: string
+          decline_reason: string | null
+          id: string
+          order_index: number
+          request_id: string
+          role: Database["public"]["Enums"]["signing_participant_role"]
+          signed_at: string | null
+          status: Database["public"]["Enums"]["signing_participant_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          decline_reason?: string | null
+          id?: string
+          order_index?: number
+          request_id: string
+          role?: Database["public"]["Enums"]["signing_participant_role"]
+          signed_at?: string | null
+          status?: Database["public"]["Enums"]["signing_participant_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          decline_reason?: string | null
+          id?: string
+          order_index?: number
+          request_id?: string
+          role?: Database["public"]["Enums"]["signing_participant_role"]
+          signed_at?: string | null
+          status?: Database["public"]["Enums"]["signing_participant_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signing_participants_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "signing_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signing_requests: {
+        Row: {
+          app_source: string
+          completed_at: string | null
+          created_at: string
+          document_id: string
+          final_export_path: string | null
+          id: string
+          message: string | null
+          sender_id: string
+          sent_at: string | null
+          status: Database["public"]["Enums"]["signing_request_status"]
+          title: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          app_source?: string
+          completed_at?: string | null
+          created_at?: string
+          document_id: string
+          final_export_path?: string | null
+          id?: string
+          message?: string | null
+          sender_id: string
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["signing_request_status"]
+          title: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          app_source?: string
+          completed_at?: string | null
+          created_at?: string
+          document_id?: string
+          final_export_path?: string | null
+          id?: string
+          message?: string | null
+          sender_id?: string
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["signing_request_status"]
+          title?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signing_requests_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signing_requests_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           billing_cycle: string
@@ -1364,8 +1594,26 @@ export type Database = {
       is_campaign_member: { Args: { _campaign_id: string }; Returns: boolean }
       is_document_member: { Args: { _doc_id: string }; Returns: boolean }
       is_group_member: { Args: { _group_id: string }; Returns: boolean }
+      is_signing_participant: {
+        Args: { _request_id: string }
+        Returns: boolean
+      }
+      is_signing_request_sender: {
+        Args: { _request_id: string }
+        Returns: boolean
+      }
       is_voice_member: { Args: { _vn_id: string }; Returns: boolean }
       is_workspace_member: { Args: { _workspace_id: string }; Returns: boolean }
+      search_users: {
+        Args: { query: string }
+        Returns: {
+          avatar_url: string
+          email: string
+          full_name: string
+          id: string
+          phone: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "user"
@@ -1432,6 +1680,16 @@ export type Database = {
         | "document_shared"
         | "system"
       push_provider: "fcm" | "apns" | "web_push" | "expo"
+      signing_field_type: "signature" | "initial" | "text" | "date"
+      signing_participant_role: "signer" | "approver" | "cc"
+      signing_participant_status: "pending" | "viewed" | "signed" | "declined"
+      signing_request_status:
+        | "draft"
+        | "sent"
+        | "in_progress"
+        | "completed"
+        | "declined"
+        | "cancelled"
       subscription_plan: "free" | "professional" | "business"
       subscription_status:
         | "active"
@@ -1633,6 +1891,17 @@ export const Constants = {
         "system",
       ],
       push_provider: ["fcm", "apns", "web_push", "expo"],
+      signing_field_type: ["signature", "initial", "text", "date"],
+      signing_participant_role: ["signer", "approver", "cc"],
+      signing_participant_status: ["pending", "viewed", "signed", "declined"],
+      signing_request_status: [
+        "draft",
+        "sent",
+        "in_progress",
+        "completed",
+        "declined",
+        "cancelled",
+      ],
       subscription_plan: ["free", "professional", "business"],
       subscription_status: [
         "active",
