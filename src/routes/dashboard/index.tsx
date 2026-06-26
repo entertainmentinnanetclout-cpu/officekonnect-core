@@ -114,32 +114,65 @@ function DashboardIndex() {
             <CardDescription>Your latest actions across the platform.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-6">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="flex gap-4">
-                  <div className="mt-0.5 h-2 w-2 flex-shrink-0 rounded-full bg-primary" />
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      {i === 1 ? "Uploaded Proposal_Q3.pdf" :
-                       i === 2 ? "Sent 'Monthly Newsletter' campaign" :
-                       i === 3 ? "Signed 'Contract_v2.docx'" :
-                       "Imported 45 new contacts"}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {i * 2} hours ago
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <Button variant="ghost" className="mt-6 w-full text-xs" asChild>
-              <Link to="/dashboard/documents">View all activity</Link>
-            </Button>
+            <RecentActivity />
           </CardContent>
         </Card>
       </div>
     </div>
   );
+}
+
+function RecentActivity() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["dashboard-activity"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("activity_logs")
+        .select("id, action, entity_type, created_at")
+        .order("created_at", { ascending: false })
+        .limit(6);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  if (isLoading) {
+    return <p className="text-sm text-muted-foreground">Loading recent activity…</p>;
+  }
+  if (!data || data.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        No activity yet. Upload a document or send a campaign to see it here.
+      </p>
+    );
+  }
+  return (
+    <div className="space-y-5">
+      {data.map((row) => (
+        <div key={row.id} className="flex gap-4">
+          <div className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-primary" />
+          <div className="min-w-0 space-y-1">
+            <p className="truncate text-sm font-medium leading-none">
+              {humanizeAction(row.action)}{" "}
+              <span className="text-muted-foreground">· {row.entity_type}</span>
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {new Date(row.created_at).toLocaleString()}
+            </p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function humanizeAction(action: string) {
+  switch (action) {
+    case "INSERT": return "Created";
+    case "UPDATE": return "Updated";
+    case "DELETE": return "Deleted";
+    default: return action;
+  }
 }
 
 function StatCard({ title, value, icon: Icon, trend }: { title: string, value: number, icon: any, trend: string }) {
