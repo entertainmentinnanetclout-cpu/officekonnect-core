@@ -83,27 +83,26 @@ function DocumentsIndex() {
       const user = (await supabase.auth.getUser()).data.user;
       if (!user) throw new Error("Not authenticated");
 
-      // 1. Upload to storage
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `${user.id}/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("documents")
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      // 2. Create database record
-      // Note: We need a workspace_id. In V1, we'll fetch the user's default workspace.
+      // Resolve workspace first — storage RLS expects workspace_id as the first folder.
       const { data: profile } = await supabase
         .from("profiles")
         .select("default_workspace_id")
         .single();
-
       const workspaceId = profile?.default_workspace_id;
       if (!workspaceId) throw new Error("No workspace found");
 
+      // 1. Upload to storage at <workspace>/<user>/<rand>.<ext>
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${workspaceId}/${user.id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("documents")
+        .upload(filePath, file, { contentType: file.type, upsert: false });
+
+      if (uploadError) throw uploadError;
+
+      // 2. Create database record
       const { error: dbError } = await supabase.from("documents").insert({
         title: file.name,
         file_type: file.type,
