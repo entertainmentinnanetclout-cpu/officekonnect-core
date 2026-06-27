@@ -34,29 +34,30 @@ export function SignatureManager({ onSave }: SignatureManagerProps) {
       const user = (await supabase.auth.getUser()).data.user;
       if (!user) throw new Error("Not authenticated");
 
-      // 1. Upload signature image to storage
-      const blob = await (await fetch(dataUrl)).blob();
-      const fileName = `sig-${Date.now()}.png`;
-      const filePath = `${user.id}/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("signatures")
-        .upload(filePath, blob);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("signatures")
-        .getPublicUrl(filePath);
-
-      // 2. Save to database
+      // Resolve workspace first — storage policies require workspace_id as the first folder.
       const { data: profile } = await supabase
         .from("profiles")
         .select("default_workspace_id")
         .single();
-
       const workspaceId = profile?.default_workspace_id;
       if (!workspaceId) throw new Error("No workspace found");
+
+      // 1. Upload signature image to storage (path: <workspace>/<user>/sig-*.png)
+      const blob = await (await fetch(dataUrl)).blob();
+      const fileName = `sig-${Date.now()}.png`;
+      const filePath = `${workspaceId}/${user.id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("signatures")
+        .upload(filePath, blob, { contentType: "image/png", upsert: false });
+
+      if (uploadError) throw uploadError;
+
+      // Bucket is private — generate a long-lived signed URL for display.
+      const { data: signed } = await supabase.storage
+        .from("signatures")
+        .createSignedUrl(filePath, 60 * 60 * 24 * 365);
+      const publicUrl = signed?.signedUrl ?? "";
 
       const { data, error } = await supabase.from("user_signatures").insert({
         name: typedName || "My Signature",
