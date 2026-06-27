@@ -95,7 +95,8 @@ export function SignatureManager({ onSave }: SignatureManagerProps) {
         toast.error("Please provide a signature first");
         return;
       }
-      dataUrl = sigCanvas.current?.getTrimmedCanvas().toDataURL("image/png") || "";
+      // react-signature-canvas v2: use getCanvas() directly (getTrimmedCanvas was removed).
+      dataUrl = sigCanvas.current?.getCanvas().toDataURL("image/png") || "";
     } else if (activeTab === "type") {
       if (!typedName) {
         toast.error("Please type your name");
