@@ -316,12 +316,15 @@ function VoiceNoteCard({
     transcript: string | null;
     storage_path: string | null;
     audio_url: string | null;
+    workspace_id?: string | null;
+    created_by?: string | null;
   };
   onDelete: () => void;
   formatTime: (s: number) => string;
 }) {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [showTranscript, setShowTranscript] = useState(false);
+  const queryClient = useQueryClient();
 
   const loadAudio = async () => {
     if (audioUrl) return;
@@ -329,10 +332,50 @@ function VoiceNoteCard({
       if (note.audio_url) setAudioUrl(note.audio_url);
       return;
     }
-    const { data } = await supabase.storage
+    const { data, error } = await supabase.storage
       .from("voice-notes")
       .createSignedUrl(note.storage_path, 60 * 60);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     if (data?.signedUrl) setAudioUrl(data.signedUrl);
+  };
+
+  const retry = async () => {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("default_workspace_id")
+      .single();
+    const user = (await supabase.auth.getUser()).data.user;
+    const workspaceId = note.workspace_id ?? profile?.default_workspace_id;
+    if (!workspaceId || !user) return toast.error("Workspace unavailable");
+    const { error } = await supabase.from("jobs").insert({
+      workspace_id: workspaceId,
+      created_by: user.id,
+      kind: "audio_transcribe",
+      input: { voiceNoteId: note.id, storagePath: note.storage_path, bucket: "voice-notes" },
+      entity_type: "voice_note",
+      entity_id: note.id,
+      provider: "openai",
+      status: "queued",
+    });
+    if (error) return toast.error(error.message);
+    toast.success("Transcription re-queued");
+    queryClient.invalidateQueries({ queryKey: ["voice-notes"] });
+  };
+
+  const downloadTranscript = () => {
+    if (!note.transcript) return;
+    const blob = new Blob([note.transcript], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${note.title || "transcript"}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -351,6 +394,10 @@ function VoiceNoteCard({
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => setShowTranscript((s) => !s)}>
                 {showTranscript ? "Hide transcript" : "Show transcript"}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={retry}>Retry transcription</DropdownMenuItem>
+              <DropdownMenuItem onClick={downloadTranscript} disabled={!note.transcript}>
+                Download transcript
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-red-600" onClick={onDelete}>Delete</DropdownMenuItem>
