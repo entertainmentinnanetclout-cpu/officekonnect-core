@@ -880,6 +880,7 @@ export type Database = {
           job_title: string | null
           last_login: string | null
           phone: string | null
+          preferences: Json
           updated_at: string
         }
         Insert: {
@@ -894,6 +895,7 @@ export type Database = {
           job_title?: string | null
           last_login?: string | null
           phone?: string | null
+          preferences?: Json
           updated_at?: string
         }
         Update: {
@@ -908,6 +910,7 @@ export type Database = {
           job_title?: string | null
           last_login?: string | null
           phone?: string | null
+          preferences?: Json
           updated_at?: string
         }
         Relationships: [
@@ -1502,10 +1505,13 @@ export type Database = {
       }
       workspaces: {
         Row: {
+          address: string | null
           avatar_url: string | null
+          company_name: string | null
           created_at: string
           id: string
           is_personal: boolean
+          logo_url: string | null
           name: string
           owner_id: string
           plan: Database["public"]["Enums"]["subscription_plan"]
@@ -1514,10 +1520,13 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          address?: string | null
           avatar_url?: string | null
+          company_name?: string | null
           created_at?: string
           id?: string
           is_personal?: boolean
+          logo_url?: string | null
           name: string
           owner_id: string
           plan?: Database["public"]["Enums"]["subscription_plan"]
@@ -1526,10 +1535,13 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          address?: string | null
           avatar_url?: string | null
+          company_name?: string | null
           created_at?: string
           id?: string
           is_personal?: boolean
+          logo_url?: string | null
           name?: string
           owner_id?: string
           plan?: Database["public"]["Enums"]["subscription_plan"]
