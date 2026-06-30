@@ -1,48 +1,95 @@
-## What's actually broken
+## Stabilization Sprint — Plan
 
-1. **Storage uploads (documents, signatures) → "row violates RLS"**
-   Storage policies require the **first folder segment to be the `workspace_id`** (verified via `is_workspace_member`/`has_workspace_role`). Frontend uploads to `${user.id}/filename`, which the policy rejects. Fix the path: `${workspaceId}/${userId}/${filename}`.
+Focused on the actual blockers you reported. I will not redesign anything or add new features.
 
-2. **Signature "Save" crashes with `(0 , Z.default) is not a function`**
-   `react-signature-canvas` v2 changed the API — `getTrimmedCanvas()` is gone / now `getCanvas().toDataURL()`. The runtime error proves it. Switch to `sigCanvas.current.getCanvas().toDataURL("image/png")` and remove the broken trim call. Also fix the same workspace-prefixed storage path.
+---
 
-3. **Voice notes are mocked** — no `MediaRecorder`, no upload to `voice-notes` bucket, no transcription enqueue. The toast "recorded! saving..." just inserts a row with `audio_url: "mock-url"`. Replace with real `MediaRecorder` → upload to `voice-notes/${workspaceId}/${userId}/${id}.webm` → insert `voice_notes` row with real `storage_path` → enqueue `audio_transcribe` job (worker already exists). Add an audio `<audio>` player wired to a signed URL, and show `transcript` once the worker writes it back.
+### P1 — Signature save fails with `uq_sig_default`
 
-4. **Contacts Import / Export buttons do nothing** — no `onClick`. Wire them:
-   - Import: file picker → parse CSV client-side (papaparse) → bulk `insert` into `contacts` with `workspace_id` + `created_by`.
-   - Export: query contacts → generate CSV → trigger download.
-   - Also wire the "Add Contact" dialog (currently the trigger has no dialog body).
+**Root cause:** `user_signatures` has a partial unique index `uq_sig_default (created_by) WHERE is_default`. `SignatureManager` writes directly via the browser Supabase client and always hard-codes `is_default: true`, so the second save violates the constraint. The proper `saveSignature` server function (which unsets the previous default first) is never called.
 
-5. **App feels like a demo** — because the four flows above never reach the backend. Once 1–4 are fixed, the existing backend (jobs, worker, RLS, Brevo, Whisper) takes over.
+**Fix**
+- Route `SignatureManager` save through `saveSignature` (server fn) so the unset-previous-default logic runs in one place.
+- Add an `is_default` toggle in the form. New signatures default to false unless explicitly chosen, or unless the user has zero signatures yet (auto-default the first).
+- DB safety net: keep the partial unique index, and add a `BEFORE INSERT/UPDATE` trigger that unsets any other `is_default = true` row for the same `created_by`. This makes "set as default" idempotent even if a client forgets.
+- Surface real error messages from the mutation (`error.message`) in the toast.
 
-## Changes
+### P2 — Signature placement workflow
 
-**Frontend only — no schema changes; backend is already correct.**
+Current `documents/$documentId.tsx` opens a `<Dialog>` with the signature manager when you click "Sign Document". Replace that with an inline flow:
 
-- `src/routes/dashboard/documents/index.tsx`
-  - Change `filePath` to `${workspaceId}/${user.id}/${rand}.${ext}` (fetch workspace first, then upload).
-  - Keep the rest of the insert.
+1. Click **Sign Document** → opens a right-side **Signature Toolbox** panel (not a modal) listing saved signatures + a "+ New" button.
+2. Selecting a signature attaches it to the cursor; clicking on the document drops it.
+3. Placed signature is draggable / resizable on the page (rotate optional, deferred).
+4. **Confirm placement** button calls `applySignatureToDocument` server fn (already exists) with page + x/y/width/height, which enqueues `signature_apply`.
+5. Creating a new signature inline uses `SignatureManager` rendered inside the same panel — no nested modal.
 
-- `src/components/signature-manager.tsx`
-  - Replace `sigCanvas.current.getTrimmedCanvas().toDataURL(...)` with `sigCanvas.current.getCanvas().toDataURL("image/png")`.
-  - Change upload path to `${workspaceId}/${user.id}/sig-${ts}.png`.
-  - Implement the Upload tab (file → same workspace-prefixed path).
+No Adobe-grade field editor — just place / move / resize / confirm, matching what the backend job already accepts.
 
-- `src/routes/dashboard/voice/index.tsx`
-  - Add real `MediaRecorder` capture (mic permission, chunks → Blob).
-  - On stop: upload Blob to `voice-notes/${workspaceId}/${user.id}/${id}.webm`, insert row with real `storage_path` + `audio_url` (signed URL), then enqueue `audio_transcribe` job via `enqueueTranscription` server fn.
-  - Render each note with an `<audio controls>` using a signed download URL and show `transcript` when present; poll/refetch every few seconds while transcript is null.
+### P3 — PDF preview
 
-- `src/routes/dashboard/contacts/index.tsx`
-  - Add hidden `<input type="file" accept=".csv">` + `onClick` on Import. Parse with `papaparse` (already-light; install). Insert in batches with `workspace_id` + `created_by`.
-  - Wire Export: fetch all contacts, build CSV string, trigger download via Blob URL.
-  - Wire Add Contact dialog with a small form (first/last/email/phone/company) calling `createContact` server fn.
+Today the viewer just renders a `<FileText>` icon. Implement real preview:
+- Install `react-pdf` (uses pdf.js).
+- Resolve a signed URL via `getSignedDownloadUrl` (bucket `documents`, `document.storage_path`).
+- Render with page navigation, zoom (wire to existing zoom state), and a basic in-page text search using pdf.js's text layer.
+- For non-PDF file types, render the file inside an `<iframe>` via signed URL (images/Office files just download).
+- Error boundary: show file name + error + Retry + Download fallback instead of a blank panel.
 
-**Dependency:** `bun add papaparse @types/papaparse` for CSV parsing.
+### P4 — Download / Export
 
-## Out of scope
+- "Download" button on the document detail page is currently a no-op. Wire it to `getSignedDownloadUrl` and trigger a browser download using the original `storage_path`.
+- Add a "Download signed version" entry that pulls the most recent `document_versions` row (signed output of `signature_apply`) when present; falls back to original.
+- Update `enqueueDocumentExport` callers to poll the `jobs` row and, on `succeeded`, fetch the output path's signed URL.
 
-- No DB migrations. Storage policies are correct as designed (workspace-scoped); we're aligning the client paths to them.
-- Letterheads / Mail / Templates flows are not touched in this pass.
+### P5 — Voice notes playback + transcription
 
-After this, uploads succeed, signatures save, recordings persist + transcribe, and contacts import/export round-trip with real data.
+- Playback: the dashboard list has no audio element. Add an inline `<audio controls>` per row using a freshly-minted signed URL (the stored 7‑day URL can expire; mint on demand).
+- MIME: the worker uploads to Whisper as `audio.webm`. Confirmed compatible. Add fallback `audio/mp4` for Safari recordings.
+- Transcription failures: today they silently retry. Surface `jobs.error` in the row, plus a **Retry transcription** button that re-enqueues the job.
+- Add a "Download transcript" action (txt blob from `voice_notes.transcript`).
+
+### P6 — Settings module
+
+Build out the tabs that are currently placeholders, all wired to existing tables:
+- **Profile** — actually persist the form (today the Save button is inert). Avatar upload to `avatars` bucket.
+- **Company** — new columns on `workspaces` if missing (`company_name`, `logo_url`, `address`). Logo upload to `avatars`.
+- **Security** — `supabase.auth.updateUser({ password })`; list/revoke sessions via `supabase.auth.signOut({ scope: 'others' })` (full session list isn't exposed via anon API — show current session + sign-out-everywhere).
+- **Signatures** — already uses `SignatureManager`; add a list with **Set default** and **Delete** actions.
+- **Appearance** — theme toggle persisted on `profiles.preferences` JSON. Language is architecture-only (locale field, no translations yet).
+- **Notifications** — boolean prefs on `profiles.preferences`.
+- **Integrations** — placeholder cards reading from `user_integrations` (Connect/Disconnect for Brevo, OpenAI — already backed by table).
+- **Account** — Export personal data (server fn returning a JSON of the user's rows). Delete account calls a new server fn that uses `supabaseAdmin.auth.admin.deleteUser` after role check / confirmation typed.
+
+### P7 — Error handling
+
+Centralize through a small helper:
+- `toastError(err, fallback)` → shows real message, logs to console, captures via existing `error-capture`.
+- Replace every `toast.error("Failed to …")` swallow with this.
+- Add Retry buttons on the queries that matter (documents list, voice list, document detail).
+
+### P8 — Backend verification
+
+Run a sweep and fix:
+- Storage policies on `documents`, `signatures`, `voice-notes`, `exports`, `document-versions`, `avatars`, `letterheads` — confirm they all use `(storage.foldername(name))[1] = workspace_id::text` and that workspace membership is checked.
+- `claim_jobs` reachable only by `service_role` (already done in last security pass — re-verify).
+- Add missing indexes spotted while reading: `voice_notes(workspace_id, created_at desc)`, `jobs(status, scheduled_for)` partial.
+- Run `supabase--linter`; fix anything blocking.
+
+### P9 — End-to-end verification
+
+Drive Playwright against `http://localhost:8080` with the injected Supabase session to walk: upload → preview → sign → download → record → playback → transcribe poll → settings save. Capture screenshots and console for the final report.
+
+---
+
+### Technical notes
+
+- DB migration adds: `enforce_single_default_signature` trigger; optional `workspaces.company_name/logo_url/address` columns; `profiles.preferences jsonb default '{}'` if missing.
+- New deps: `react-pdf`.
+- New/changed files (approx): `src/components/signature-manager.tsx`, new `src/components/document/pdf-viewer.tsx`, new `src/components/document/signature-toolbox.tsx`, `src/routes/dashboard/documents/$documentId.tsx`, `src/routes/dashboard/voice/index.tsx`, `src/routes/dashboard/settings/index.tsx` + per-tab components, `src/lib/signatures.functions.ts` (delete + set-default fns), `src/lib/profile.functions.ts` (new), `src/lib/account.functions.ts` (new export/delete), `src/lib/errors.ts` (new helper).
+- No edge functions involved — all server work stays in TanStack server functions per the stack rules.
+
+### Final deliverable
+
+After implementation I'll post: bugs fixed + root cause, files changed, migrations applied, remaining known gaps (likely: rotate on placed signature, full session listing, real translations), and Playwright verification results.
+
+Reply **go** to start, or tell me which priorities to drop/reorder.
