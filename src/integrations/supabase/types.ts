@@ -1577,43 +1577,6 @@ export type Database = {
           isSetofReturn: true
         }
       }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
-      has_workspace_role: {
-        Args: {
-          _min_role: Database["public"]["Enums"]["workspace_role"]
-          _workspace_id: string
-        }
-        Returns: boolean
-      }
-      is_campaign_member: { Args: { _campaign_id: string }; Returns: boolean }
-      is_document_member: { Args: { _doc_id: string }; Returns: boolean }
-      is_group_member: { Args: { _group_id: string }; Returns: boolean }
-      is_signing_participant: {
-        Args: { _request_id: string }
-        Returns: boolean
-      }
-      is_signing_request_sender: {
-        Args: { _request_id: string }
-        Returns: boolean
-      }
-      is_voice_member: { Args: { _vn_id: string }; Returns: boolean }
-      is_workspace_member: { Args: { _workspace_id: string }; Returns: boolean }
-      search_users: {
-        Args: { query: string }
-        Returns: {
-          avatar_url: string
-          email: string
-          full_name: string
-          id: string
-          phone: string
-        }[]
-      }
     }
     Enums: {
       app_role: "admin" | "user"
