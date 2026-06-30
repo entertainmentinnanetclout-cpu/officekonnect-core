@@ -292,7 +292,7 @@ function VoiceNotesIndex() {
           {voiceNotes?.map((note) => (
             <VoiceNoteCard
               key={note.id}
-              note={note}
+              note={note as Parameters<typeof VoiceNoteCard>[0]["note"]}
               onDelete={() => deleteMutation.mutate({ id: note.id, storage_path: note.storage_path })}
               formatTime={formatTime}
             />
