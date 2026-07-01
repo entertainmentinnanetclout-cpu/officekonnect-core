@@ -278,6 +278,7 @@ function DocumentDetail() {
                           );
                         }}
                         className="group !border-2 !border-dashed !border-primary bg-primary/5"
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <img
                           src={p.imageUrl}
