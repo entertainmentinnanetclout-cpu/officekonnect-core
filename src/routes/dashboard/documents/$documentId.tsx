@@ -128,6 +128,11 @@ function DocumentDetail() {
       toast.success("Signatures queued for flattening — check back in a moment");
       setPlacements([]);
       setToolboxOpen(false);
+      // Refresh the document + signed URL after the worker flattens
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["document", documentId] });
+        queryClient.invalidateQueries({ queryKey: ["document-url", documentId] });
+      }, 4000);
     },
     onError: (e) => toastError(e, "Failed to apply signature"),
   });
