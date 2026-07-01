@@ -179,10 +179,111 @@ async function handleEmailCampaignSend(job: Job) {
   return { sent, failed };
 }
 
+async function handleSignatureApply(job: Job) {
+  const { PDFDocument } = await import("pdf-lib");
+  const documentId = job.input.documentId as string;
+  const signatureId = job.input.signatureId as string;
+  const page = Number(job.input.page ?? 1);
+  const x = Number(job.input.x ?? 0);
+  const y = Number(job.input.y ?? 0);
+  const width = Number(job.input.width ?? 0.2);
+  const height = Number(job.input.height ?? 0.08);
+
+  const { data: doc, error: dErr } = await supabaseAdmin
+    .from("documents")
+    .select("storage_path, title, workspace_id")
+    .eq("id", documentId)
+    .single();
+  if (dErr || !doc?.storage_path) throw new Error(dErr?.message || "document missing");
+
+  const { data: sig, error: sErr } = await supabaseAdmin
+    .from("user_signatures")
+    .select("signature_image_url, storage_path")
+    .eq("id", signatureId)
+    .single();
+  if (sErr || !sig) throw new Error(sErr?.message || "signature missing");
+
+  // Fetch original PDF
+  const { data: pdfBlob, error: dlErr } = await supabaseAdmin.storage
+    .from("documents")
+    .download(doc.storage_path);
+  if (dlErr || !pdfBlob) throw new Error(dlErr?.message || "download failed");
+  const pdfBytes = new Uint8Array(await pdfBlob.arrayBuffer());
+  const pdf = await PDFDocument.load(pdfBytes);
+
+  // Fetch signature image
+  let sigBytes: Uint8Array;
+  let sigMime = "image/png";
+  if (sig.storage_path) {
+    const { data: sBlob } = await supabaseAdmin.storage
+      .from("signatures")
+      .download(sig.storage_path);
+    if (!sBlob) throw new Error("signature file missing");
+    sigBytes = new Uint8Array(await sBlob.arrayBuffer());
+    sigMime = sBlob.type || sigMime;
+  } else {
+    const r = await fetch(sig.signature_image_url);
+    if (!r.ok) throw new Error(`fetch signature ${r.status}`);
+    sigBytes = new Uint8Array(await r.arrayBuffer());
+    sigMime = r.headers.get("content-type") ?? sigMime;
+  }
+  const img = sigMime.includes("jpeg") || sigMime.includes("jpg")
+    ? await pdf.embedJpg(sigBytes)
+    : await pdf.embedPng(sigBytes);
+
+  const pages = pdf.getPages();
+  const pageIdx = Math.min(Math.max(page - 1, 0), pages.length - 1);
+  const pg = pages[pageIdx];
+  const { width: pw, height: ph } = pg.getSize();
+  const drawWidth = width * pw;
+  const drawHeight = height * ph;
+  // PDF origin is bottom-left; overlay coords use top-left
+  const drawX = x * pw;
+  const drawY = ph - y * ph - drawHeight;
+  pg.drawImage(img, { x: drawX, y: drawY, width: drawWidth, height: drawHeight });
+
+  const outBytes = await pdf.save();
+  const outPath = `${doc.workspace_id}/${job.created_by}/${documentId}-signed-${Date.now()}.pdf`;
+  const { error: upErr } = await supabaseAdmin.storage
+    .from("document-versions")
+    .upload(outPath, outBytes, { contentType: "application/pdf", upsert: false });
+  if (upErr) throw new Error(upErr.message);
+
+  // Get next version number
+  const { data: existing } = await supabaseAdmin
+    .from("document_versions")
+    .select("version_number")
+    .eq("document_id", documentId)
+    .order("version_number", { ascending: false })
+    .limit(1);
+  const nextVersion = (existing?.[0]?.version_number ?? 0) + 1;
+
+  await supabaseAdmin.from("document_versions").insert({
+    document_id: documentId,
+    workspace_id: doc.workspace_id,
+    created_by: job.created_by,
+    version_number: nextVersion,
+    storage_path: outPath,
+    file_size: outBytes.byteLength,
+  } as never);
+
+  await supabaseAdmin
+    .from("documents")
+    .update({ document_status: "signed" as never })
+    .eq("id", documentId);
+
+  await notify(
+    job.workspace_id,
+    job.created_by,
+    "Signature applied",
+    `Your document “${doc.title}” has been signed.`,
+    "document_signed",
+  );
+
+  return { versionPath: outPath, version: nextVersion };
+}
+
 async function handleStub(job: Job) {
-  // Placeholder: document_convert / document_export / letterhead_generate /
-  // signature_apply / contact_import / contact_export are wired but use
-  // provider stubs. Mark as succeeded with input echoed, ready for provider plug-in.
   return { stub: true, kind: job.kind };
 }
 
@@ -195,6 +296,9 @@ export async function dispatchJob(job: Job): Promise<void> {
         break;
       case "email_campaign_send":
         output = await handleEmailCampaignSend(job);
+        break;
+      case "signature_apply":
+        output = await handleSignatureApply(job);
         break;
       default:
         output = await handleStub(job);
