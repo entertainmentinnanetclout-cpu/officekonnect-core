@@ -260,12 +260,17 @@ async function handleSignatureApply(job: Job) {
 
   await supabaseAdmin.from("document_versions").insert({
     document_id: documentId,
-    workspace_id: doc.workspace_id,
     created_by: job.created_by,
     version_number: nextVersion,
     storage_path: outPath,
-    file_size: outBytes.byteLength,
+    file_url: outPath,
   } as never);
+
+  // Update current file pointer on the document
+  await supabaseAdmin
+    .from("documents")
+    .update({ storage_path: outPath, current_file_url: outPath } as never)
+    .eq("id", documentId);
 
   await supabaseAdmin
     .from("documents")
