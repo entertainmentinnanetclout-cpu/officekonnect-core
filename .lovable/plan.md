@@ -1,95 +1,101 @@
-## Stabilization Sprint — Plan
 
-Focused on the actual blockers you reported. I will not redesign anything or add new features.
+# SignKonnect Document Engine — Phased Rebuild
 
----
-
-### P1 — Signature save fails with `uq_sig_default`
-
-**Root cause:** `user_signatures` has a partial unique index `uq_sig_default (created_by) WHERE is_default`. `SignatureManager` writes directly via the browser Supabase client and always hard-codes `is_default: true`, so the second save violates the constraint. The proper `saveSignature` server function (which unsets the previous default first) is never called.
-
-**Fix**
-- Route `SignatureManager` save through `saveSignature` (server fn) so the unset-previous-default logic runs in one place.
-- Add an `is_default` toggle in the form. New signatures default to false unless explicitly chosen, or unless the user has zero signatures yet (auto-default the first).
-- DB safety net: keep the partial unique index, and add a `BEFORE INSERT/UPDATE` trigger that unsets any other `is_default = true` row for the same `created_by`. This makes "set as default" idempotent even if a client forgets.
-- Surface real error messages from the mutation (`error.message`) in the toast.
-
-### P2 — Signature placement workflow
-
-Current `documents/$documentId.tsx` opens a `<Dialog>` with the signature manager when you click "Sign Document". Replace that with an inline flow:
-
-1. Click **Sign Document** → opens a right-side **Signature Toolbox** panel (not a modal) listing saved signatures + a "+ New" button.
-2. Selecting a signature attaches it to the cursor; clicking on the document drops it.
-3. Placed signature is draggable / resizable on the page (rotate optional, deferred).
-4. **Confirm placement** button calls `applySignatureToDocument` server fn (already exists) with page + x/y/width/height, which enqueues `signature_apply`.
-5. Creating a new signature inline uses `SignatureManager` rendered inside the same panel — no nested modal.
-
-No Adobe-grade field editor — just place / move / resize / confirm, matching what the backend job already accepts.
-
-### P3 — PDF preview
-
-Today the viewer just renders a `<FileText>` icon. Implement real preview:
-- Install `react-pdf` (uses pdf.js).
-- Resolve a signed URL via `getSignedDownloadUrl` (bucket `documents`, `document.storage_path`).
-- Render with page navigation, zoom (wire to existing zoom state), and a basic in-page text search using pdf.js's text layer.
-- For non-PDF file types, render the file inside an `<iframe>` via signed URL (images/Office files just download).
-- Error boundary: show file name + error + Retry + Download fallback instead of a blank panel.
-
-### P4 — Download / Export
-
-- "Download" button on the document detail page is currently a no-op. Wire it to `getSignedDownloadUrl` and trigger a browser download using the original `storage_path`.
-- Add a "Download signed version" entry that pulls the most recent `document_versions` row (signed output of `signature_apply`) when present; falls back to original.
-- Update `enqueueDocumentExport` callers to poll the `jobs` row and, on `succeeded`, fetch the output path's signed URL.
-
-### P5 — Voice notes playback + transcription
-
-- Playback: the dashboard list has no audio element. Add an inline `<audio controls>` per row using a freshly-minted signed URL (the stored 7‑day URL can expire; mint on demand).
-- MIME: the worker uploads to Whisper as `audio.webm`. Confirmed compatible. Add fallback `audio/mp4` for Safari recordings.
-- Transcription failures: today they silently retry. Surface `jobs.error` in the row, plus a **Retry transcription** button that re-enqueues the job.
-- Add a "Download transcript" action (txt blob from `voice_notes.transcript`).
-
-### P6 — Settings module
-
-Build out the tabs that are currently placeholders, all wired to existing tables:
-- **Profile** — actually persist the form (today the Save button is inert). Avatar upload to `avatars` bucket.
-- **Company** — new columns on `workspaces` if missing (`company_name`, `logo_url`, `address`). Logo upload to `avatars`.
-- **Security** — `supabase.auth.updateUser({ password })`; list/revoke sessions via `supabase.auth.signOut({ scope: 'others' })` (full session list isn't exposed via anon API — show current session + sign-out-everywhere).
-- **Signatures** — already uses `SignatureManager`; add a list with **Set default** and **Delete** actions.
-- **Appearance** — theme toggle persisted on `profiles.preferences` JSON. Language is architecture-only (locale field, no translations yet).
-- **Notifications** — boolean prefs on `profiles.preferences`.
-- **Integrations** — placeholder cards reading from `user_integrations` (Connect/Disconnect for Brevo, OpenAI — already backed by table).
-- **Account** — Export personal data (server fn returning a JSON of the user's rows). Delete account calls a new server fn that uses `supabaseAdmin.auth.admin.deleteUser` after role check / confirmation typed.
-
-### P7 — Error handling
-
-Centralize through a small helper:
-- `toastError(err, fallback)` → shows real message, logs to console, captures via existing `error-capture`.
-- Replace every `toast.error("Failed to …")` swallow with this.
-- Add Retry buttons on the queries that matter (documents list, voice list, document detail).
-
-### P8 — Backend verification
-
-Run a sweep and fix:
-- Storage policies on `documents`, `signatures`, `voice-notes`, `exports`, `document-versions`, `avatars`, `letterheads` — confirm they all use `(storage.foldername(name))[1] = workspace_id::text` and that workspace membership is checked.
-- `claim_jobs` reachable only by `service_role` (already done in last security pass — re-verify).
-- Add missing indexes spotted while reading: `voice_notes(workspace_id, created_at desc)`, `jobs(status, scheduled_for)` partial.
-- Run `supabase--linter`; fix anything blocking.
-
-### P9 — End-to-end verification
-
-Drive Playwright against `http://localhost:8080` with the injected Supabase session to walk: upload → preview → sign → download → record → playback → transcribe poll → settings save. Capture screenshots and console for the final report.
+We'll rebuild the document pipeline in **5 phases**, shipping a working, testable slice at the end of each. Original PDFs stay immutable; everything is done as an overlay that's flattened on export (industry-standard, matches DocuSign/Adobe Sign).
 
 ---
 
-### Technical notes
+## Phase 1 — Rock-solid PDF workspace (this sprint)
 
-- DB migration adds: `enforce_single_default_signature` trigger; optional `workspaces.company_name/logo_url/address` columns; `profiles.preferences jsonb default '{}'` if missing.
-- New deps: `react-pdf`.
-- New/changed files (approx): `src/components/signature-manager.tsx`, new `src/components/document/pdf-viewer.tsx`, new `src/components/document/signature-toolbox.tsx`, `src/routes/dashboard/documents/$documentId.tsx`, `src/routes/dashboard/voice/index.tsx`, `src/routes/dashboard/settings/index.tsx` + per-tab components, `src/lib/signatures.functions.ts` (delete + set-default fns), `src/lib/profile.functions.ts` (new), `src/lib/account.functions.ts` (new export/delete), `src/lib/errors.ts` (new helper).
-- No edge functions involved — all server work stays in TanStack server functions per the stack rules.
+Goal: opening any uploaded PDF Just Works, and signing works end-to-end.
 
-### Final deliverable
+**Viewer rebuild** (`src/components/document/pdf-workspace.tsx`, replaces `pdf-viewer.tsx`)
+- Render ALL pages in a scrollable canvas (not one page at a time) — this is why signing feels broken today.
+- Left rail: page thumbnails (click to jump, active highlight).
+- Top toolbar: zoom in/out + % input, fit-width, fit-page, rotate page, fullscreen, page number jump, text search.
+- Mobile: thumbnails collapse into a drawer; toolbar wraps.
+- Proper error state with retry + download fallback when a PDF fails to render (bad MIME, corrupt file, expired signed URL).
+- Refresh signed URL automatically when it nears expiry.
 
-After implementation I'll post: bugs fixed + root cause, files changed, migrations applied, remaining known gaps (likely: rotate on placed signature, full session listing, real translations), and Playwright verification results.
+**Upload → preview reliability**
+- Fix upload to always set correct `contentType` (many current uploads store as `application/octet-stream`, which is why previews fail).
+- Backfill server fn to re-stamp `file_type` from actual file MIME on the row.
+- Verify storage RLS path convention (`{workspace_id}/{user_id}/...`) is used everywhere.
 
-Reply **go** to start, or tell me which priorities to drop/reorder.
+**Signing UX rewrite** (Adobe Sign / DocuSign style, no popup)
+- "Sign" button opens the right-side Signature Toolbox (already scaffolded, cleaned up).
+- Pick saved signature OR draw/type a new one inline.
+- Cursor attaches to a ghost signature; click anywhere on any page to drop it.
+- Placed signature is a draggable + resizable + deletable overlay box (react-rnd), snap-to-page bounds.
+- "Confirm & Save" flattens the placements into a new PDF version via `signature_apply` job (pdf-lib on the worker), stores as a new `document_versions` row, and updates status. Download returns the flattened PDF.
+
+**Voice notes fix** (small, since it's blocking users today)
+- Refresh signed URL before each playback so audio actually plays after recording.
+- Retry transcription button wired to `enqueueTranscribe`.
+- Verify MediaRecorder MIME is one Whisper accepts (`audio/webm;codecs=opus` → uploaded as `.webm`).
+
+**Backend verification pass**
+- Confirm buckets: `documents`, `document-versions`, `voice-notes`, `signatures` exist with correct public/private flags and RLS.
+- Confirm `signature_apply` worker handler flattens and writes a new version.
+- Confirm `pg_cron` job is hitting the correct env URL.
+
+**Deliverable:** Upload a PDF → see every page → open toolbox → drop signature → confirm → download flattened signed PDF. Same for voice: record → playback → transcribe.
+
+---
+
+## Phase 2 — Overlay editor (fields + formatting)
+
+Goal: sender can place fillable fields and visual elements on the PDF before sending.
+
+- Reuse the Phase 1 workspace; add a left "Fields" palette:
+  - Text, Multi-line text, Number, Email, Phone, Address, Date, Time, Currency
+  - Checkbox, Radio, Dropdown
+  - Signature, Initials, Signature date, Printed name
+  - Shapes (rect, circle, line), Highlight, Freehand
+- Selecting an element opens a **right-side Properties panel**:
+  - Font family / size / color / bold / italic / underline / alignment (text elements)
+  - Placeholder, default value, required flag, validation (email/phone/number)
+  - Recipient assignment (populated in Phase 3)
+- Canvas interactions: drag, resize, rotate, align guides, duplicate, lock, delete, undo/redo (Zustand history stack).
+- Persist all elements as JSON in `signing_fields` (schema already exists) tied to the document.
+- "Save as template" writes to a new `document_templates` table (fields JSON, name, thumbnail).
+
+---
+
+## Phase 3 — Send to recipient (registered users + guest email links)
+
+- "Send" flow: pick recipients (existing users OR type an email → guest), assign each to specific fields, add message.
+- Creates `signing_request` + `signing_participants` rows.
+- Registered users: notification + dashboard "Waiting for you" list.
+- Guests: Brevo email with a signed tokenized URL (JWT, expiring) → opens a public `/sign/{token}` route with the same workspace but locked to their assigned fields only.
+- Recipient view: read-only for everything except their assigned fields; submit → server validates all required fields → status advances → notifies next participant or completes.
+- Audit trail rows in `signing_events` for every action (view/fill/sign/complete) with IP + UA.
+
+## Phase 4 — Final PDF generation + delivery
+
+- On completion, worker flattens all overlays + filled values into a signed PDF, uploads to `document-versions`, updates `documents.document_status = 'completed'`.
+- Emails both parties a copy + link.
+- Adds "Certificate of completion" page (audit trail) — foundation for future notarization/witness.
+
+## Phase 5 — Voice notes hardening + polish
+
+- Pause/resume in MediaRecorder, waveform visualiser, rename inline, delete with confirm, transcript inline edit, export as `.txt`/`.docx`.
+- Mobile mic permission prompts, background upload progress.
+
+---
+
+## Technical notes
+
+- **Rendering**: keep `react-pdf` (pdfjs), switch to virtualized multi-page scroll. Worker stays on CDN.
+- **Overlay canvas**: HTML overlay positioned over each rendered page using normalized (0..1) coords → survives zoom/rotate. Interactions via `react-rnd`. No Konva/Fabric — kept lean.
+- **State**: Zustand store per document for elements + history (undo/redo).
+- **Flatten**: `pdf-lib` inside the Cloudflare Worker job handler (Workers-compatible, no native deps). Signature images fetched via signed URL, drawn at the same normalized coords.
+- **Templates**: new `document_templates(workspace_id, name, source_document_id, fields jsonb, thumbnail_path)` table + RLS in Phase 2.
+- **Guest signing**: new `signing_tokens(token_hash, request_id, participant_id, expires_at)` + public route `/sign/$token` in Phase 3.
+- **No schema changes in Phase 1** — everything uses existing `documents`, `document_versions`, `signing_fields`, `user_signatures`.
+
+---
+
+## What ships when you approve
+
+Just Phase 1. It's the unblocker: preview works, signing works end-to-end, voice playback+transcription works. After you've tested Phase 1 in the preview, say "go Phase 2" and I'll build the editor.
