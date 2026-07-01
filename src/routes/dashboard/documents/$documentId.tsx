@@ -41,6 +41,7 @@ type Placement = {
 function DocumentDetail() {
   const { documentId } = Route.useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [toolboxOpen, setToolboxOpen] = useState(false);
   const [activeSig, setActiveSig] = useState<ToolboxSignature | null>(null);
   const [placements, setPlacements] = useState<Placement[]>([]);
