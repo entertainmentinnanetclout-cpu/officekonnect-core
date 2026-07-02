@@ -341,10 +341,10 @@ async function handleSigningNotify(job: Job) {
       await supabaseAdmin.from("notifications").insert({
         workspace_id: job.workspace_id,
         user_id: p.user_id,
-        kind: "signing_invite" as never,
+        kind: "document_shared" as never,
         title: `Signature requested: ${req.title}`,
         body: message || "You have been asked to sign a document.",
-        action_url: signUrl,
+        data: { signUrl } as never,
       } as never);
     }
 
