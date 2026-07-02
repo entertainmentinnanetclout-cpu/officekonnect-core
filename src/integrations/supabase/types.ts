@@ -331,6 +331,87 @@ export type Database = {
           },
         ]
       }
+      document_fields: {
+        Row: {
+          assigned_email: string | null
+          assigned_participant_id: string | null
+          created_at: string
+          created_by: string
+          default_value: string | null
+          document_id: string
+          field_type: string
+          h: number
+          id: string
+          label: string | null
+          page: number
+          properties: Json
+          required: boolean
+          updated_at: string
+          value: string | null
+          w: number
+          workspace_id: string
+          x: number
+          y: number
+        }
+        Insert: {
+          assigned_email?: string | null
+          assigned_participant_id?: string | null
+          created_at?: string
+          created_by: string
+          default_value?: string | null
+          document_id: string
+          field_type: string
+          h: number
+          id?: string
+          label?: string | null
+          page?: number
+          properties?: Json
+          required?: boolean
+          updated_at?: string
+          value?: string | null
+          w: number
+          workspace_id: string
+          x: number
+          y: number
+        }
+        Update: {
+          assigned_email?: string | null
+          assigned_participant_id?: string | null
+          created_at?: string
+          created_by?: string
+          default_value?: string | null
+          document_id?: string
+          field_type?: string
+          h?: number
+          id?: string
+          label?: string | null
+          page?: number
+          properties?: Json
+          required?: boolean
+          updated_at?: string
+          value?: string | null
+          w?: number
+          workspace_id?: string
+          x?: number
+          y?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_fields_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_fields_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_metadata: {
         Row: {
           checksum: string | null
@@ -1047,6 +1128,8 @@ export type Database = {
         Row: {
           created_at: string
           decline_reason: string | null
+          email: string | null
+          full_name: string | null
           id: string
           order_index: number
           request_id: string
@@ -1054,11 +1137,13 @@ export type Database = {
           signed_at: string | null
           status: Database["public"]["Enums"]["signing_participant_status"]
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
           decline_reason?: string | null
+          email?: string | null
+          full_name?: string | null
           id?: string
           order_index?: number
           request_id: string
@@ -1066,11 +1151,13 @@ export type Database = {
           signed_at?: string | null
           status?: Database["public"]["Enums"]["signing_participant_status"]
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
           decline_reason?: string | null
+          email?: string | null
+          full_name?: string | null
           id?: string
           order_index?: number
           request_id?: string
@@ -1078,7 +1165,7 @@ export type Database = {
           signed_at?: string | null
           status?: Database["public"]["Enums"]["signing_participant_status"]
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -1149,6 +1236,51 @@ export type Database = {
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signing_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          participant_id: string
+          request_id: string
+          token_hash: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          participant_id: string
+          request_id: string
+          token_hash: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          participant_id?: string
+          request_id?: string
+          token_hash?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signing_tokens_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "signing_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signing_tokens_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "signing_requests"
             referencedColumns: ["id"]
           },
         ]
@@ -1644,6 +1776,8 @@ export type Database = {
         | "contact_import"
         | "contact_export"
         | "signature_apply"
+        | "signing_notify"
+        | "signing_finalize"
       job_status: "queued" | "running" | "succeeded" | "failed" | "canceled"
       notification_kind:
         | "job_succeeded"
@@ -1853,6 +1987,8 @@ export const Constants = {
         "contact_import",
         "contact_export",
         "signature_apply",
+        "signing_notify",
+        "signing_finalize",
       ],
       job_status: ["queued", "running", "succeeded", "failed", "canceled"],
       notification_kind: [
