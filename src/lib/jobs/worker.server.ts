@@ -93,7 +93,7 @@ async function handleAudioTranscribe(job: Job) {
     .update({ transcript: result.text })
     .eq("id", voiceNoteId);
 
-  await notify(job.workspace_id, job.created_by, "Transcript ready", "Your voice note has been transcribed.", "voice_transcribed");
+  await notify(job.workspace_id, job.created_by, "Transcript ready", "Your voice note has been transcribed.", "transcription_ready");
   return { text: result.text };
 }
 
@@ -174,7 +174,7 @@ async function handleEmailCampaignSend(job: Job) {
     job.created_by,
     "Campaign complete",
     `${sent} sent, ${failed} failed`,
-    "campaign_complete",
+    "campaign_completed",
   );
   return { sent, failed };
 }
@@ -282,7 +282,238 @@ async function handleSignatureApply(job: Job) {
     job.created_by,
     "Signature applied",
     `Your document “${doc.title}” has been signed.`,
-    "document_signed",
+    "document_shared",
+  );
+
+  return { versionPath: outPath, version: nextVersion };
+}
+
+async function handleSigningNotify(job: Job) {
+  const apiKey = process.env.BREVO_API_KEY;
+  const lovableKey = process.env.LOVABLE_API_KEY;
+  const sender = process.env.BREVO_SENDER_EMAIL;
+  const senderName = process.env.BREVO_SENDER_NAME ?? "OfficeKonnect";
+
+  const requestId = job.input.requestId as string;
+  const message = (job.input.message as string) ?? "";
+
+  const { data: req } = await supabaseAdmin
+    .from("signing_requests")
+    .select("id, title, document_id")
+    .eq("id", requestId)
+    .single();
+  if (!req) throw new Error("Signing request not found");
+
+  const { data: participants } = await supabaseAdmin
+    .from("signing_participants")
+    .select("id, email, full_name, user_id, status")
+    .eq("request_id", requestId);
+
+  const baseUrl =
+    process.env.APP_BASE_URL ||
+    process.env.PUBLISHED_URL ||
+    "https://id-preview--755c322c-3de5-4bde-b3a5-ea9c93aa5dcc.lovable.app";
+
+  let sent = 0;
+  for (const p of participants ?? []) {
+    if (p.status !== "pending" || !p.email) continue;
+
+    // Mint token
+    const rawToken =
+      crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
+    const enc = new TextEncoder().encode(rawToken);
+    const hashBuf = await crypto.subtle.digest("SHA-256", enc);
+    const tokenHash = Array.from(new Uint8Array(hashBuf))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+
+    await supabaseAdmin.from("signing_tokens" as never).insert({
+      token_hash: tokenHash,
+      request_id: requestId,
+      participant_id: p.id,
+      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    } as never);
+
+    const signUrl = `${baseUrl}/sign/${rawToken}`;
+
+    // Notify registered users in-app
+    if (p.user_id) {
+      await supabaseAdmin.from("notifications").insert({
+        workspace_id: job.workspace_id,
+        user_id: p.user_id,
+        kind: "document_shared" as never,
+        title: `Signature requested: ${req.title}`,
+        body: message || "You have been asked to sign a document.",
+        data: { signUrl } as never,
+      } as never);
+    }
+
+    // Send email
+    if (apiKey && lovableKey && sender) {
+      const html = `
+        <div style="font-family: -apple-system, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
+          <h2 style="color: #1a1a1a;">${req.title}</h2>
+          <p style="color: #555; line-height: 1.6;">
+            Hello${p.full_name ? ` ${p.full_name}` : ""}, you have been requested to sign a document.
+          </p>
+          ${message ? `<blockquote style="border-left: 3px solid #3b82f6; padding-left: 12px; color: #555;">${message}</blockquote>` : ""}
+          <p style="margin-top: 24px;">
+            <a href="${signUrl}" style="background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 500;">
+              Review &amp; sign
+            </a>
+          </p>
+          <p style="color: #999; font-size: 12px; margin-top: 32px;">
+            This link expires in 30 days. Do not share it.
+          </p>
+        </div>`;
+      await fetch("https://connector-gateway.lovable.dev/brevo/smtp/email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${lovableKey}`,
+          "X-Connection-Api-Key": apiKey,
+        },
+        body: JSON.stringify({
+          sender: { name: senderName, email: sender },
+          to: [{ email: p.email, name: p.full_name ?? undefined }],
+          subject: `Signature requested: ${req.title}`,
+          htmlContent: html,
+        }),
+      }).catch(() => void 0);
+    }
+    sent++;
+  }
+
+  return { sent };
+}
+
+async function handleSigningFinalize(job: Job) {
+  const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
+  const requestId = job.input.requestId as string;
+
+  const { data: req } = await supabaseAdmin
+    .from("signing_requests")
+    .select("id, title, document_id, workspace_id, sender_id")
+    .eq("id", requestId)
+    .single();
+  if (!req) throw new Error("Request not found");
+
+  const { data: doc } = await supabaseAdmin
+    .from("documents")
+    .select("storage_path, title")
+    .eq("id", req.document_id)
+    .single();
+  if (!doc?.storage_path) throw new Error("Document missing");
+
+  const { data: pdfBlob } = await supabaseAdmin.storage.from("documents").download(doc.storage_path);
+  if (!pdfBlob) throw new Error("PDF download failed");
+  const pdf = await PDFDocument.load(new Uint8Array(await pdfBlob.arrayBuffer()));
+  const helv = await pdf.embedFont(StandardFonts.Helvetica);
+
+  const { data: fields } = await supabaseAdmin
+    .from("document_fields" as never)
+    .select("*")
+    .eq("document_id", req.document_id);
+
+  const pages = pdf.getPages();
+  for (const raw of (fields ?? []) as unknown as Array<{
+    field_type: string;
+    page: number;
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    value: string | null;
+    default_value: string | null;
+    properties: Record<string, string | number | boolean | null> | null;
+  }>) {
+    const pageIdx = Math.min(Math.max(raw.page - 1, 0), pages.length - 1);
+    const pg = pages[pageIdx];
+    const { width: pw, height: ph } = pg.getSize();
+    const dx = raw.x * pw;
+    const dy = ph - raw.y * ph - raw.h * ph;
+    const dw = raw.w * pw;
+    const dh = raw.h * ph;
+    const val = raw.value ?? raw.default_value ?? "";
+
+    if ((raw.field_type === "signature" || raw.field_type === "initials") && val.startsWith("data:image")) {
+      const b64 = val.split(",")[1];
+      const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+      const img = val.includes("jpeg") ? await pdf.embedJpg(bytes) : await pdf.embedPng(bytes);
+      pg.drawImage(img, { x: dx, y: dy, width: dw, height: dh });
+    } else if (raw.field_type === "checkbox") {
+      if (val === "true" || val === "1") {
+        pg.drawText("X", {
+          x: dx + dw / 4,
+          y: dy + dh / 4,
+          size: Math.min(dh, dw) * 0.8,
+          font: helv,
+          color: rgb(0, 0, 0),
+        });
+      }
+    } else if (val) {
+      const fontSize = Number(raw.properties?.fontSize ?? 12);
+      pg.drawText(String(val), {
+        x: dx + 2,
+        y: dy + dh - fontSize - 2,
+        size: fontSize,
+        font: helv,
+        color: rgb(0, 0, 0),
+        maxWidth: dw - 4,
+      });
+    }
+  }
+
+  const outBytes = await pdf.save();
+  const outPath = `${req.workspace_id}/${req.sender_id}/${req.document_id}-final-${Date.now()}.pdf`;
+  const { error: upErr } = await supabaseAdmin.storage
+    .from("document-versions")
+    .upload(outPath, outBytes, { contentType: "application/pdf", upsert: false });
+  if (upErr) throw new Error(upErr.message);
+
+  const { data: existing } = await supabaseAdmin
+    .from("document_versions")
+    .select("version_number")
+    .eq("document_id", req.document_id)
+    .order("version_number", { ascending: false })
+    .limit(1);
+  const nextVersion = (existing?.[0]?.version_number ?? 0) + 1;
+
+  await supabaseAdmin.from("document_versions").insert({
+    document_id: req.document_id,
+    created_by: req.sender_id,
+    version_number: nextVersion,
+    storage_path: outPath,
+    file_url: outPath,
+  } as never);
+
+  await supabaseAdmin
+    .from("documents")
+    .update({ storage_path: outPath, current_file_url: outPath, document_status: "signed" as never } as never)
+    .eq("id", req.document_id);
+
+  await supabaseAdmin
+    .from("signing_requests")
+    .update({
+      status: "completed" as never,
+      completed_at: new Date().toISOString(),
+      final_export_path: outPath,
+    } as never)
+    .eq("id", requestId);
+
+  await supabaseAdmin.from("signing_events").insert({
+    request_id: requestId,
+    actor_id: null,
+    event_type: "completed",
+    metadata: { version: nextVersion } as never,
+  } as never);
+
+  await notify(
+    job.workspace_id,
+    job.created_by,
+    "Document completed",
+    `“${doc.title}” has been signed by all participants.`,
+    "document_shared",
   );
 
   return { versionPath: outPath, version: nextVersion };
@@ -305,6 +536,12 @@ export async function dispatchJob(job: Job): Promise<void> {
       case "signature_apply":
         output = await handleSignatureApply(job);
         break;
+      case "signing_notify":
+        output = await handleSigningNotify(job);
+        break;
+      case "signing_finalize":
+        output = await handleSigningFinalize(job);
+        break;
       default:
         output = await handleStub(job);
     }
@@ -313,3 +550,4 @@ export async function dispatchJob(job: Job): Promise<void> {
     await markFailed(job, (err as Error).message);
   }
 }
+
