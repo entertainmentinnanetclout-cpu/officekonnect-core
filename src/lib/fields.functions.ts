@@ -11,6 +11,28 @@ export type FieldType =
   | "name"
   | "email";
 
+export interface DocumentFieldRow {
+  id: string;
+  workspace_id: string;
+  document_id: string;
+  created_by: string;
+  field_type: FieldType;
+  label: string | null;
+  page: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  required: boolean;
+  default_value: string | null;
+  value: string | null;
+  properties: Record<string, string | number | boolean | null>;
+  assigned_email: string | null;
+  assigned_participant_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface DocumentFieldInput {
   id?: string;
   documentId: string;
@@ -24,14 +46,14 @@ export interface DocumentFieldInput {
   required?: boolean;
   defaultValue?: string | null;
   value?: string | null;
-  properties?: Record<string, unknown>;
+  properties?: Record<string, string | number | boolean | null>;
   assignedEmail?: string | null;
 }
 
 export const listDocumentFields = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { documentId: string }) => d)
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }): Promise<{ fields: DocumentFieldRow[] }> => {
     const { supabase } = context;
     const { data: rows, error } = await supabase
       .from("document_fields" as never)
@@ -39,13 +61,13 @@ export const listDocumentFields = createServerFn({ method: "POST" })
       .eq("document_id", data.documentId)
       .order("page", { ascending: true });
     if (error) throw new Error(error.message);
-    return (rows ?? []) as unknown as Array<Record<string, unknown>>;
+    return { fields: (rows ?? []) as unknown as DocumentFieldRow[] };
   });
 
 export const upsertDocumentField = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: DocumentFieldInput) => d)
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }): Promise<{ field: DocumentFieldRow }> => {
     const { supabase, userId } = context;
     const workspaceId = await getActiveWorkspaceId(supabase, userId);
     const row = {
@@ -73,7 +95,7 @@ export const upsertDocumentField = createServerFn({ method: "POST" })
         .select("*")
         .single();
       if (error) throw new Error(error.message);
-      return out;
+      return { field: out as unknown as DocumentFieldRow };
     }
     const { data: out, error } = await supabase
       .from("document_fields" as never)
@@ -81,13 +103,13 @@ export const upsertDocumentField = createServerFn({ method: "POST" })
       .select("*")
       .single();
     if (error) throw new Error(error.message);
-    return out;
+    return { field: out as unknown as DocumentFieldRow };
   });
 
 export const deleteDocumentField = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => d)
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }): Promise<{ ok: true }> => {
     const { error } = await context.supabase
       .from("document_fields" as never)
       .delete()

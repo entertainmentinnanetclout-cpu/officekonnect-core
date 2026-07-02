@@ -80,7 +80,20 @@ export const getSigningContext = createServerFn({ method: "POST" })
       pdfUrl,
       participants: participants ?? [],
       me: (participants ?? []).find((p) => p.id === participant_id) ?? null,
-      fields: (fields as unknown as Array<Record<string, unknown>>) ?? [],
+      fields: JSON.parse(JSON.stringify(fields ?? [])) as Array<{
+        id: string;
+        field_type: string;
+        label: string | null;
+        page: number;
+        x: number;
+        y: number;
+        w: number;
+        h: number;
+        required: boolean;
+        value: string | null;
+        default_value: string | null;
+        assigned_email: string | null;
+      }>,
     };
   });
 
