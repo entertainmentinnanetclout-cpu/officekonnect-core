@@ -93,7 +93,7 @@ async function handleAudioTranscribe(job: Job) {
     .update({ transcript: result.text })
     .eq("id", voiceNoteId);
 
-  await notify(job.workspace_id, job.created_by, "Transcript ready", "Your voice note has been transcribed.", "voice_transcribed");
+  await notify(job.workspace_id, job.created_by, "Transcript ready", "Your voice note has been transcribed.", "transcription_ready");
   return { text: result.text };
 }
 
@@ -174,7 +174,7 @@ async function handleEmailCampaignSend(job: Job) {
     job.created_by,
     "Campaign complete",
     `${sent} sent, ${failed} failed`,
-    "campaign_complete",
+    "campaign_completed",
   );
   return { sent, failed };
 }
@@ -282,7 +282,7 @@ async function handleSignatureApply(job: Job) {
     job.created_by,
     "Signature applied",
     `Your document “${doc.title}” has been signed.`,
-    "document_signed",
+    "document_shared",
   );
 
   return { versionPath: outPath, version: nextVersion };
@@ -513,7 +513,7 @@ async function handleSigningFinalize(job: Job) {
     job.created_by,
     "Document completed",
     `“${doc.title}” has been signed by all participants.`,
-    "document_signed",
+    "document_shared",
   );
 
   return { versionPath: outPath, version: nextVersion };
