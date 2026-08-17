@@ -64,7 +64,7 @@ export const createSigningDraft = createServerFn({ method: "POST" })
         status: "draft",
         app_source: "officekonnect",
         signing_order: data.signingOrder ?? "parallel",
-      } as never)
+      })
       .select("*")
       .single();
     if (requestError) throw new Error(requestError.message);
@@ -81,7 +81,7 @@ export const createSigningDraft = createServerFn({ method: "POST" })
 
     const { data: participants, error: participantError } = await supabase
       .from("signing_participants")
-      .insert(participantRows as never)
+      .insert(participantRows)
       .select("*");
 
     if (participantError) {
@@ -123,17 +123,16 @@ export const cancelSigningRequest = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: request, error: requestError } = await supabase
       .from("signing_requests")
-      .select("id, sender_id, status, locked_at")
+      .select("id, sender_id, workspace_id, status, locked_at")
       .eq("id", data.requestId)
       .single();
     if (requestError) throw new Error(requestError.message);
 
     if (request.sender_id !== userId) {
-      const workspaceId = await getActiveWorkspaceId(supabase, userId);
       const { data: membership } = await supabase
         .from("workspace_members")
         .select("role")
-        .eq("workspace_id", workspaceId)
+        .eq("workspace_id", request.workspace_id)
         .eq("user_id", userId)
         .maybeSingle();
       if (!membership || !["owner", "admin"].includes(membership.role)) {
