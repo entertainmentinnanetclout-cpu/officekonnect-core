@@ -11,10 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Loader2, Send } from "lucide-react";
+import { Plus, Trash2, Loader2, FileSignature } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { createSigningRequest } from "@/lib/signing.functions";
+import { createSigningDraft } from "@/lib/signing.functions";
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 
@@ -28,6 +28,7 @@ interface Props {
   onOpenChange: (v: boolean) => void;
   documentId: string;
   defaultTitle: string;
+  /** Legacy callback name retained until the Phase 6 signing workspace is routed. */
   onSent?: () => void;
 }
 
@@ -35,7 +36,7 @@ export function SendDocumentDialog({ open, onOpenChange, documentId, defaultTitl
   const [title, setTitle] = useState(defaultTitle);
   const [message, setMessage] = useState("");
   const [recipients, setRecipients] = useState<Recipient[]>([{ email: "", fullName: "" }]);
-  const sendFn = useServerFn(createSigningRequest);
+  const createDraftFn = useServerFn(createSigningDraft);
 
   const mut = useMutation({
     mutationFn: async () => {
@@ -43,7 +44,7 @@ export function SendDocumentDialog({ open, onOpenChange, documentId, defaultTitl
         .map((r) => ({ ...r, email: r.email.trim() }))
         .filter((r) => /.+@.+\..+/.test(r.email));
       if (cleaned.length === 0) throw new Error("Add at least one recipient email");
-      return sendFn({
+      return createDraftFn({
         data: {
           documentId,
           title,
@@ -57,22 +58,22 @@ export function SendDocumentDialog({ open, onOpenChange, documentId, defaultTitl
       });
     },
     onSuccess: () => {
-      toast.success("Request sent");
+      toast.success("Signing draft created. Required fields must be prepared before sending.");
       onSent?.();
       onOpenChange(false);
       setRecipients([{ email: "", fullName: "" }]);
       setMessage("");
     },
-    onError: (e) => toastError(e, "Failed to send"),
+    onError: (e) => toastError(e, "Failed to create signing draft"),
   });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Send for signature</DialogTitle>
+          <DialogTitle>Create signing request</DialogTitle>
           <DialogDescription>
-            Recipients get an email with a secure link to sign. Guest recipients don't need an account.
+            Create the recipient draft first. Signature and initial fields must be assigned before the secure request can be sent.
           </DialogDescription>
         </DialogHeader>
 
@@ -144,9 +145,9 @@ export function SendDocumentDialog({ open, onOpenChange, documentId, defaultTitl
             {mut.isPending ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
-              <Send className="mr-2 h-4 w-4" />
+              <FileSignature className="mr-2 h-4 w-4" />
             )}
-            Send request
+            Create signing draft
           </Button>
         </DialogFooter>
       </DialogContent>
