@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getActiveWorkspaceId } from "@/lib/workspace.server";
-import { enqueueJob } from "@/lib/jobs/enqueue.server";
 
 export interface RecipientInput {
   email: string;
@@ -10,8 +9,15 @@ export interface RecipientInput {
   userId?: string | null;
 }
 
-// Sender creates a signing request and dispatches invitations
-export const createSigningRequest = createServerFn({ method: "POST" })
+/**
+ * Create the editable configuration for a signing request.
+ *
+ * Phase 5 deliberately allows direct RLS-protected writes only while a request
+ * is an unlocked draft. Sending, completion, decline, cancellation and
+ * finalization are server-authoritative state transitions and must go through
+ * the signing RPC/Edge Function layer.
+ */
+export const createSigningDraft = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
     (d: {
@@ -19,82 +25,133 @@ export const createSigningRequest = createServerFn({ method: "POST" })
       title: string;
       message?: string;
       recipients: RecipientInput[];
+      signingOrder?: "parallel" | "sequential";
     }) => d,
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const workspaceId = await getActiveWorkspaceId(supabase, userId);
 
-    if (!data.recipients || data.recipients.length === 0) {
-      throw new Error("At least one recipient is required");
+    const recipients = (data.recipients ?? [])
+      .map((recipient) => ({
+        ...recipient,
+        email: recipient.email.trim().toLowerCase(),
+      }))
+      .filter((recipient) => recipient.userId || /.+@.+\..+/.test(recipient.email));
+
+    if (recipients.length === 0) {
+      throw new Error("At least one valid recipient is required");
     }
 
-    // 1. Insert signing_request
-    const { data: req, error: reqErr } = await supabase
+    const { data: document, error: documentError } = await supabase
+      .from("documents")
+      .select("id, workspace_id")
+      .eq("id", data.documentId)
+      .single();
+    if (documentError) throw new Error(documentError.message);
+    if (document.workspace_id !== workspaceId) {
+      throw new Error("Document does not belong to the active workspace");
+    }
+
+    const { data: request, error: requestError } = await supabase
       .from("signing_requests")
       .insert({
         document_id: data.documentId,
         workspace_id: workspaceId,
         sender_id: userId,
-        title: data.title,
-        message: data.message ?? null,
-        status: "sent" as never,
-        app_source: "signkonnect",
-        sent_at: new Date().toISOString(),
+        title: data.title.trim() || "Signature request",
+        message: data.message?.trim() || null,
+        status: "draft",
+        app_source: "officekonnect",
+        signing_order: data.signingOrder ?? "parallel",
       } as never)
       .select("*")
       .single();
-    if (reqErr) throw new Error(reqErr.message);
+    if (requestError) throw new Error(requestError.message);
 
-    // 2. Insert participants
-    const parts = data.recipients.map((r, idx) => ({
-      request_id: req.id,
-      user_id: r.userId ?? null,
-      email: r.email.toLowerCase().trim(),
-      full_name: r.fullName ?? null,
-      order_index: idx,
-      role: "signer" as never,
-      status: "pending" as never,
+    const participantRows = recipients.map((recipient, index) => ({
+      request_id: request.id,
+      user_id: recipient.userId ?? null,
+      email: recipient.email || null,
+      full_name: recipient.fullName?.trim() || null,
+      order_index: index,
+      role: "signer" as const,
+      status: "pending" as const,
     }));
-    const { data: participants, error: partErr } = await supabase
+
+    const { data: participants, error: participantError } = await supabase
       .from("signing_participants")
-      .insert(parts as never)
+      .insert(participantRows as never)
       .select("*");
-    if (partErr) throw new Error(partErr.message);
 
-    // 3. Mark document as sent
-    await supabase
-      .from("documents")
-      .update({ document_status: "sent" as never } as never)
-      .eq("id", data.documentId);
+    if (participantError) {
+      // The request is still an unlocked draft, so RLS permits the sender to
+      // clean it up rather than leaving a partial configuration behind.
+      await supabase.from("signing_requests").delete().eq("id", request.id);
+      throw new Error(participantError.message);
+    }
 
-    // 4. Enqueue notify job (worker mints tokens + sends emails)
-    await enqueueJob(supabase, {
-      workspaceId,
-      userId,
-      kind: "signing_notify" as never,
-      input: {
-        requestId: req.id,
-        participantIds: (participants ?? []).map((p) => p.id),
-        message: data.message ?? "",
-      },
-      entityType: "signing_request",
-      entityId: req.id,
-    });
-
-    return { requestId: req.id, participants };
+    return { request, participants: participants ?? [] };
   });
 
-// Cancel a pending request
+/**
+ * Compatibility alias for the older caller name. This now creates a draft; it
+ * never bypasses field preparation by forcing the request directly to `sent`.
+ */
+export const createSigningRequest = createSigningDraft;
+
+export const sendSigningRequest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { requestId: string; expiresAt?: string | null }) => d)
+  .handler(async ({ data, context }) => {
+    const { data: result, error } = await context.supabase.functions.invoke("signing-actions", {
+      body: {
+        action: "send",
+        requestId: data.requestId,
+        expiresAt: data.expiresAt ?? null,
+      },
+    });
+    if (error) throw new Error(error.message);
+    if (result?.error) throw new Error(String(result.error));
+    return result;
+  });
+
 export const cancelSigningRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { requestId: string }) => d)
+  .inputValidator((d: { requestId: string; reason?: string }) => d)
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
-    const { error } = await supabase
+    const { supabase, userId } = context;
+    const { data: request, error: requestError } = await supabase
       .from("signing_requests")
-      .update({ status: "cancelled" as never } as never)
-      .eq("id", data.requestId);
+      .select("id, sender_id, status, locked_at")
+      .eq("id", data.requestId)
+      .single();
+    if (requestError) throw new Error(requestError.message);
+
+    if (request.sender_id !== userId) {
+      const workspaceId = await getActiveWorkspaceId(supabase, userId);
+      const { data: membership } = await supabase
+        .from("workspace_members")
+        .select("role")
+        .eq("workspace_id", workspaceId)
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (!membership || !["owner", "admin"].includes(membership.role)) {
+        throw new Error("You do not have permission to cancel this signing request");
+      }
+    }
+
+    if (request.status === "draft" && request.locked_at == null) {
+      const { error } = await supabase.from("signing_requests").delete().eq("id", request.id);
+      if (error) throw new Error(error.message);
+      return { deletedDraft: true };
+    }
+
+    const reason = data.reason?.trim() || "Cancelled by sender";
+    const { data: result, error } = await supabase.functions.invoke("signing-actions", {
+      body: { action: "cancel", requestId: request.id, reason },
+    });
     if (error) throw new Error(error.message);
-    return { ok: true };
+    if (result?.error) throw new Error(String(result.error));
+    return result;
   });
