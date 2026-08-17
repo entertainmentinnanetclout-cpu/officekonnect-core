@@ -4,7 +4,9 @@ Last audited: 2026-08-17
 
 ## Current phase
 
-Phase 1 — Development Identity and Application Shell.
+Phase 1 — Development Identity and Application Shell: **source implementation and CI validation complete**.
+
+Next implementation phase: Phase 2 — Documents, native editor and PDF engine.
 
 ## Upgrade branch policy
 
@@ -21,6 +23,7 @@ The live Supabase project was treated as the authoritative description of alread
 - Public application tables: 43; RLS enabled on all 43 at Phase 0 audit time.
 - Private storage buckets include documents, document-versions, exports, letterheads, signatures and voice-notes.
 - Existing backend foundations: native documents, structured versions, spreadsheets, workflows/review/approval, secure e-signing, notifications, activity logs and workspace membership.
+- Canonical package manager for the upgrade branch: Bun 1.3.14 with committed `bun.lock` and frozen `bun ci` validation.
 
 ## Phase 0 reconciliation result
 
@@ -31,33 +34,39 @@ The live Supabase project was treated as the authoritative description of alread
 5. The frontend signing helper predated the hardened signing state machine. **Resolved: draft creation plus controlled lifecycle actions.**
 6. Signing certificate source contained stale CCSF branding. **Checked-in finalizer source now uses OfficeKonnect-only branding; production deployment remains deferred.**
 7. `.env` was tracked. **Resolved: removed from version control, `.env.example` added.**
-8. Repository parity/validation gates were absent. **Resolved structurally with Phase 0 parity and CI workflows.**
-9. A deterministic npm lockfile has now been generated on the upgrade branch. **Validation still needs a fully green deterministic run.**
+8. Repository parity/validation gates were absent. **Resolved with repository parity and the canonical Upgrade Validation workflow.**
+9. The invalid secondary npm lock path was removed. **Resolved: Bun 1.3.14 + `bun.lock` are canonical and `bun ci` is green.**
 10. Supabase advisor findings were documented without weakening intentional signing-token isolation.
 
-## Phase 1 implementation
+## Phase 1 result
 
 - Added server-only development identity bootstrap using a real Supabase sign-in.
 - Development bootstrap cannot run on Vercel production deployments.
 - Browser code never receives development email/password credentials.
 - Existing Supabase JWT identity, `auth.uid()`, workspace membership and RLS remain authoritative.
 - Replaced the V1 dashboard chrome with the canonical OfficeKonnect shell.
+- Reframed existing auth routes in the canonical OfficeKonnect visual/identity system without changing auth semantics.
 - Added authenticated workspace discovery and workspace switching through `profiles.default_workspace_id`.
 - Added grouped canonical navigation for Workspace, Operations, Communication and Administration.
 - Existing routes remain live: Home, Documents, Mail Center, Contacts, Voice Notes and Settings.
 - Later-phase modules are visible but disabled until implemented, preventing broken/dead routes.
 - Added responsive mobile drawer and bottom navigation.
 - Added a production-safe unauthenticated workspace state and secure sign-in path.
-- Added `docs/PHASE1.md` with the security invariants and Phase 1 validation checklist.
+- Repaired historical ESLint blockers discovered by the stricter whole-repository validation gate without weakening lint rules.
+- Added `docs/PHASE1.md` with security invariants and the validation record.
 
-## Current validation status
+## Latest validated checkpoint
 
-- Repository parity: implemented and previously green.
-- Deterministic npm install: requires revalidation on the current Phase 1 head.
-- ESLint: requires revalidation on the current Phase 1 head.
-- TypeScript: requires revalidation on the current Phase 1 head.
-- Production build: requires revalidation on the current Phase 1 head.
-- Vercel preview: should be smoke-tested after preview-only development credentials are configured.
+Upgrade Validation run `32046085104` on commit `fd009a804d4a06a7f74ab5d6396847976ff891f6` completed successfully:
+
+- Repository parity: **PASS**.
+- Deterministic dependency install (`bun ci`): **PASS**.
+- ESLint: **PASS**.
+- TypeScript (`tsc --noEmit`): **PASS**.
+- Production build: **PASS**.
+- Vercel deployment status for the same commit: **SUCCESS**.
+
+The remaining optional Phase 1 operational check is a credentialed preview smoke test of the development bootstrap after a dedicated preview-only Supabase user is configured. Production credentials must not be used for this check.
 
 ## Non-negotiable release rule
 
