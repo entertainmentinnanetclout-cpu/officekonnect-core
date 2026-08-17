@@ -15,7 +15,12 @@ function DocumentDetail() {
   const { documentId } = Route.useParams();
   const queryClient = useQueryClient();
 
-  const { data: document, isLoading, error, refetch } = useQuery({
+  const {
+    data: document,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ["document", documentId],
     queryFn: async () => {
       const { data, error: documentError } = await supabase

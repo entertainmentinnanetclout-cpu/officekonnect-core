@@ -109,7 +109,12 @@ function normalizeBlock(raw: unknown): NativeDocumentBlock | null {
   const type = block.type;
 
   if (type === "paragraph") {
-    return { id, type, html: stringOr(block.html, stringOr(block.text)), align: normalizeAlign(block.align) };
+    return {
+      id,
+      type,
+      html: stringOr(block.html, stringOr(block.text)),
+      align: normalizeAlign(block.align),
+    };
   }
 
   if (type === "heading") {
@@ -124,7 +129,12 @@ function normalizeBlock(raw: unknown): NativeDocumentBlock | null {
   }
 
   if (type === "quote") {
-    return { id, type, html: stringOr(block.html, stringOr(block.text)), align: normalizeAlign(block.align) };
+    return {
+      id,
+      type,
+      html: stringOr(block.html, stringOr(block.text)),
+      align: normalizeAlign(block.align),
+    };
   }
 
   if (type === "bulletList" || type === "orderedList") {
@@ -136,9 +146,7 @@ function normalizeBlock(raw: unknown): NativeDocumentBlock | null {
 
   if (type === "table") {
     const rows = Array.isArray(block.rows)
-      ? block.rows.map((row) =>
-          Array.isArray(row) ? row.map((cell) => stringOr(cell)) : [],
-        )
+      ? block.rows.map((row) => (Array.isArray(row) ? row.map((cell) => stringOr(cell)) : []))
       : [];
     return { id, type, rows: rows.filter((row) => row.length > 0) };
   }
@@ -157,9 +165,10 @@ export function normalizeNativeDocumentContent(value: Json | unknown): NativeDoc
   }
 
   const raw = value as Record<string, unknown>;
-  const rawPage = raw.page && typeof raw.page === "object" && !Array.isArray(raw.page)
-    ? (raw.page as Record<string, unknown>)
-    : {};
+  const rawPage =
+    raw.page && typeof raw.page === "object" && !Array.isArray(raw.page)
+      ? (raw.page as Record<string, unknown>)
+      : {};
   const rawMargins =
     rawPage.margins && typeof rawPage.margins === "object" && !Array.isArray(rawPage.margins)
       ? (rawPage.margins as Record<string, unknown>)

@@ -157,8 +157,10 @@ export const duplicateNativeDocument = createServerFn({ method: "POST" })
       .eq("id", data.documentId)
       .single();
     if (sourceError) throw new Error(sourceError.message);
-    if (source.workspace_id !== workspaceId) throw new Error("Document is outside the active workspace");
-    if (source.document_kind !== "native") throw new Error("Only native documents can be duplicated in Phase 2");
+    if (source.workspace_id !== workspaceId)
+      throw new Error("Document is outside the active workspace");
+    if (source.document_kind !== "native")
+      throw new Error("Only native documents can be duplicated in Phase 2");
 
     const { data: copy, error } = await supabase
       .from("documents")
@@ -209,8 +211,10 @@ export const exportNativeDocumentPdf = createServerFn({ method: "POST" })
       .eq("id", data.documentId)
       .single();
     if (documentError) throw new Error(documentError.message);
-    if (document.workspace_id !== workspaceId) throw new Error("Document is outside the active workspace");
-    if (document.document_kind !== "native") throw new Error("Only native documents use the Phase 2 PDF renderer");
+    if (document.workspace_id !== workspaceId)
+      throw new Error("Document is outside the active workspace");
+    if (document.document_kind !== "native")
+      throw new Error("Only native documents use the Phase 2 PDF renderer");
 
     let letterhead: {
       name: string;
@@ -258,11 +262,9 @@ export const exportNativeDocumentPdf = createServerFn({ method: "POST" })
     });
 
     const storagePath = `${workspaceId}/${userId}/documents/${document.id}/export-${Date.now()}.pdf`;
-    const { error: uploadError } = await supabase.storage.from("exports").upload(
-      storagePath,
-      rendered.bytes,
-      { contentType: "application/pdf", upsert: false },
-    );
+    const { error: uploadError } = await supabase.storage
+      .from("exports")
+      .upload(storagePath, rendered.bytes, { contentType: "application/pdf", upsert: false });
     if (uploadError) throw new Error(uploadError.message);
 
     const { error: updateError } = await supabase

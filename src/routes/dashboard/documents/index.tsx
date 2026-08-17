@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Archive,
-  ArrowDownAZ,
   Copy,
   Download,
   File,
@@ -92,7 +91,9 @@ function documentMeta(document: DocumentRow) {
   if (document.document_kind === "spreadsheet") {
     return `${document.sheet_count.toLocaleString()} sheet${document.sheet_count === 1 ? "" : "s"}`;
   }
-  return document.file_size ? `${(document.file_size / 1024 / 1024).toFixed(2)} MB` : "Uploaded file";
+  return document.file_size
+    ? `${(document.file_size / 1024 / 1024).toFixed(2)} MB`
+    : "Uploaded file";
 }
 
 function statusLabel(status: string) {
@@ -171,7 +172,10 @@ function DocumentsIndex() {
     onSuccess: async (document) => {
       await refreshLibrary();
       toast.success("Document created");
-      await navigate({ to: "/dashboard/documents/$documentId", params: { documentId: document.id } });
+      await navigate({
+        to: "/dashboard/documents/$documentId",
+        params: { documentId: document.id },
+      });
     },
     onError: (error) => toastError(error, "Could not create document"),
   });
@@ -240,8 +244,13 @@ function DocumentsIndex() {
   });
 
   const statusMutation = useMutation({
-    mutationFn: ({ documentId, status }: { documentId: string; status: "draft" | "archived" | "deleted" }) =>
-      statusFn({ data: { documentId, status } }),
+    mutationFn: ({
+      documentId,
+      status,
+    }: {
+      documentId: string;
+      status: "draft" | "archived" | "deleted";
+    }) => statusFn({ data: { documentId, status } }),
     onSuccess: async (_, variables) => {
       await refreshLibrary();
       toast.success(
@@ -298,7 +307,12 @@ function DocumentsIndex() {
   const renderActions = (document: DocumentRow) => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Actions for ${document.title}`}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          aria-label={`Actions for ${document.title}`}
+        >
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
@@ -326,20 +340,30 @@ function DocumentsIndex() {
         <DropdownMenuSeparator />
         {scope === "active" ? (
           <>
-            <DropdownMenuItem onClick={() => statusMutation.mutate({ documentId: document.id, status: "archived" })}>
+            <DropdownMenuItem
+              onClick={() => statusMutation.mutate({ documentId: document.id, status: "archived" })}
+            >
               <Archive className="mr-2 h-4 w-4" /> Archive
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={() => statusMutation.mutate({ documentId: document.id, status: "deleted" })}>
+            <DropdownMenuItem
+              className="text-red-600 focus:text-red-600"
+              onClick={() => statusMutation.mutate({ documentId: document.id, status: "deleted" })}
+            >
               <Trash2 className="mr-2 h-4 w-4" /> Move to Trash
             </DropdownMenuItem>
           </>
         ) : (
-          <DropdownMenuItem onClick={() => statusMutation.mutate({ documentId: document.id, status: "draft" })}>
+          <DropdownMenuItem
+            onClick={() => statusMutation.mutate({ documentId: document.id, status: "draft" })}
+          >
             <RotateCcw className="mr-2 h-4 w-4" /> Restore to Documents
           </DropdownMenuItem>
         )}
         {scope === "archived" && (
-          <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={() => statusMutation.mutate({ documentId: document.id, status: "deleted" })}>
+          <DropdownMenuItem
+            className="text-red-600 focus:text-red-600"
+            onClick={() => statusMutation.mutate({ documentId: document.id, status: "deleted" })}
+          >
             <Trash2 className="mr-2 h-4 w-4" /> Move to Trash
           </DropdownMenuItem>
         )}
@@ -363,7 +387,11 @@ function DocumentsIndex() {
             <Upload className="mr-2 h-4 w-4" /> Upload file
           </Button>
           <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
-            {createMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FilePlus2 className="mr-2 h-4 w-4" />}
+            {createMutation.isPending ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <FilePlus2 className="mr-2 h-4 w-4" />
+            )}
             New document
           </Button>
         </div>
@@ -373,30 +401,65 @@ function DocumentsIndex() {
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
           <div className="relative min-w-0 flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Search document titles…" className="pl-9" />
+            <Input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search document titles…"
+              className="pl-9"
+            />
           </div>
           <div className="flex flex-wrap gap-2">
             <div className="flex rounded-lg bg-muted p-1">
               {(["active", "archived", "trash"] as const).map((value) => (
-                <Button key={value} variant={scope === value ? "secondary" : "ghost"} size="sm" className="h-8 capitalize" onClick={() => setScope(value)}>
+                <Button
+                  key={value}
+                  variant={scope === value ? "secondary" : "ghost"}
+                  size="sm"
+                  className="h-8 capitalize"
+                  onClick={() => setScope(value)}
+                >
                   {value}
                 </Button>
               ))}
             </div>
-            <select value={kind} onChange={(event) => setKind(event.target.value as KindFilter)} className="h-9 rounded-md border bg-background px-3 text-sm">
+            <select
+              value={kind}
+              onChange={(event) => setKind(event.target.value as KindFilter)}
+              className="h-9 rounded-md border bg-background px-3 text-sm"
+            >
               <option value="all">All types</option>
               <option value="native">Documents</option>
               <option value="file">Uploaded files</option>
               <option value="spreadsheet">Sheets</option>
             </select>
-            <select value={sort} onChange={(event) => setSort(event.target.value as SortMode)} className="h-9 rounded-md border bg-background px-3 text-sm">
+            <select
+              value={sort}
+              onChange={(event) => setSort(event.target.value as SortMode)}
+              className="h-9 rounded-md border bg-background px-3 text-sm"
+            >
               <option value="updated">Recently updated</option>
               <option value="created">Recently created</option>
               <option value="title">Title A–Z</option>
             </select>
             <div className="flex rounded-lg border bg-background p-1">
-              <Button variant={view === "table" ? "secondary" : "ghost"} size="icon" className="h-7 w-7" onClick={() => setView("table")} aria-label="Table view"><List className="h-4 w-4" /></Button>
-              <Button variant={view === "grid" ? "secondary" : "ghost"} size="icon" className="h-7 w-7" onClick={() => setView("grid")} aria-label="Grid view"><Grid3X3 className="h-4 w-4" /></Button>
+              <Button
+                variant={view === "table" ? "secondary" : "ghost"}
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setView("table")}
+                aria-label="Table view"
+              >
+                <List className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={view === "grid" ? "secondary" : "ghost"}
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setView("grid")}
+                aria-label="Grid view"
+              >
+                <Grid3X3 className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>
@@ -404,35 +467,88 @@ function DocumentsIndex() {
 
       {documentsError ? (
         <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
-          {documentsError instanceof Error ? documentsError.message : "Documents could not be loaded."}
+          {documentsError instanceof Error
+            ? documentsError.message
+            : "Documents could not be loaded."}
         </div>
       ) : loading ? (
         <div className="grid gap-3 md:grid-cols-3">
-          {[1, 2, 3].map((item) => <div key={item} className="h-40 animate-pulse rounded-xl bg-muted" />)}
+          {[1, 2, 3].map((item) => (
+            <div key={item} className="h-40 animate-pulse rounded-xl bg-muted" />
+          ))}
         </div>
       ) : (documents ?? []).length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed bg-background py-20 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted"><FileText className="h-7 w-7 text-muted-foreground" /></div>
-          <h2 className="mt-4 font-semibold">{scope === "active" ? "No documents here yet" : scope === "archived" ? "Archive is empty" : "Trash is empty"}</h2>
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
+            <FileText className="h-7 w-7 text-muted-foreground" />
+          </div>
+          <h2 className="mt-4 font-semibold">
+            {scope === "active"
+              ? "No documents here yet"
+              : scope === "archived"
+                ? "Archive is empty"
+                : "Trash is empty"}
+          </h2>
           <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-            {scope === "active" ? "Create an OfficeKonnect document or upload a file. Real data will appear here—no sample documents are generated." : "Items moved here remain recoverable until a future retention policy is intentionally implemented."}
+            {scope === "active"
+              ? "Create an OfficeKonnect document or upload a file. Real data will appear here—no sample documents are generated."
+              : "Items moved here remain recoverable until a future retention policy is intentionally implemented."}
           </p>
-          {scope === "active" && <div className="mt-5 flex gap-2"><Button variant="outline" onClick={() => setUploadOpen(true)}><Upload className="mr-2 h-4 w-4" /> Upload</Button><Button onClick={() => createMutation.mutate()}><Plus className="mr-2 h-4 w-4" /> New document</Button></div>}
+          {scope === "active" && (
+            <div className="mt-5 flex gap-2">
+              <Button variant="outline" onClick={() => setUploadOpen(true)}>
+                <Upload className="mr-2 h-4 w-4" /> Upload
+              </Button>
+              <Button onClick={() => createMutation.mutate()}>
+                <Plus className="mr-2 h-4 w-4" /> New document
+              </Button>
+            </div>
+          )}
         </div>
       ) : view === "table" ? (
         <div className="overflow-hidden rounded-xl border bg-background shadow-sm">
           <Table>
-            <TableHeader><TableRow><TableHead>Document</TableHead><TableHead>Type</TableHead><TableHead>Status</TableHead><TableHead>Updated</TableHead><TableHead>Details</TableHead><TableHead className="w-12" /></TableRow></TableHeader>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Document</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Updated</TableHead>
+                <TableHead>Details</TableHead>
+                <TableHead className="w-12" />
+              </TableRow>
+            </TableHeader>
             <TableBody>
               {(documents ?? []).map((document) => {
                 const Icon = documentIcon(document);
                 return (
                   <TableRow key={document.id}>
-                    <TableCell><Link to="/dashboard/documents/$documentId" params={{ documentId: document.id }} className="flex min-w-0 items-center gap-3 font-medium hover:underline"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300"><Icon className="h-4 w-4" /></span><span className="truncate">{document.title}</span></Link></TableCell>
-                    <TableCell className="capitalize text-muted-foreground">{document.document_kind === "native" ? "Document" : document.document_kind}</TableCell>
-                    <TableCell><span className="rounded-full bg-muted px-2 py-1 text-xs font-medium">{statusLabel(document.document_status)}</span></TableCell>
-                    <TableCell className="text-muted-foreground">{format(new Date(document.updated_at), "MMM d, yyyy")}</TableCell>
-                    <TableCell className="text-muted-foreground">{documentMeta(document)}</TableCell>
+                    <TableCell>
+                      <Link
+                        to="/dashboard/documents/$documentId"
+                        params={{ documentId: document.id }}
+                        className="flex min-w-0 items-center gap-3 font-medium hover:underline"
+                      >
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300">
+                          <Icon className="h-4 w-4" />
+                        </span>
+                        <span className="truncate">{document.title}</span>
+                      </Link>
+                    </TableCell>
+                    <TableCell className="capitalize text-muted-foreground">
+                      {document.document_kind === "native" ? "Document" : document.document_kind}
+                    </TableCell>
+                    <TableCell>
+                      <span className="rounded-full bg-muted px-2 py-1 text-xs font-medium">
+                        {statusLabel(document.document_status)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {format(new Date(document.updated_at), "MMM d, yyyy")}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {documentMeta(document)}
+                    </TableCell>
                     <TableCell>{renderActions(document)}</TableCell>
                   </TableRow>
                 );
@@ -445,12 +561,31 @@ function DocumentsIndex() {
           {(documents ?? []).map((document) => {
             const Icon = documentIcon(document);
             return (
-              <Card key={document.id} className="group overflow-hidden transition-shadow hover:shadow-md">
+              <Card
+                key={document.id}
+                className="group overflow-hidden transition-shadow hover:shadow-md"
+              >
                 <CardContent className="p-0">
-                  <Link to="/dashboard/documents/$documentId" params={{ documentId: document.id }} className="flex h-32 items-center justify-center bg-muted/50"><Icon className="h-12 w-12 text-muted-foreground/50 transition-transform group-hover:scale-105" /></Link>
+                  <Link
+                    to="/dashboard/documents/$documentId"
+                    params={{ documentId: document.id }}
+                    className="flex h-32 items-center justify-center bg-muted/50"
+                  >
+                    <Icon className="h-12 w-12 text-muted-foreground/50 transition-transform group-hover:scale-105" />
+                  </Link>
                   <div className="p-4">
                     <div className="flex items-start gap-2">
-                      <Link to="/dashboard/documents/$documentId" params={{ documentId: document.id }} className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{document.title}</p><p className="mt-1 text-xs text-muted-foreground">{documentMeta(document)} • {format(new Date(document.updated_at), "MMM d")}</p></Link>
+                      <Link
+                        to="/dashboard/documents/$documentId"
+                        params={{ documentId: document.id }}
+                        className="min-w-0 flex-1"
+                      >
+                        <p className="truncate text-sm font-medium">{document.title}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {documentMeta(document)} •{" "}
+                          {format(new Date(document.updated_at), "MMM d")}
+                        </p>
+                      </Link>
                       {renderActions(document)}
                     </div>
                   </div>
@@ -463,28 +598,79 @@ function DocumentsIndex() {
 
       <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Upload a file</DialogTitle><DialogDescription>The original binary is stored privately under the active workspace. Maximum size: 10 MB.</DialogDescription></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Upload a file</DialogTitle>
+            <DialogDescription>
+              The original binary is stored privately under the active workspace. Maximum size: 10
+              MB.
+            </DialogDescription>
+          </DialogHeader>
           <div
             onDragOver={(event) => event.preventDefault()}
             onDrop={handleDrop}
             onClick={() => !uploadMutation.isPending && fileInputRef.current?.click()}
             className="relative flex min-h-52 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 text-center hover:bg-muted/30"
           >
-            {uploadMutation.isPending ? <><Loader2 className="h-8 w-8 animate-spin text-primary" /><p className="mt-3 text-sm font-medium">Uploading securely…</p></> : <><Upload className="h-9 w-9 text-muted-foreground" /><p className="mt-3 text-sm font-medium">Drop a file here or click to browse</p><p className="mt-1 text-xs text-muted-foreground">PDF, DOC/DOCX, XLS/XLSX, PNG, JPG</p></>}
-            <input ref={fileInputRef} type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onChange={handleFileInput} disabled={uploadMutation.isPending} />
+            {uploadMutation.isPending ? (
+              <>
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="mt-3 text-sm font-medium">Uploading securely…</p>
+              </>
+            ) : (
+              <>
+                <Upload className="h-9 w-9 text-muted-foreground" />
+                <p className="mt-3 text-sm font-medium">Drop a file here or click to browse</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  PDF, DOC/DOCX, XLS/XLSX, PNG, JPG
+                </p>
+              </>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+              onChange={handleFileInput}
+              disabled={uploadMutation.isPending}
+            />
           </div>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={Boolean(renameTarget)} onOpenChange={(open) => { if (!open) setRenameTarget(null); }}>
+      <Dialog
+        open={Boolean(renameTarget)}
+        onOpenChange={(open) => {
+          if (!open) setRenameTarget(null);
+        }}
+      >
         <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>Rename document</DialogTitle><DialogDescription>Change the display title without altering the underlying file or version history.</DialogDescription></DialogHeader>
-          <Input value={renameValue} onChange={(event) => setRenameValue(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && renameValue.trim()) renameMutation.mutate(); }} autoFocus />
-          <DialogFooter><Button variant="outline" onClick={() => setRenameTarget(null)}>Cancel</Button><Button onClick={() => renameMutation.mutate()} disabled={!renameValue.trim() || renameMutation.isPending}>{renameMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Rename</Button></DialogFooter>
+          <DialogHeader>
+            <DialogTitle>Rename document</DialogTitle>
+            <DialogDescription>
+              Change the display title without altering the underlying file or version history.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            value={renameValue}
+            onChange={(event) => setRenameValue(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && renameValue.trim()) renameMutation.mutate();
+            }}
+            autoFocus
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => renameMutation.mutate()}
+              disabled={!renameValue.trim() || renameMutation.isPending}
+            >
+              {renameMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Rename
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <span className="sr-only"><ArrowDownAZ /> Documents are sorted using the selected sort control.</span>
     </div>
   );
 }

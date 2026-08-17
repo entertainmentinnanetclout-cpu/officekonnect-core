@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Download, Loader2, PenTool, Save, Check, X } from "lucide-react";
@@ -28,7 +28,10 @@ type Placement = {
   height: number;
 };
 
-export function UploadedDocumentWorkspace({ document, onDocumentUpdated }: UploadedDocumentWorkspaceProps) {
+export function UploadedDocumentWorkspace({
+  document,
+  onDocumentUpdated,
+}: UploadedDocumentWorkspaceProps) {
   const queryClient = useQueryClient();
   const [toolboxOpen, setToolboxOpen] = useState(false);
   const [activeSig, setActiveSig] = useState<ToolboxSignature | null>(null);
@@ -116,7 +119,11 @@ export function UploadedDocumentWorkspace({ document, onDocumentUpdated }: Uploa
         <div className="min-w-0">
           <h1 className="truncate text-base font-semibold">{document.title}</h1>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {(document.file_type ?? "File").toUpperCase()} • {document.file_size ? `${(document.file_size / 1024 / 1024).toFixed(2)} MB` : "Size unavailable"} • {document.document_status}
+            {(document.file_type ?? "File").toUpperCase()} •{" "}
+            {document.file_size
+              ? `${(document.file_size / 1024 / 1024).toFixed(2)} MB`
+              : "Size unavailable"}{" "}
+            • {document.document_status}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -126,17 +133,35 @@ export function UploadedDocumentWorkspace({ document, onDocumentUpdated }: Uploa
             </span>
           )}
           {placements.length > 0 && (
-            <Button size="sm" onClick={() => confirmMutation.mutate()} disabled={confirmMutation.isPending}>
-              {confirmMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+            <Button
+              size="sm"
+              onClick={() => confirmMutation.mutate()}
+              disabled={confirmMutation.isPending}
+            >
+              {confirmMutation.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
               Confirm ({placements.length})
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={() => void handleDownload()} disabled={!document.storage_path}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void handleDownload()}
+            disabled={!document.storage_path}
+          >
             <Download className="mr-2 h-4 w-4" /> Download
           </Button>
           {isPdf && (
-            <Button size="sm" variant={toolboxOpen ? "secondary" : "default"} onClick={() => setToolboxOpen((open) => !open)}>
-              <PenTool className="mr-2 h-4 w-4" /> {toolboxOpen ? "Close toolbox" : "Apply my signature"}
+            <Button
+              size="sm"
+              variant={toolboxOpen ? "secondary" : "default"}
+              onClick={() => setToolboxOpen((open) => !open)}
+            >
+              <PenTool className="mr-2 h-4 w-4" />{" "}
+              {toolboxOpen ? "Close toolbox" : "Apply my signature"}
             </Button>
           )}
         </div>
@@ -145,7 +170,9 @@ export function UploadedDocumentWorkspace({ document, onDocumentUpdated }: Uploa
       <div className="flex min-h-0 flex-1 overflow-hidden bg-slate-100 dark:bg-slate-950">
         <div className="min-h-0 min-w-0 flex-1">
           {resolvingFile ? (
-            <div className="flex h-full items-center justify-center"><Loader2 className="h-7 w-7 animate-spin text-muted-foreground" /></div>
+            <div className="flex h-full items-center justify-center">
+              <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
+            </div>
           ) : resolvedFile?.url && isPdf ? (
             <PdfWorkspace
               url={resolvedFile.url}
@@ -154,38 +181,81 @@ export function UploadedDocumentWorkspace({ document, onDocumentUpdated }: Uploa
               onPageClick={handlePageClick}
               renderPageOverlay={(pageNumber, rect) => (
                 <>
-                  {placements.filter((placement) => placement.page === pageNumber).map((placement) => (
-                    <Rnd
-                      key={placement.id}
-                      bounds="parent"
-                      size={{ width: placement.width * rect.width, height: placement.height * rect.height }}
-                      position={{ x: placement.x * rect.width, y: placement.y * rect.height }}
-                      onDragStop={(_, position) => setPlacements((items) => items.map((item) => item.id === placement.id ? { ...item, x: position.x / rect.width, y: position.y / rect.height } : item))}
-                      onResizeStop={(_, __, ref, ___, position) => setPlacements((items) => items.map((item) => item.id === placement.id ? { ...item, x: position.x / rect.width, y: position.y / rect.height, width: ref.offsetWidth / rect.width, height: ref.offsetHeight / rect.height } : item))}
-                      className="group !border-2 !border-dashed !border-primary bg-primary/5"
-                      onClick={(event: React.MouseEvent) => event.stopPropagation()}
-                    >
-                      <img src={placement.imageUrl} alt="Signature placement" className="pointer-events-none h-full w-full object-contain" draggable={false} />
-                      <button
-                        type="button"
-                        aria-label="Remove signature placement"
-                        className="absolute -right-2 -top-2 rounded-full bg-destructive p-0.5 text-white opacity-0 shadow group-hover:opacity-100"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setPlacements((items) => items.filter((item) => item.id !== placement.id));
+                  {placements
+                    .filter((placement) => placement.page === pageNumber)
+                    .map((placement) => (
+                      <Rnd
+                        key={placement.id}
+                        bounds="parent"
+                        size={{
+                          width: placement.width * rect.width,
+                          height: placement.height * rect.height,
                         }}
+                        position={{ x: placement.x * rect.width, y: placement.y * rect.height }}
+                        onDragStop={(_, position) =>
+                          setPlacements((items) =>
+                            items.map((item) =>
+                              item.id === placement.id
+                                ? {
+                                    ...item,
+                                    x: position.x / rect.width,
+                                    y: position.y / rect.height,
+                                  }
+                                : item,
+                            ),
+                          )
+                        }
+                        onResizeStop={(_, __, ref, ___, position) =>
+                          setPlacements((items) =>
+                            items.map((item) =>
+                              item.id === placement.id
+                                ? {
+                                    ...item,
+                                    x: position.x / rect.width,
+                                    y: position.y / rect.height,
+                                    width: ref.offsetWidth / rect.width,
+                                    height: ref.offsetHeight / rect.height,
+                                  }
+                                : item,
+                            ),
+                          )
+                        }
+                        className="group !border-2 !border-dashed !border-primary bg-primary/5"
+                        onClick={(event: MouseEvent) => event.stopPropagation()}
                       >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Rnd>
-                  ))}
+                        <img
+                          src={placement.imageUrl}
+                          alt="Signature placement"
+                          className="pointer-events-none h-full w-full object-contain"
+                          draggable={false}
+                        />
+                        <button
+                          type="button"
+                          aria-label="Remove signature placement"
+                          className="absolute -right-2 -top-2 rounded-full bg-destructive p-0.5 text-white opacity-0 shadow group-hover:opacity-100"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setPlacements((items) =>
+                              items.filter((item) => item.id !== placement.id),
+                            );
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Rnd>
+                    ))}
                 </>
               )}
             />
           ) : resolvedFile?.url ? (
             <div className="mx-auto mt-12 flex max-w-xl flex-col items-center gap-4 rounded-xl border bg-background p-10 text-center shadow-sm">
-              <p className="text-sm text-muted-foreground">This file type does not have an inline OfficeKonnect preview yet. The original file is preserved and available for download.</p>
-              <Button onClick={() => void handleDownload()}><Download className="mr-2 h-4 w-4" /> Download file</Button>
+              <p className="text-sm text-muted-foreground">
+                This file type does not have an inline OfficeKonnect preview yet. The original file
+                is preserved and available for download.
+              </p>
+              <Button onClick={() => void handleDownload()}>
+                <Download className="mr-2 h-4 w-4" /> Download file
+              </Button>
             </div>
           ) : (
             <div className="mx-auto mt-12 max-w-xl rounded-xl border border-dashed bg-background p-10 text-center text-sm text-muted-foreground">

@@ -173,7 +173,8 @@ function drawTable(state: RendererState, rows: string[][]) {
         columnWidth - padding * 2,
       ),
     );
-    const rowHeight = Math.max(...wrapped.map((cell) => Math.max(cell.length, 1))) * lineHeight + padding * 2;
+    const rowHeight =
+      Math.max(...wrapped.map((cell) => Math.max(cell.length, 1))) * lineHeight + padding * 2;
     next = ensureSpace(next, rowHeight + 5);
 
     for (let columnIndex = 0; columnIndex < maxColumns; columnIndex += 1) {
@@ -280,7 +281,12 @@ function drawBlock(state: RendererState, block: NativeDocumentBlock) {
   });
 }
 
-function drawPageChrome(state: RendererState, page: PDFPage, pageNumber: number, totalPages: number) {
+function drawPageChrome(
+  state: RendererState,
+  page: PDFPage,
+  pageNumber: number,
+  totalPages: number,
+) {
   const letterheadHeader = state.letterhead?.header_content?.trim() ?? "";
   const companyDetails = plainCompanyDetails(state.letterhead?.company_details);
   const header = [letterheadHeader, state.content.page.header.trim()].filter(Boolean).join(" • ");
@@ -354,9 +360,11 @@ export async function buildNativeDocumentPdf(options: NativeDocumentPdfOptions) 
   let logo: PDFImage | null = null;
   if (options.logoBytes && options.logoBytes.byteLength > 0) {
     try {
-      logo = options.logoMimeType?.toLowerCase().includes("jpeg") || options.logoMimeType?.toLowerCase().includes("jpg")
-        ? await pdf.embedJpg(options.logoBytes)
-        : await pdf.embedPng(options.logoBytes);
+      logo =
+        options.logoMimeType?.toLowerCase().includes("jpeg") ||
+        options.logoMimeType?.toLowerCase().includes("jpg")
+          ? await pdf.embedJpg(options.logoBytes)
+          : await pdf.embedPng(options.logoBytes);
     } catch {
       logo = null;
     }
