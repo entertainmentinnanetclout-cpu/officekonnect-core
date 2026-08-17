@@ -1,0 +1,51 @@
+name: Phase 0 Normalize Repository
+
+on:
+  push:
+    branches: [phase-0-canonical-reconciliation]
+    paths:
+      - .github/workflows/phase0-normalize.yml
+
+permissions:
+  contents: write
+
+jobs:
+  normalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: phase-0-canonical-reconciliation
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Install dependencies and create lockfile
+        run: npm install --no-audit --no-fund
+
+      - name: Format Phase 0 lint blockers
+        run: >-
+          npx prettier --write
+          scripts/check-phase0-parity.mjs
+          src/components/brevo-onboarding.tsx
+          src/components/document/send-document-dialog.tsx
+          src/components/document/pdf-workspace.tsx
+          src/lib/documents.functions.ts
+          src/lib/signing.functions.ts
+
+      - name: Commit deterministic outputs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json scripts/check-phase0-parity.mjs src/components/brevo-onboarding.tsx src/components/document/send-document-dialog.tsx src/components/document/pdf-workspace.tsx src/lib/documents.functions.ts src/lib/signing.functions.ts
+          if git diff --cached --quiet; then
+            echo "No normalization changes required."
+          else
+            git commit -m "chore: normalize Phase 0 sources and lock dependencies"
+            git push origin HEAD:phase-0-canonical-reconciliation
+          fi
