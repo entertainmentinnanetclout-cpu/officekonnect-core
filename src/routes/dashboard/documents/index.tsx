@@ -1,31 +1,39 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import {
-  FileText,
-  Grid,
-  List as ListIcon,
-  Search,
-  Filter,
-  MoreVertical,
-  Plus,
-  Download,
-  Trash2,
   Archive,
-  ExternalLink,
+  ArrowDownAZ,
+  Copy,
+  Download,
+  File,
+  FilePlus2,
+  FileSpreadsheet,
+  FileText,
+  Grid3X3,
+  List,
   Loader2,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  RotateCcw,
+  Search,
+  Trash2,
+  Upload,
 } from "lucide-react";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,37 +43,120 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { format } from "date-fns";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
+import {
+  createDocumentRecord,
+  createNativeDocument,
+  createSignedUploadUrl,
+  duplicateNativeDocument,
+  exportNativeDocumentPdf,
+  renameDocument,
+  updateDocumentStatus,
+} from "@/lib/documents.functions";
+import { downloadDocumentFromStorage } from "@/lib/download";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { toastError } from "@/lib/errors";
 
 export const Route = createFileRoute("/dashboard/documents/")({
   component: DocumentsIndex,
 });
 
+type LibraryView = "table" | "grid";
+type LibraryScope = "active" | "archived" | "trash";
+type KindFilter = "all" | "native" | "file" | "spreadsheet";
+type SortMode = "updated" | "created" | "title";
+
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+const ALLOWED_EXTENSIONS = new Set(["pdf", "doc", "docx", "xls", "xlsx", "png", "jpg", "jpeg"]);
+
+type DocumentRow = Tables<"documents">;
+
+function documentIcon(document: DocumentRow) {
+  if (document.document_kind === "native") return FileText;
+  if (document.document_kind === "spreadsheet") return FileSpreadsheet;
+  return File;
+}
+
+function documentMeta(document: DocumentRow) {
+  if (document.document_kind === "native") {
+    return `${document.word_count.toLocaleString()} words`;
+  }
+  if (document.document_kind === "spreadsheet") {
+    return `${document.sheet_count.toLocaleString()} sheet${document.sheet_count === 1 ? "" : "s"}`;
+  }
+  return document.file_size ? `${(document.file_size / 1024 / 1024).toFixed(2)} MB` : "Uploaded file";
+}
+
+function statusLabel(status: string) {
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
 function DocumentsIndex() {
-  const [view, setView] = useState<"grid" | "table">("table");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [view, setView] = useState<LibraryView>("table");
+  const [scope, setScope] = useState<LibraryScope>("active");
+  const [kind, setKind] = useState<KindFilter>("all");
+  const [sort, setSort] = useState<SortMode>("updated");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [renameTarget, setRenameTarget] = useState<DocumentRow | null>(null);
+  const [renameValue, setRenameValue] = useState("");
 
-  // Fetch documents
-  const { data: documents, isLoading } = useQuery({
-    queryKey: ["documents", searchQuery],
+  const createNativeFn = useServerFn(createNativeDocument);
+  const createUploadUrlFn = useServerFn(createSignedUploadUrl);
+  const createRecordFn = useServerFn(createDocumentRecord);
+  const renameFn = useServerFn(renameDocument);
+  const duplicateFn = useServerFn(duplicateNativeDocument);
+  const statusFn = useServerFn(updateDocumentStatus);
+  const exportFn = useServerFn(exportNativeDocumentPdf);
+
+  const { data: workspaceId, isLoading: workspaceLoading } = useQuery({
+    queryKey: ["active-workspace-id"],
     queryFn: async () => {
-      let query = supabase.from("documents").select("*").order("updated_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("default_workspace_id")
+        .maybeSingle();
+      if (error) throw error;
+      if (!data?.default_workspace_id) throw new Error("No active workspace is selected");
+      return data.default_workspace_id;
+    },
+  });
 
-      if (searchQuery) {
-        query = query.ilike("title", `%${searchQuery}%`);
+  const {
+    data: documents,
+    isLoading,
+    error: documentsError,
+  } = useQuery({
+    queryKey: ["documents", workspaceId, scope, kind, sort, searchQuery],
+    enabled: Boolean(workspaceId),
+    queryFn: async () => {
+      let query = supabase.from("documents").select("*").eq("workspace_id", workspaceId!);
+
+      if (scope === "active") {
+        query = query.neq("document_status", "archived").neq("document_status", "deleted");
+      } else if (scope === "archived") {
+        query = query.eq("document_status", "archived");
+      } else {
+        query = query.eq("document_status", "deleted");
       }
+
+      if (kind !== "all") query = query.eq("document_kind", kind);
+      if (searchQuery.trim()) query = query.ilike("title", `%${searchQuery.trim()}%`);
+
+      if (sort === "title") query = query.order("title", { ascending: true });
+      else if (sort === "created") query = query.order("created_at", { ascending: false });
+      else query = query.order("updated_at", { ascending: false });
 
       const { data, error } = await query;
       if (error) throw error;
@@ -73,299 +164,327 @@ function DocumentsIndex() {
     },
   });
 
-  // Upload mutation
-  const uploadMutation = useMutation({
-    mutationFn: async (file: File) => {
-      setIsUploading(true);
-      const user = (await supabase.auth.getUser()).data.user;
-      if (!user) throw new Error("Not authenticated");
+  const refreshLibrary = () => queryClient.invalidateQueries({ queryKey: ["documents"] });
 
-      // Resolve workspace first — storage RLS expects workspace_id as the first folder.
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("default_workspace_id")
-        .single();
-      const workspaceId = profile?.default_workspace_id;
-      if (!workspaceId) throw new Error("No workspace found");
-
-      // 1. Upload to storage at <workspace>/<user>/<rand>.<ext>
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `${workspaceId}/${user.id}/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("documents")
-        .upload(filePath, file, { contentType: file.type, upsert: false });
-
-      if (uploadError) throw uploadError;
-
-      // 2. Create database record
-      const { error: dbError } = await supabase.from("documents").insert({
-        title: file.name,
-        file_type: file.type,
-        file_size: file.size,
-        storage_path: filePath,
-        workspace_id: workspaceId,
-        created_by: user.id,
-        document_status: "draft",
-      });
-
-      if (dbError) throw dbError;
+  const createMutation = useMutation({
+    mutationFn: () => createNativeFn({ data: { title: "Untitled document" } }),
+    onSuccess: async (document) => {
+      await refreshLibrary();
+      toast.success("Document created");
+      await navigate({ to: "/dashboard/documents/$documentId", params: { documentId: document.id } });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
-      toast.success("Document uploaded successfully");
-      setIsUploading(false);
-    },
-    onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : "Unknown upload error";
-      toast.error(`Upload failed: ${message}`);
-      setIsUploading(false);
-    },
+    onError: (error) => toastError(error, "Could not create document"),
   });
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      uploadMutation.mutate(file);
+  const uploadMutation = useMutation({
+    mutationFn: async (file: globalThis.File) => {
+      if (file.size > MAX_UPLOAD_BYTES) throw new Error("Files must be 10 MB or smaller");
+      const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+      if (!ALLOWED_EXTENSIONS.has(extension)) {
+        throw new Error("Supported uploads: PDF, DOC/DOCX, XLS/XLSX, PNG and JPG");
+      }
+
+      const objectName = `${crypto.randomUUID()}.${extension || "bin"}`;
+      const signed = await createUploadUrlFn({ data: { bucket: "documents", path: objectName } });
+      const { error: uploadError } = await supabase.storage
+        .from("documents")
+        .uploadToSignedUrl(signed.path, signed.token, file, {
+          contentType: file.type || "application/octet-stream",
+        });
+      if (uploadError) throw uploadError;
+
+      try {
+        return await createRecordFn({
+          data: {
+            title: file.name,
+            storagePath: signed.path,
+            fileType: file.type || "application/octet-stream",
+            fileSize: file.size,
+          },
+        });
+      } catch (error) {
+        await supabase.storage.from("documents").remove([signed.path]);
+        throw error;
+      }
+    },
+    onSuccess: async () => {
+      setUploadOpen(false);
+      await refreshLibrary();
+      toast.success("File uploaded");
+    },
+    onError: (error) => toastError(error, "Upload failed"),
+  });
+
+  const renameMutation = useMutation({
+    mutationFn: () => {
+      if (!renameTarget) throw new Error("No document selected");
+      return renameFn({ data: { documentId: renameTarget.id, title: renameValue } });
+    },
+    onSuccess: async () => {
+      setRenameTarget(null);
+      setRenameValue("");
+      await refreshLibrary();
+      toast.success("Document renamed");
+    },
+    onError: (error) => toastError(error, "Rename failed"),
+  });
+
+  const duplicateMutation = useMutation({
+    mutationFn: (documentId: string) => duplicateFn({ data: { documentId } }),
+    onSuccess: async (copy) => {
+      await refreshLibrary();
+      toast.success("Document duplicated");
+      await navigate({ to: "/dashboard/documents/$documentId", params: { documentId: copy.id } });
+    },
+    onError: (error) => toastError(error, "Duplicate failed"),
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: ({ documentId, status }: { documentId: string; status: "draft" | "archived" | "deleted" }) =>
+      statusFn({ data: { documentId, status } }),
+    onSuccess: async (_, variables) => {
+      await refreshLibrary();
+      toast.success(
+        variables.status === "archived"
+          ? "Document archived"
+          : variables.status === "deleted"
+            ? "Document moved to Trash"
+            : "Document restored",
+      );
+    },
+    onError: (error) => toastError(error, "Document update failed"),
+  });
+
+  const handleDownload = async (document: DocumentRow) => {
+    try {
+      if (document.document_kind === "native") {
+        const result = await exportFn({ data: { documentId: document.id } });
+        const anchor = window.document.createElement("a");
+        anchor.href = result.url;
+        anchor.download = result.fileName;
+        anchor.rel = "noopener noreferrer";
+        window.document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        return;
+      }
+      if (document.document_kind === "file" && document.storage_path) {
+        await downloadDocumentFromStorage(document.storage_path, document.title);
+      }
+    } catch (error) {
+      toastError(error, "Download failed");
     }
   };
 
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("documents").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
-      toast.success("Document deleted");
-    },
-  });
+  const submitFile = (file?: globalThis.File | null) => {
+    if (file && !uploadMutation.isPending) uploadMutation.mutate(file);
+  };
+
+  const handleFileInput = (event: ChangeEvent<HTMLInputElement>) => {
+    submitFile(event.target.files?.[0]);
+    event.target.value = "";
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    submitFile(event.dataTransfer.files?.[0]);
+  };
+
+  const beginRename = (document: DocumentRow) => {
+    setRenameTarget(document);
+    setRenameValue(document.title);
+  };
+
+  const renderActions = (document: DocumentRow) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Actions for ${document.title}`}>
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuLabel>Document actions</DropdownMenuLabel>
+        <DropdownMenuItem asChild>
+          <Link to="/dashboard/documents/$documentId" params={{ documentId: document.id }}>
+            <FileText className="mr-2 h-4 w-4" /> Open
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => beginRename(document)}>
+          <Pencil className="mr-2 h-4 w-4" /> Rename
+        </DropdownMenuItem>
+        {document.document_kind === "native" && scope === "active" && (
+          <DropdownMenuItem onClick={() => duplicateMutation.mutate(document.id)}>
+            <Copy className="mr-2 h-4 w-4" /> Duplicate
+          </DropdownMenuItem>
+        )}
+        {document.document_kind !== "spreadsheet" && (
+          <DropdownMenuItem onClick={() => void handleDownload(document)}>
+            <Download className="mr-2 h-4 w-4" />
+            {document.document_kind === "native" ? "Export PDF" : "Download"}
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuSeparator />
+        {scope === "active" ? (
+          <>
+            <DropdownMenuItem onClick={() => statusMutation.mutate({ documentId: document.id, status: "archived" })}>
+              <Archive className="mr-2 h-4 w-4" /> Archive
+            </DropdownMenuItem>
+            <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={() => statusMutation.mutate({ documentId: document.id, status: "deleted" })}>
+              <Trash2 className="mr-2 h-4 w-4" /> Move to Trash
+            </DropdownMenuItem>
+          </>
+        ) : (
+          <DropdownMenuItem onClick={() => statusMutation.mutate({ documentId: document.id, status: "draft" })}>
+            <RotateCcw className="mr-2 h-4 w-4" /> Restore to Documents
+          </DropdownMenuItem>
+        )}
+        {scope === "archived" && (
+          <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={() => statusMutation.mutate({ documentId: document.id, status: "deleted" })}>
+            <Trash2 className="mr-2 h-4 w-4" /> Move to Trash
+          </DropdownMenuItem>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
+  const loading = workspaceLoading || isLoading;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-5">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Documents</h1>
-          <p className="text-slate-500">Manage and organize your business documents.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Documents</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Create native office documents, preserve uploaded files, and manage their lifecycle.
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="hidden items-center rounded-lg border border-slate-200 bg-white p-1 dark:border-slate-800 dark:bg-slate-900 sm:flex">
-            <Button
-              variant={view === "table" ? "secondary" : "ghost"}
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() => setView("table")}
-            >
-              <ListIcon className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={view === "grid" ? "secondary" : "ghost"}
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() => setView("grid")}
-            >
-              <Grid className="h-4 w-4" />
-            </Button>
-          </div>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Upload
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Upload Document</DialogTitle>
-                <DialogDescription>
-                  Select a PDF, DOCX, or spreadsheet to upload to your workspace.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 p-12 dark:border-slate-800">
-                  {isUploading ? (
-                    <div className="flex flex-col items-center gap-2">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                      <p className="text-sm text-slate-500">Uploading...</p>
-                    </div>
-                  ) : (
-                    <>
-                      <FileText className="mb-4 h-12 w-12 text-slate-300" />
-                      <p className="mb-2 text-sm font-medium">Click to upload or drag and drop</p>
-                      <p className="text-xs text-slate-400">PDF, DOCX, XLSX (max. 10MB)</p>
-                      <input
-                        type="file"
-                        className="absolute inset-0 cursor-pointer opacity-0"
-                        onChange={handleFileUpload}
-                        disabled={isUploading}
-                        accept=".pdf,.docx,.xlsx,.xls"
-                      />
-                    </>
-                  )}
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <Input
-            placeholder="Search documents..."
-            className="pl-10"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <Button variant="outline" size="icon">
-          <Filter className="h-4 w-4" />
-        </Button>
-      </div>
-
-      {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-48 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
-          ))}
-        </div>
-      ) : documents?.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white py-24 text-center dark:border-slate-800 dark:bg-slate-900">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 dark:bg-slate-800">
-            <FileText className="h-8 w-8 text-slate-400" />
-          </div>
-          <h3 className="text-lg font-medium">No documents found</h3>
-          <p className="mt-1 text-slate-500">Get started by uploading your first document.</p>
-          <Button
-            variant="outline"
-            className="mt-6"
-            onClick={() =>
-              (document.querySelector('input[type="file"]') as HTMLInputElement)?.click()
-            }
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Upload Now
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setUploadOpen(true)}>
+            <Upload className="mr-2 h-4 w-4" /> Upload file
+          </Button>
+          <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
+            {createMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FilePlus2 className="mr-2 h-4 w-4" />}
+            New document
           </Button>
         </div>
-      ) : view === "table" ? (
-        <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Last Modified</TableHead>
-                <TableHead>Size</TableHead>
-                <TableHead className="w-12"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {documents?.map((doc) => (
-                <TableRow key={doc.id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded bg-blue-50 text-blue-600 dark:bg-blue-900/20">
-                        <FileText className="h-4 w-4" />
-                      </div>
-                      {doc.title}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={cn(
-                        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-                        doc.document_status === "signed"
-                          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
-                          : doc.document_status === "draft"
-                            ? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400"
-                            : "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400",
-                      )}
-                    >
-                      {doc.document_status.charAt(0).toUpperCase() + doc.document_status.slice(1)}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-slate-500">
-                    {format(new Date(doc.updated_at), "MMM d, yyyy")}
-                  </TableCell>
-                  <TableCell className="text-slate-500">
-                    {doc.file_size ? `${(doc.file_size / 1024 / 1024).toFixed(2)} MB` : "-"}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem asChild>
-                          <Link to={`/dashboard/documents/${doc.id}`}>
-                            <ExternalLink className="mr-2 h-4 w-4" />
-                            Open
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Download className="mr-2 h-4 w-4" />
-                          Download
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-red-600 focus:text-red-600"
-                          onClick={() => deleteMutation.mutate(doc.id)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
+      </div>
+
+      <div className="rounded-xl border bg-background p-3 shadow-sm">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+          <div className="relative min-w-0 flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Search document titles…" className="pl-9" />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <div className="flex rounded-lg bg-muted p-1">
+              {(["active", "archived", "trash"] as const).map((value) => (
+                <Button key={value} variant={scope === value ? "secondary" : "ghost"} size="sm" className="h-8 capitalize" onClick={() => setScope(value)}>
+                  {value}
+                </Button>
               ))}
+            </div>
+            <select value={kind} onChange={(event) => setKind(event.target.value as KindFilter)} className="h-9 rounded-md border bg-background px-3 text-sm">
+              <option value="all">All types</option>
+              <option value="native">Documents</option>
+              <option value="file">Uploaded files</option>
+              <option value="spreadsheet">Sheets</option>
+            </select>
+            <select value={sort} onChange={(event) => setSort(event.target.value as SortMode)} className="h-9 rounded-md border bg-background px-3 text-sm">
+              <option value="updated">Recently updated</option>
+              <option value="created">Recently created</option>
+              <option value="title">Title A–Z</option>
+            </select>
+            <div className="flex rounded-lg border bg-background p-1">
+              <Button variant={view === "table" ? "secondary" : "ghost"} size="icon" className="h-7 w-7" onClick={() => setView("table")} aria-label="Table view"><List className="h-4 w-4" /></Button>
+              <Button variant={view === "grid" ? "secondary" : "ghost"} size="icon" className="h-7 w-7" onClick={() => setView("grid")} aria-label="Grid view"><Grid3X3 className="h-4 w-4" /></Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {documentsError ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
+          {documentsError instanceof Error ? documentsError.message : "Documents could not be loaded."}
+        </div>
+      ) : loading ? (
+        <div className="grid gap-3 md:grid-cols-3">
+          {[1, 2, 3].map((item) => <div key={item} className="h-40 animate-pulse rounded-xl bg-muted" />)}
+        </div>
+      ) : (documents ?? []).length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed bg-background py-20 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted"><FileText className="h-7 w-7 text-muted-foreground" /></div>
+          <h2 className="mt-4 font-semibold">{scope === "active" ? "No documents here yet" : scope === "archived" ? "Archive is empty" : "Trash is empty"}</h2>
+          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+            {scope === "active" ? "Create an OfficeKonnect document or upload a file. Real data will appear here—no sample documents are generated." : "Items moved here remain recoverable until a future retention policy is intentionally implemented."}
+          </p>
+          {scope === "active" && <div className="mt-5 flex gap-2"><Button variant="outline" onClick={() => setUploadOpen(true)}><Upload className="mr-2 h-4 w-4" /> Upload</Button><Button onClick={() => createMutation.mutate()}><Plus className="mr-2 h-4 w-4" /> New document</Button></div>}
+        </div>
+      ) : view === "table" ? (
+        <div className="overflow-hidden rounded-xl border bg-background shadow-sm">
+          <Table>
+            <TableHeader><TableRow><TableHead>Document</TableHead><TableHead>Type</TableHead><TableHead>Status</TableHead><TableHead>Updated</TableHead><TableHead>Details</TableHead><TableHead className="w-12" /></TableRow></TableHeader>
+            <TableBody>
+              {(documents ?? []).map((document) => {
+                const Icon = documentIcon(document);
+                return (
+                  <TableRow key={document.id}>
+                    <TableCell><Link to="/dashboard/documents/$documentId" params={{ documentId: document.id }} className="flex min-w-0 items-center gap-3 font-medium hover:underline"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300"><Icon className="h-4 w-4" /></span><span className="truncate">{document.title}</span></Link></TableCell>
+                    <TableCell className="capitalize text-muted-foreground">{document.document_kind === "native" ? "Document" : document.document_kind}</TableCell>
+                    <TableCell><span className="rounded-full bg-muted px-2 py-1 text-xs font-medium">{statusLabel(document.document_status)}</span></TableCell>
+                    <TableCell className="text-muted-foreground">{format(new Date(document.updated_at), "MMM d, yyyy")}</TableCell>
+                    <TableCell className="text-muted-foreground">{documentMeta(document)}</TableCell>
+                    <TableCell>{renderActions(document)}</TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
-          {documents?.map((doc) => (
-            <Card key={doc.id} className="group overflow-hidden">
-              <CardContent className="p-0">
-                <Link to={`/dashboard/documents/${doc.id}`}>
-                  <div className="flex h-32 items-center justify-center bg-slate-50 dark:bg-slate-800/50">
-                    <FileText className="h-12 w-12 text-slate-300 transition-transform group-hover:scale-110" />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {(documents ?? []).map((document) => {
+            const Icon = documentIcon(document);
+            return (
+              <Card key={document.id} className="group overflow-hidden transition-shadow hover:shadow-md">
+                <CardContent className="p-0">
+                  <Link to="/dashboard/documents/$documentId" params={{ documentId: document.id }} className="flex h-32 items-center justify-center bg-muted/50"><Icon className="h-12 w-12 text-muted-foreground/50 transition-transform group-hover:scale-105" /></Link>
+                  <div className="p-4">
+                    <div className="flex items-start gap-2">
+                      <Link to="/dashboard/documents/$documentId" params={{ documentId: document.id }} className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{document.title}</p><p className="mt-1 text-xs text-muted-foreground">{documentMeta(document)} • {format(new Date(document.updated_at), "MMM d")}</p></Link>
+                      {renderActions(document)}
+                    </div>
                   </div>
-                </Link>
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <Link to={`/dashboard/documents/${doc.id}`} className="flex-1 truncate">
-                      <p className="truncate text-sm font-medium">{doc.title}</p>
-                      <p className="text-xs text-slate-500">
-                        {format(new Date(doc.updated_at), "MMM d, yyyy")}
-                      </p>
-                    </Link>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => deleteMutation.mutate(doc.id)}>
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
+
+      <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Upload a file</DialogTitle><DialogDescription>The original binary is stored privately under the active workspace. Maximum size: 10 MB.</DialogDescription></DialogHeader>
+          <div
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={handleDrop}
+            onClick={() => !uploadMutation.isPending && fileInputRef.current?.click()}
+            className="relative flex min-h-52 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 text-center hover:bg-muted/30"
+          >
+            {uploadMutation.isPending ? <><Loader2 className="h-8 w-8 animate-spin text-primary" /><p className="mt-3 text-sm font-medium">Uploading securely…</p></> : <><Upload className="h-9 w-9 text-muted-foreground" /><p className="mt-3 text-sm font-medium">Drop a file here or click to browse</p><p className="mt-1 text-xs text-muted-foreground">PDF, DOC/DOCX, XLS/XLSX, PNG, JPG</p></>}
+            <input ref={fileInputRef} type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onChange={handleFileInput} disabled={uploadMutation.isPending} />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(renameTarget)} onOpenChange={(open) => { if (!open) setRenameTarget(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Rename document</DialogTitle><DialogDescription>Change the display title without altering the underlying file or version history.</DialogDescription></DialogHeader>
+          <Input value={renameValue} onChange={(event) => setRenameValue(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && renameValue.trim()) renameMutation.mutate(); }} autoFocus />
+          <DialogFooter><Button variant="outline" onClick={() => setRenameTarget(null)}>Cancel</Button><Button onClick={() => renameMutation.mutate()} disabled={!renameValue.trim() || renameMutation.isPending}>{renameMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Rename</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <span className="sr-only"><ArrowDownAZ /> Documents are sorted using the selected sort control.</span>
     </div>
   );
 }
-
-import { Card, CardContent } from "@/components/ui/card";
