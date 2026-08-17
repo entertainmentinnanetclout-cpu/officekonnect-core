@@ -124,11 +124,16 @@ function RootComponent() {
     if (isLoading) return;
 
     const isAuthPage = location.pathname.startsWith("/auth");
+    const isDashboardPage = location.pathname.startsWith("/dashboard");
     const isPublicPage = ["/", "/pricing", "/privacy", "/terms", "/contact"].includes(
       location.pathname,
     );
 
-    if (!user && !isAuthPage && !isPublicPage) {
+    // Dashboard routes own their authentication boundary. This allows the
+    // dashboard layout to establish the optional server-backed development
+    // session before falling back to secure sign-in. Production remains safe:
+    // the dashboard bootstrap is disabled there and renders its login fallback.
+    if (!user && !isAuthPage && !isPublicPage && !isDashboardPage) {
       navigate({ to: "/auth/login" });
     } else if (user && isAuthPage) {
       navigate({ to: "/dashboard" });
