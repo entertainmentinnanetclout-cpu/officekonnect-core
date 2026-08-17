@@ -5,14 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Eraser,
-  Type,
-  Upload,
-  PenTool,
-  Save,
-  Loader2,
-} from "lucide-react";
+import { Eraser, Type, Upload, PenTool, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -125,9 +118,18 @@ export function SignatureManager({ onSave }: SignatureManagerProps) {
     <div className="space-y-4">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="draw" className="gap-2"><PenTool className="h-4 w-4" />Draw</TabsTrigger>
-          <TabsTrigger value="type" className="gap-2"><Type className="h-4 w-4" />Type</TabsTrigger>
-          <TabsTrigger value="upload" className="gap-2" disabled><Upload className="h-4 w-4" />Upload</TabsTrigger>
+          <TabsTrigger value="draw" className="gap-2">
+            <PenTool className="h-4 w-4" />
+            Draw
+          </TabsTrigger>
+          <TabsTrigger value="type" className="gap-2">
+            <Type className="h-4 w-4" />
+            Type
+          </TabsTrigger>
+          <TabsTrigger value="upload" className="gap-2" disabled>
+            <Upload className="h-4 w-4" />
+            Upload
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="draw" className="mt-4">
@@ -139,7 +141,8 @@ export function SignatureManager({ onSave }: SignatureManagerProps) {
             />
             <div className="absolute bottom-3 right-3">
               <Button variant="outline" size="sm" onClick={handleClear} className="h-8">
-                <Eraser className="mr-2 h-3 w-3" />Clear
+                <Eraser className="mr-2 h-3 w-3" />
+                Clear
               </Button>
             </div>
           </div>
@@ -154,7 +157,12 @@ export function SignatureManager({ onSave }: SignatureManagerProps) {
           />
           <div className="flex h-28 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900">
             {typedName ? (
-              <span className="text-4xl italic" style={{ fontFamily: "'Brush Script MT', cursive" }}>{typedName}</span>
+              <span
+                className="text-4xl italic"
+                style={{ fontFamily: "'Brush Script MT', cursive" }}
+              >
+                {typedName}
+              </span>
             ) : (
               <span className="text-slate-400 italic">Preview</span>
             )}
@@ -186,9 +194,21 @@ export function SignatureManager({ onSave }: SignatureManagerProps) {
       </div>
 
       <div className="flex items-center justify-end gap-3 border-t border-slate-100 pt-3 dark:border-slate-800">
-        <Button variant="ghost" onClick={handleClear} disabled={isSaving}>Reset</Button>
+        <Button variant="ghost" onClick={handleClear} disabled={isSaving}>
+          Reset
+        </Button>
         <Button onClick={handleSave} disabled={isSaving}>
-          {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving…</> : <><Save className="mr-2 h-4 w-4" />Save Signature</>}
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving…
+            </>
+          ) : (
+            <>
+              <Save className="mr-2 h-4 w-4" />
+              Save Signature
+            </>
+          )}
         </Button>
       </div>
     </div>

@@ -26,10 +26,12 @@ Deno.serve(async (req: Request) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (!supabaseUrl || !anonKey || !serviceKey) return response({ error: "Signing actions are not configured" }, 500);
+  if (!supabaseUrl || !anonKey || !serviceKey)
+    return response({ error: "Signing actions are not configured" }, 500);
 
   const authorization = req.headers.get("Authorization") ?? "";
-  if (!authorization.match(/^Bearer\s+\S+/i)) return response({ error: "Authorization required" }, 401);
+  if (!authorization.match(/^Bearer\s+\S+/i))
+    return response({ error: "Authorization required" }, 401);
 
   const userClient = createClient(supabaseUrl, anonKey, {
     auth: { persistSession: false },
@@ -70,10 +72,13 @@ Deno.serve(async (req: Request) => {
       if (ccError) throw new Error(ccError.message);
 
       for (const participant of ccParticipants ?? []) {
-        const { data: invitation, error: rotateError } = await userClient.rpc("rotate_signing_invitation", {
-          p_participant_id: participant.id,
-          p_expires_at: expiresAt,
-        });
+        const { data: invitation, error: rotateError } = await userClient.rpc(
+          "rotate_signing_invitation",
+          {
+            p_participant_id: participant.id,
+            p_expires_at: expiresAt,
+          },
+        );
         if (rotateError) throw new Error(rotateError.message);
         invitations.push(invitation);
       }
@@ -109,9 +114,12 @@ Deno.serve(async (req: Request) => {
 
       let finalization: any = null;
       if (completion?.finalizationQueued) {
-        const { data, error: finalizationError } = await service.functions.invoke("signing-finalize", {
-          body: { requestId: completion?.request?.id },
-        });
+        const { data, error: finalizationError } = await service.functions.invoke(
+          "signing-finalize",
+          {
+            body: { requestId: completion?.request?.id },
+          },
+        );
         if (finalizationError) throw new Error(finalizationError.message);
         finalization = data;
       }

@@ -21,7 +21,11 @@ interface SignatureToolboxProps {
 
 export function SignatureToolbox({ selectedId, onSelect, onClose }: SignatureToolboxProps) {
   const [creating, setCreating] = useState(false);
-  const { data: sigs, isLoading, refetch } = useQuery({
+  const {
+    data: sigs,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["signatures"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -54,7 +58,12 @@ export function SignatureToolbox({ selectedId, onSelect, onClose }: SignatureToo
               await refetch();
             }}
           />
-          <Button variant="ghost" size="sm" className="mt-2 w-full" onClick={() => setCreating(false)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-2 w-full"
+            onClick={() => setCreating(false)}
+          >
             Cancel
           </Button>
         </div>
@@ -64,7 +73,9 @@ export function SignatureToolbox({ selectedId, onSelect, onClose }: SignatureToo
             Select a signature, then click on the page to place it. Drag corners to resize.
           </p>
           {isLoading ? (
-            <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin" />
+            </div>
           ) : (sigs ?? []).length === 0 ? (
             <p className="rounded-md border border-dashed border-slate-200 p-4 text-center text-xs text-slate-500 dark:border-slate-700">
               No signatures yet. Create one to start.

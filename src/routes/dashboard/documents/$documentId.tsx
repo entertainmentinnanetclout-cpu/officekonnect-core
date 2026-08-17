@@ -1,15 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import {
-  ChevronLeft,
-  Download,
-  PenTool,
-  Share2,
-  Loader2,
-  X,
-  Save,
-  Check,
-} from "lucide-react";
+import { ChevronLeft, Download, PenTool, Share2, Loader2, X, Save, Check } from "lucide-react";
 import { Rnd } from "react-rnd";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -183,9 +174,7 @@ function DocumentDetail() {
             <p className="text-xs text-slate-500">
               {(document.file_type ?? "").split("/")[1]?.toUpperCase() || "FILE"} •{" "}
               {((document.file_size ?? 0) / 1024 / 1024).toFixed(2)} MB •{" "}
-              <span className="font-medium uppercase text-primary">
-                {document.document_status}
-              </span>
+              <span className="font-medium uppercase text-primary">{document.document_status}</span>
             </p>
           </div>
         </div>
@@ -302,9 +291,7 @@ function DocumentDetail() {
             />
           ) : signedUrl ? (
             <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 rounded-xl border bg-white p-12 text-center dark:bg-slate-900">
-              <p className="text-sm text-slate-500">
-                Inline preview is only available for PDFs.
-              </p>
+              <p className="text-sm text-slate-500">Inline preview is only available for PDFs.</p>
               <Button onClick={handleDownload}>
                 <Download className="mr-2 h-4 w-4" />
                 Download to view

@@ -33,12 +33,36 @@ export const Route = createFileRoute("/")({
 });
 
 const modules = [
-  { icon: FileText, name: "Smart Documents", desc: "Upload, convert, version and share PDFs, Word and images with a single source of truth." },
-  { icon: PenTool, name: "E-Signatures", desc: "Request and apply legally binding signatures with full audit trails and field placement." },
-  { icon: Mail, name: "Mail Center", desc: "Send personalised bulk campaigns via Brevo with live open, click and bounce analytics." },
-  { icon: Users, name: "Contacts & Groups", desc: "Import, segment and sync contacts. Build the right list for every campaign." },
-  { icon: Mic, name: "Voice Notes", desc: "Record meetings on any device. Get transcripts in seconds with Whisper-grade accuracy." },
-  { icon: Shield, name: "Workspace Security", desc: "Row-level security, role-based access, audit logs and encrypted integrations by default." },
+  {
+    icon: FileText,
+    name: "Smart Documents",
+    desc: "Upload, convert, version and share PDFs, Word and images with a single source of truth.",
+  },
+  {
+    icon: PenTool,
+    name: "E-Signatures",
+    desc: "Request and apply legally binding signatures with full audit trails and field placement.",
+  },
+  {
+    icon: Mail,
+    name: "Mail Center",
+    desc: "Send personalised bulk campaigns via Brevo with live open, click and bounce analytics.",
+  },
+  {
+    icon: Users,
+    name: "Contacts & Groups",
+    desc: "Import, segment and sync contacts. Build the right list for every campaign.",
+  },
+  {
+    icon: Mic,
+    name: "Voice Notes",
+    desc: "Record meetings on any device. Get transcripts in seconds with Whisper-grade accuracy.",
+  },
+  {
+    icon: Shield,
+    name: "Workspace Security",
+    desc: "Row-level security, role-based access, audit logs and encrypted integrations by default.",
+  },
 ];
 
 function LandingPage() {
@@ -54,9 +78,15 @@ function LandingPage() {
             <span className="text-base font-semibold tracking-tight">OfficeKonnect</span>
           </Link>
           <nav className="hidden items-center gap-7 text-sm text-muted-foreground md:flex">
-            <a href="#features" className="hover:text-foreground">Features</a>
-            <a href="#how" className="hover:text-foreground">How it works</a>
-            <a href="#security" className="hover:text-foreground">Security</a>
+            <a href="#features" className="hover:text-foreground">
+              Features
+            </a>
+            <a href="#how" className="hover:text-foreground">
+              How it works
+            </a>
+            <a href="#security" className="hover:text-foreground">
+              Security
+            </a>
           </nav>
           <div className="flex items-center gap-2">
             <Button asChild variant="ghost" size="sm">
@@ -89,9 +119,9 @@ function LandingPage() {
               One workspace for every <span className="text-primary">office task</span>.
             </h1>
             <p className="max-w-xl text-lg leading-relaxed text-muted-foreground">
-              Documents, signatures, letterheads, bulk email, contacts and voice
-              notes — unified in a single, secure workspace. Built for productive
-              offices, freelancers and growing teams.
+              Documents, signatures, letterheads, bulk email, contacts and voice notes — unified in
+              a single, secure workspace. Built for productive offices, freelancers and growing
+              teams.
             </p>
             <div className="flex flex-wrap items-center gap-3">
               <Button asChild size="lg">
@@ -171,8 +201,8 @@ function LandingPage() {
               Six modules. Zero context switching.
             </h2>
             <p className="mt-3 text-muted-foreground">
-              OfficeKonnect replaces the scattered tools your team uses today —
-              with shared data, shared permissions and a consistent UI.
+              OfficeKonnect replaces the scattered tools your team uses today — with shared data,
+              shared permissions and a consistent UI.
             </p>
           </div>
           <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -204,15 +234,24 @@ function LandingPage() {
                 Set up your workspace in under a minute.
               </h2>
               <p className="mt-3 text-muted-foreground">
-                Sign up, invite your team, and connect Brevo for email or
-                OpenAI for transcription. Everything else is already wired.
+                Sign up, invite your team, and connect Brevo for email or OpenAI for transcription.
+                Everything else is already wired.
               </p>
             </div>
             <ol className="space-y-5">
               {[
-                { t: "Create your workspace", d: "Personal workspace is provisioned automatically on sign-up." },
-                { t: "Upload or import", d: "Drop documents, import contacts via CSV, or record a voice note." },
-                { t: "Send, sign, ship", d: "Send a campaign, request a signature, export a transcript — all from one place." },
+                {
+                  t: "Create your workspace",
+                  d: "Personal workspace is provisioned automatically on sign-up.",
+                },
+                {
+                  t: "Upload or import",
+                  d: "Drop documents, import contacts via CSV, or record a voice note.",
+                },
+                {
+                  t: "Send, sign, ship",
+                  d: "Send a campaign, request a signature, export a transcript — all from one place.",
+                },
               ].map((s, i) => (
                 <li key={s.t} className="flex gap-4 rounded-xl border border-border bg-card p-5">
                   <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground font-semibold">
@@ -242,8 +281,8 @@ function LandingPage() {
                   Built on row-level security, audit logs and encrypted integrations.
                 </h2>
                 <p className="mt-3 text-muted-foreground">
-                  Every workspace is isolated. Every action is logged. Every
-                  third-party token is stored encrypted. You stay in control.
+                  Every workspace is isolated. Every action is logged. Every third-party token is
+                  stored encrypted. You stay in control.
                 </p>
               </div>
               <Button asChild size="lg">
@@ -261,8 +300,12 @@ function LandingPage() {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:px-6">
           <p>© {new Date().getFullYear()} OfficeKonnect. All rights reserved.</p>
           <div className="flex items-center gap-5">
-            <Link to="/auth/login" className="hover:text-foreground">Sign in</Link>
-            <Link to="/auth/register" className="hover:text-foreground">Create account</Link>
+            <Link to="/auth/login" className="hover:text-foreground">
+              Sign in
+            </Link>
+            <Link to="/auth/register" className="hover:text-foreground">
+              Create account
+            </Link>
           </div>
         </div>
       </footer>

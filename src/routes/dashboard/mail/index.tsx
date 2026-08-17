@@ -12,7 +12,7 @@ import {
   Users,
   Layout,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,7 +45,8 @@ function MailCenterIndex() {
     },
   });
 
-  const isBrevoConnected = (integrations?.length ?? 0) > 0 || localStorage.getItem("brevo_connected") === "true";
+  const isBrevoConnected =
+    (integrations?.length ?? 0) > 0 || localStorage.getItem("brevo_connected") === "true";
 
   if (!isBrevoConnected) {
     return (
@@ -105,22 +106,37 @@ function MailCenterIndex() {
 
           <div className="grid gap-4 lg:grid-cols-2">
             {[1, 2, 3, 4].map((i) => (
-              <Card key={i} className="group hover:border-primary/50 transition-colors cursor-pointer">
+              <Card
+                key={i}
+                className="group hover:border-primary/50 transition-colors cursor-pointer"
+              >
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-bold">{i === 1 ? "Product Launch Q4" : i === 2 ? "Monthly Newsletter" : "Welcome Series"}</h3>
-                        <span className={cn(
-                          "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase",
-                          i === 1 ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20" :
-                          i === 2 ? "bg-blue-50 text-blue-700 dark:bg-blue-900/20" :
-                          "bg-slate-100 text-slate-700 dark:bg-slate-800"
-                        )}>
+                        <h3 className="font-bold">
+                          {i === 1
+                            ? "Product Launch Q4"
+                            : i === 2
+                              ? "Monthly Newsletter"
+                              : "Welcome Series"}
+                        </h3>
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase",
+                            i === 1
+                              ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20"
+                              : i === 2
+                                ? "bg-blue-50 text-blue-700 dark:bg-blue-900/20"
+                                : "bg-slate-100 text-slate-700 dark:bg-slate-800",
+                          )}
+                        >
                           {i === 1 ? "Completed" : i === 2 ? "Sending" : "Draft"}
                         </span>
                       </div>
-                      <p className="text-sm text-slate-500">Sent to 850 contacts • Oct {10 + i}, 2023</p>
+                      <p className="text-sm text-slate-500">
+                        Sent to 850 contacts • Oct {10 + i}, 2023
+                      </p>
                     </div>
                     <Button variant="ghost" size="icon" className="h-8 w-8">
                       <MoreVertical className="h-4 w-4" />
@@ -157,7 +173,7 @@ function MailCenterIndex() {
             {[1, 2, 3].map((i) => (
               <Card key={i} className="overflow-hidden">
                 <div className="aspect-[4/5] bg-slate-100 p-4 dark:bg-slate-800">
-                   <div className="h-full w-full rounded border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"></div>
+                  <div className="h-full w-full rounded border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"></div>
                 </div>
                 <CardContent className="p-4">
                   <p className="font-medium">Template {i}</p>
@@ -172,17 +188,31 @@ function MailCenterIndex() {
   );
 }
 
-function StatItem({ title, value, icon: Icon, trend }: { title: string, value: string, icon: any, trend: string }) {
+function StatItem({
+  title,
+  value,
+  icon: Icon,
+  trend,
+}: {
+  title: string;
+  value: string;
+  icon: any;
+  trend: string;
+}) {
   return (
     <Card>
       <CardContent className="p-4 flex items-center justify-between">
         <div>
           <p className="text-xs text-slate-500">{title}</p>
           <h4 className="text-lg font-bold">{value}</h4>
-          <span className={cn(
-            "text-[10px] font-bold",
-            trend.startsWith('+') ? "text-emerald-500" : "text-rose-500"
-          )}>{trend}</span>
+          <span
+            className={cn(
+              "text-[10px] font-bold",
+              trend.startsWith("+") ? "text-emerald-500" : "text-rose-500",
+            )}
+          >
+            {trend}
+          </span>
         </div>
         <div className="h-8 w-8 rounded bg-slate-100 flex items-center justify-center dark:bg-slate-800">
           <Icon className="h-4 w-4 text-slate-500" />

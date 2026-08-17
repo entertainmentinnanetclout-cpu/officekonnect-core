@@ -13,7 +13,7 @@ export function errorMessage(err: unknown, fallback = "Something went wrong"): s
 
 export function toastError(err: unknown, fallback = "Something went wrong"): string {
   const msg = errorMessage(err, fallback);
-  // eslint-disable-next-line no-console
+
   console.error("[error]", err);
   toast.error(msg);
   return msg;

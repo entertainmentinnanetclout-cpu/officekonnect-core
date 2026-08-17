@@ -87,14 +87,26 @@ function SettingsIndex() {
         </aside>
 
         <div className="max-w-3xl flex-1">
-          {activeTab === "profile" && <ProfileTab userEmail={user?.email ?? ""} userId={user?.id ?? ""} />}
+          {activeTab === "profile" && (
+            <ProfileTab userEmail={user?.email ?? ""} userId={user?.id ?? ""} />
+          )}
           {activeTab === "company" && <CompanyTab />}
           {activeTab === "signatures" && <SignaturesTab />}
           {activeTab === "appearance" && <AppearanceTab userId={user?.id ?? ""} />}
           {activeTab === "notifications" && <NotificationsTab userId={user?.id ?? ""} />}
           {activeTab === "security" && <SecurityTab />}
-          {activeTab === "integrations" && <PlaceholderTab title="Integrations" description="Connect external services (Brevo, OpenAI, etc.). Configuration is managed under your workspace integrations." />}
-          {activeTab === "billing" && <PlaceholderTab title="Billing" description="Plan and invoicing details will appear here once subscriptions are enabled." />}
+          {activeTab === "integrations" && (
+            <PlaceholderTab
+              title="Integrations"
+              description="Connect external services (Brevo, OpenAI, etc.). Configuration is managed under your workspace integrations."
+            />
+          )}
+          {activeTab === "billing" && (
+            <PlaceholderTab
+              title="Billing"
+              description="Plan and invoicing details will appear here once subscriptions are enabled."
+            />
+          )}
           {activeTab === "account" && <AccountTab />}
         </div>
       </div>
@@ -177,10 +189,15 @@ function ProfileTab({ userEmail, userId }: { userEmail: string; userId: string }
             </div>
             <label className="absolute -bottom-2 -right-2 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-slate-200 bg-white text-xs shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <PenTool className="h-3 w-3" />
-              <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void uploadAvatar(f);
-              }} />
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void uploadAvatar(f);
+                }}
+              />
             </label>
           </div>
           <div>
@@ -189,15 +206,31 @@ function ProfileTab({ userEmail, userId }: { userEmail: string; userId: string }
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Full Name" value={form.full_name} onChange={(v) => setForm({ ...form, full_name: v })} />
+          <Field
+            label="Full Name"
+            value={form.full_name}
+            onChange={(v) => setForm({ ...form, full_name: v })}
+          />
           <Field label="Email Address" value={userEmail} disabled />
-          <Field label="Phone Number" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
-          <Field label="Job Title" value={form.job_title} onChange={(v) => setForm({ ...form, job_title: v })} />
+          <Field
+            label="Phone Number"
+            value={form.phone}
+            onChange={(v) => setForm({ ...form, phone: v })}
+          />
+          <Field
+            label="Job Title"
+            value={form.job_title}
+            onChange={(v) => setForm({ ...form, job_title: v })}
+          />
         </div>
       </CardContent>
       <CardFooter className="justify-end border-t bg-slate-50/50 px-6 py-4 dark:bg-slate-900/50">
         <Button onClick={() => save.mutate()} disabled={save.isPending}>
-          {save.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+          {save.isPending ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Save className="mr-2 h-4 w-4" />
+          )}
           Save Changes
         </Button>
       </CardFooter>
@@ -212,7 +245,10 @@ function CompanyTab() {
   const { data: ws, isLoading } = useQuery({
     queryKey: ["my-workspace"],
     queryFn: async () => {
-      const { data: profile } = await supabase.from("profiles").select("default_workspace_id").single();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("default_workspace_id")
+        .single();
       if (!profile?.default_workspace_id) throw new Error("No workspace");
       const { data, error } = await supabase
         .from("workspaces")
@@ -226,7 +262,12 @@ function CompanyTab() {
 
   const [form, setForm] = useState({ company_name: "", logo_url: "", address: "" });
   useEffect(() => {
-    if (ws) setForm({ company_name: ws.company_name ?? "", logo_url: ws.logo_url ?? "", address: ws.address ?? "" });
+    if (ws)
+      setForm({
+        company_name: ws.company_name ?? "",
+        logo_url: ws.logo_url ?? "",
+        address: ws.address ?? "",
+      });
   }, [ws]);
 
   const save = useMutation({
@@ -251,16 +292,32 @@ function CompanyTab() {
         <CardDescription>These appear on letterheads and sent documents.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Field label="Company Name" value={form.company_name} onChange={(v) => setForm({ ...form, company_name: v })} />
-        <Field label="Logo URL" value={form.logo_url} onChange={(v) => setForm({ ...form, logo_url: v })} />
+        <Field
+          label="Company Name"
+          value={form.company_name}
+          onChange={(v) => setForm({ ...form, company_name: v })}
+        />
+        <Field
+          label="Logo URL"
+          value={form.logo_url}
+          onChange={(v) => setForm({ ...form, logo_url: v })}
+        />
         <div className="space-y-2">
           <Label>Address</Label>
-          <Textarea value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} rows={3} />
+          <Textarea
+            value={form.address}
+            onChange={(e) => setForm({ ...form, address: e.target.value })}
+            rows={3}
+          />
         </div>
       </CardContent>
       <CardFooter className="justify-end border-t bg-slate-50/50 px-6 py-4 dark:bg-slate-900/50">
         <Button onClick={() => save.mutate()} disabled={save.isPending}>
-          {save.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+          {save.isPending ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Save className="mr-2 h-4 w-4" />
+          )}
           Save
         </Button>
       </CardFooter>
@@ -287,7 +344,10 @@ function SignaturesTab() {
 
   const setDefault = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("user_signatures").update({ is_default: true }).eq("id", id);
+      const { error } = await supabase
+        .from("user_signatures")
+        .update({ is_default: true })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -329,17 +389,25 @@ function SignaturesTab() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin" />
+            </div>
           ) : (sigs ?? []).length === 0 ? (
             <p className="py-6 text-center text-sm text-slate-500">No signatures yet.</p>
           ) : (
             <ul className="divide-y dark:divide-slate-800">
               {sigs!.map((s) => (
                 <li key={s.id} className="flex items-center gap-4 py-3">
-                  <img src={s.signature_image_url} alt={s.name} className="h-12 w-24 rounded bg-slate-50 object-contain dark:bg-slate-800" />
+                  <img
+                    src={s.signature_image_url}
+                    alt={s.name}
+                    className="h-12 w-24 rounded bg-slate-50 object-contain dark:bg-slate-800"
+                  />
                   <div className="flex-1">
                     <p className="text-sm font-medium">{s.name}</p>
-                    {s.is_default && <span className="text-[10px] uppercase text-primary">Default</span>}
+                    {s.is_default && (
+                      <span className="text-[10px] uppercase text-primary">Default</span>
+                    )}
                   </div>
                   <Button
                     variant="ghost"
@@ -347,10 +415,18 @@ function SignaturesTab() {
                     disabled={s.is_default}
                     onClick={() => setDefault.mutate(s.id)}
                   >
-                    {s.is_default ? <Star className="mr-2 h-4 w-4 fill-current" /> : <StarOff className="mr-2 h-4 w-4" />}
+                    {s.is_default ? (
+                      <Star className="mr-2 h-4 w-4 fill-current" />
+                    ) : (
+                      <StarOff className="mr-2 h-4 w-4" />
+                    )}
                     {s.is_default ? "Default" : "Set default"}
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={() => remove.mutate({ id: s.id, storage_path: s.storage_path })}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => remove.mutate({ id: s.id, storage_path: s.storage_path })}
+                  >
                     <Trash2 className="h-4 w-4 text-red-600" />
                   </Button>
                 </li>
@@ -370,7 +446,11 @@ function AppearanceTab({ userId }: { userId: string }) {
   const { data: profile } = useQuery({
     queryKey: ["profile-prefs", userId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("preferences").eq("id", userId).single();
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("preferences")
+        .eq("id", userId)
+        .single();
       if (error) throw error;
       return data;
     },
@@ -392,7 +472,10 @@ function AppearanceTab({ userId }: { userId: string }) {
   const save = useMutation({
     mutationFn: async (newTheme: string) => {
       const updated = { ...prefs, theme: newTheme };
-      const { error } = await supabase.from("profiles").update({ preferences: updated }).eq("id", userId);
+      const { error } = await supabase
+        .from("profiles")
+        .update({ preferences: updated })
+        .eq("id", userId);
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["profile-prefs", userId] }),
@@ -410,10 +493,15 @@ function AppearanceTab({ userId }: { userId: string }) {
           {(["light", "dark", "system"] as const).map((t) => (
             <button
               key={t}
-              onClick={() => { setTheme(t); save.mutate(t); }}
+              onClick={() => {
+                setTheme(t);
+                save.mutate(t);
+              }}
               className={cn(
                 "rounded-lg border p-4 text-center text-sm font-medium capitalize transition",
-                theme === t ? "border-primary bg-primary/5" : "border-slate-200 hover:border-primary/40 dark:border-slate-700",
+                theme === t
+                  ? "border-primary bg-primary/5"
+                  : "border-slate-200 hover:border-primary/40 dark:border-slate-700",
               )}
             >
               {t}
@@ -433,7 +521,11 @@ function NotificationsTab({ userId }: { userId: string }) {
   const { data: profile } = useQuery({
     queryKey: ["profile-notif", userId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("preferences").eq("id", userId).single();
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("preferences")
+        .eq("id", userId)
+        .single();
       if (error) throw error;
       return data;
     },
@@ -449,7 +541,10 @@ function NotificationsTab({ userId }: { userId: string }) {
   const toggle = useMutation({
     mutationFn: async (next: Record<string, boolean>) => {
       const updated = { ...prefs, notifications: next };
-      const { error } = await supabase.from("profiles").update({ preferences: updated }).eq("id", userId);
+      const { error } = await supabase
+        .from("profiles")
+        .update({ preferences: updated })
+        .eq("id", userId);
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["profile-notif", userId] }),
@@ -457,7 +552,10 @@ function NotificationsTab({ userId }: { userId: string }) {
   });
 
   const row = (key: string, label: string, desc: string) => (
-    <div key={key} className="flex items-center justify-between border-b py-3 last:border-0 dark:border-slate-800">
+    <div
+      key={key}
+      className="flex items-center justify-between border-b py-3 last:border-0 dark:border-slate-800"
+    >
       <div>
         <p className="text-sm font-medium">{label}</p>
         <p className="text-xs text-slate-500">{desc}</p>
@@ -476,7 +574,11 @@ function NotificationsTab({ userId }: { userId: string }) {
         <CardDescription>Choose what we send you by email.</CardDescription>
       </CardHeader>
       <CardContent>
-        {row("email_documents", "Document activity", "When documents are signed, exported or converted")}
+        {row(
+          "email_documents",
+          "Document activity",
+          "When documents are signed, exported or converted",
+        )}
         {row("email_campaigns", "Email campaigns", "Delivery summaries for sent campaigns")}
         {row("email_voice", "Voice transcriptions", "When a voice note finishes transcribing")}
       </CardContent>
@@ -498,7 +600,8 @@ function SecurityTab() {
     },
     onSuccess: () => {
       toast.success("Password updated");
-      setPw(""); setPw2("");
+      setPw("");
+      setPw2("");
     },
     onError: (e) => toastError(e, "Could not update password"),
   });
@@ -531,10 +634,14 @@ function SecurityTab() {
       <Card>
         <CardHeader>
           <CardTitle>Active Sessions</CardTitle>
-          <CardDescription>Sign out everywhere else if you suspect a compromised session.</CardDescription>
+          <CardDescription>
+            Sign out everywhere else if you suspect a compromised session.
+          </CardDescription>
         </CardHeader>
         <CardFooter className="justify-end border-t bg-slate-50/50 px-6 py-4 dark:bg-slate-900/50">
-          <Button variant="outline" onClick={signOutOthers}>Sign out other sessions</Button>
+          <Button variant="outline" onClick={signOutOthers}>
+            Sign out other sessions
+          </Button>
         </CardFooter>
       </Card>
     </div>
@@ -582,10 +689,14 @@ function AccountTab() {
       <Card>
         <CardHeader>
           <CardTitle>Export Personal Data</CardTitle>
-          <CardDescription>Download a JSON copy of your profile, signatures, documents and voice notes.</CardDescription>
+          <CardDescription>
+            Download a JSON copy of your profile, signatures, documents and voice notes.
+          </CardDescription>
         </CardHeader>
         <CardFooter className="justify-end border-t bg-slate-50/50 px-6 py-4 dark:bg-slate-900/50">
-          <Button variant="outline" onClick={exportData}>Download my data</Button>
+          <Button variant="outline" onClick={exportData}>
+            Download my data
+          </Button>
         </CardFooter>
       </Card>
 
@@ -593,12 +704,14 @@ function AccountTab() {
         <CardHeader>
           <CardTitle className="text-red-600">Delete Account</CardTitle>
           <CardDescription>
-            Permanently delete your account and workspace data. This action cannot be undone.
-            Please contact support to complete account deletion.
+            Permanently delete your account and workspace data. This action cannot be undone. Please
+            contact support to complete account deletion.
           </CardDescription>
         </CardHeader>
         <CardFooter className="justify-end border-t bg-slate-50/50 px-6 py-4 dark:bg-slate-900/50">
-          <Button variant="destructive" disabled>Delete Account</Button>
+          <Button variant="destructive" disabled>
+            Delete Account
+          </Button>
         </CardFooter>
       </Card>
     </div>
@@ -623,7 +736,12 @@ function Field({
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
-      <Input type={type} value={value} disabled={disabled} onChange={(e) => onChange?.(e.target.value)} />
+      <Input
+        type={type}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange?.(e.target.value)}
+      />
     </div>
   );
 }
@@ -645,9 +763,7 @@ function PlaceholderTab({ title, description }: { title: string; description: st
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
-      <CardContent className="py-12 text-center text-sm text-slate-500">
-        Coming soon.
-      </CardContent>
+      <CardContent className="py-12 text-center text-sm text-slate-500">Coming soon.</CardContent>
     </Card>
   );
 }

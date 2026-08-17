@@ -124,7 +124,9 @@ function RootComponent() {
     if (isLoading) return;
 
     const isAuthPage = location.pathname.startsWith("/auth");
-    const isPublicPage = ["/", "/pricing", "/privacy", "/terms", "/contact"].includes(location.pathname);
+    const isPublicPage = ["/", "/pricing", "/privacy", "/terms", "/contact"].includes(
+      location.pathname,
+    );
 
     if (!user && !isAuthPage && !isPublicPage) {
       navigate({ to: "/auth/login" });

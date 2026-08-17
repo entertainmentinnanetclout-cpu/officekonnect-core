@@ -107,9 +107,13 @@ export const submitSigning = createServerFn({ method: "POST" })
     }).parse,
   )
   .handler(async ({ data }) => {
-    const { supabaseAdmin, id: tokenId, request_id, participant_id, used_at } = await verifyToken(
-      data.token,
-    );
+    const {
+      supabaseAdmin,
+      id: tokenId,
+      request_id,
+      participant_id,
+      used_at,
+    } = await verifyToken(data.token);
     if (used_at) throw new Error("This link has already been used");
 
     // Update assigned fields with submitted values

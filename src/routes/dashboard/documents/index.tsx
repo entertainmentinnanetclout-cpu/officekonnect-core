@@ -12,7 +12,7 @@ import {
   Trash2,
   Archive,
   ExternalLink,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,10 +61,7 @@ function DocumentsIndex() {
   const { data: documents, isLoading } = useQuery({
     queryKey: ["documents", searchQuery],
     queryFn: async () => {
-      let query = supabase
-        .from("documents")
-        .select("*")
-        .order("updated_at", { ascending: false });
+      let query = supabase.from("documents").select("*").order("updated_at", { ascending: false });
 
       if (searchQuery) {
         query = query.ilike("title", `%${searchQuery}%`);
@@ -240,7 +237,13 @@ function DocumentsIndex() {
           </div>
           <h3 className="text-lg font-medium">No documents found</h3>
           <p className="mt-1 text-slate-500">Get started by uploading your first document.</p>
-          <Button variant="outline" className="mt-6" onClick={() => (document.querySelector('input[type="file"]') as HTMLInputElement)?.click()}>
+          <Button
+            variant="outline"
+            className="mt-6"
+            onClick={() =>
+              (document.querySelector('input[type="file"]') as HTMLInputElement)?.click()
+            }
+          >
             <Plus className="mr-2 h-4 w-4" />
             Upload Now
           </Button>
@@ -269,12 +272,16 @@ function DocumentsIndex() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span className={cn(
-                      "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-                      doc.document_status === "signed" ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400" :
-                      doc.document_status === "draft" ? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400" :
-                      "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
-                    )}>
+                    <span
+                      className={cn(
+                        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+                        doc.document_status === "signed"
+                          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
+                          : doc.document_status === "draft"
+                            ? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                            : "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400",
+                      )}
+                    >
                       {doc.document_status.charAt(0).toUpperCase() + doc.document_status.slice(1)}
                     </span>
                   </TableCell>
@@ -304,7 +311,10 @@ function DocumentsIndex() {
                           Download
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={() => deleteMutation.mutate(doc.id)}>
+                        <DropdownMenuItem
+                          className="text-red-600 focus:text-red-600"
+                          onClick={() => deleteMutation.mutate(doc.id)}
+                        >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete
                         </DropdownMenuItem>
@@ -330,7 +340,9 @@ function DocumentsIndex() {
                   <div className="flex items-start justify-between gap-2">
                     <Link to={`/dashboard/documents/${doc.id}`} className="flex-1 truncate">
                       <p className="truncate text-sm font-medium">{doc.title}</p>
-                      <p className="text-xs text-slate-500">{format(new Date(doc.updated_at), "MMM d, yyyy")}</p>
+                      <p className="text-xs text-slate-500">
+                        {format(new Date(doc.updated_at), "MMM d, yyyy")}
+                      </p>
                     </Link>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -339,7 +351,9 @@ function DocumentsIndex() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => deleteMutation.mutate(doc.id)}>Delete</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => deleteMutation.mutate(doc.id)}>
+                          Delete
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>

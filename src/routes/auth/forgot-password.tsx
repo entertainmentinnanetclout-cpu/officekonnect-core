@@ -112,7 +112,10 @@ function ForgotPasswordComponent() {
       </Form>
 
       <p className="text-center text-sm text-slate-500 dark:text-slate-400">
-        <Link to="/auth/login" className="inline-flex items-center font-medium text-primary hover:underline">
+        <Link
+          to="/auth/login"
+          className="inline-flex items-center font-medium text-primary hover:underline"
+        >
           <ChevronLeft className="mr-1 h-4 w-4" />
           Back to Login
         </Link>

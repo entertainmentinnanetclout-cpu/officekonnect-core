@@ -1,6 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export async function getSignedUrl(bucket: string, path: string, expiresIn = 60 * 60): Promise<string> {
+export async function getSignedUrl(
+  bucket: string,
+  path: string,
+  expiresIn = 60 * 60,
+): Promise<string> {
   const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, expiresIn);
   if (error) throw error;
   if (!data?.signedUrl) throw new Error("Could not create signed URL");

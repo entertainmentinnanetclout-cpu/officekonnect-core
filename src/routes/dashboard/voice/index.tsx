@@ -203,7 +203,12 @@ function VoiceNotesIndex() {
           <h1 className="text-3xl font-bold tracking-tight">Voice Notes</h1>
           <p className="text-slate-500">Record, transcribe, and organize your audio notes.</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={(o) => { if (!isRecording && !isSaving) setDialogOpen(o); }}>
+        <Dialog
+          open={dialogOpen}
+          onOpenChange={(o) => {
+            if (!isRecording && !isSaving) setDialogOpen(o);
+          }}
+        >
           <DialogTrigger asChild>
             <Button className="rounded-full px-6 shadow-lg shadow-primary/20">
               <Mic className="mr-2 h-4 w-4" />
@@ -224,7 +229,9 @@ function VoiceNotesIndex() {
                   isRecording && "scale-110 ring-4 ring-primary/20",
                 )}
               >
-                {isRecording && <div className="absolute inset-0 animate-ping rounded-full bg-primary/20" />}
+                {isRecording && (
+                  <div className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
+                )}
                 <div
                   className={cn(
                     "flex h-20 w-20 items-center justify-center rounded-full text-white shadow-xl",
@@ -237,18 +244,32 @@ function VoiceNotesIndex() {
               <div className="mt-8 text-center">
                 <p className="text-3xl font-mono font-bold">{formatTime(recordingTime)}</p>
                 <p className="text-sm text-slate-500 mt-1">
-                  {isSaving ? "Uploading…" : isRecording ? "Recording in progress…" : "Ready to record"}
+                  {isSaving
+                    ? "Uploading…"
+                    : isRecording
+                      ? "Recording in progress…"
+                      : "Ready to record"}
                 </p>
               </div>
             </div>
             <DialogFooter className="sm:justify-center">
               {!isRecording ? (
-                <Button onClick={startRecording} size="lg" className="rounded-full px-12" disabled={isSaving}>
+                <Button
+                  onClick={startRecording}
+                  size="lg"
+                  className="rounded-full px-12"
+                  disabled={isSaving}
+                >
                   {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   Start Recording
                 </Button>
               ) : (
-                <Button onClick={stopRecording} variant="destructive" size="lg" className="rounded-full px-12">
+                <Button
+                  onClick={stopRecording}
+                  variant="destructive"
+                  size="lg"
+                  className="rounded-full px-12"
+                >
                   <Square className="mr-2 h-4 w-4 fill-current" />
                   Stop & Save
                 </Button>
@@ -293,7 +314,9 @@ function VoiceNotesIndex() {
             <VoiceNoteCard
               key={note.id}
               note={note as Parameters<typeof VoiceNoteCard>[0]["note"]}
-              onDelete={() => deleteMutation.mutate({ id: note.id, storage_path: note.storage_path })}
+              onDelete={() =>
+                deleteMutation.mutate({ id: note.id, storage_path: note.storage_path })
+              }
               formatTime={formatTime}
             />
           ))}
@@ -387,7 +410,11 @@ function VoiceNoteCard({
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 opacity-0 group-hover:opacity-100"
+              >
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -400,11 +427,15 @@ function VoiceNoteCard({
                 Download transcript
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600" onClick={onDelete}>Delete</DropdownMenuItem>
+              <DropdownMenuItem className="text-red-600" onClick={onDelete}>
+                Delete
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <CardTitle className="text-base mt-4 line-clamp-1">{note.title || "Untitled Note"}</CardTitle>
+        <CardTitle className="text-base mt-4 line-clamp-1">
+          {note.title || "Untitled Note"}
+        </CardTitle>
         <CardDescription className="flex items-center gap-3">
           <span className="flex items-center gap-1">
             <Clock className="h-3 w-3" />
@@ -433,7 +464,11 @@ function VoiceNoteCard({
           disabled={!note.transcript}
         >
           <FileText className="h-3 w-3" />
-          {note.transcript ? (showTranscript ? "Hide transcript" : "Show transcript") : "Transcribing…"}
+          {note.transcript
+            ? showTranscript
+              ? "Hide transcript"
+              : "Show transcript"
+            : "Transcribing…"}
         </Button>
         {showTranscript && note.transcript && (
           <p className="text-xs text-slate-600 dark:text-slate-300 whitespace-pre-wrap leading-relaxed max-h-40 overflow-auto rounded-md bg-slate-50 dark:bg-slate-800/50 p-2">

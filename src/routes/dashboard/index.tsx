@@ -8,7 +8,7 @@ import {
   Plus,
   ArrowUpRight,
   Clock,
-  ChevronRight
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -47,7 +47,12 @@ function DashboardIndex() {
 
   const quickActions = [
     { name: "Upload Document", icon: FileText, color: "bg-blue-500", href: "/dashboard/documents" },
-    { name: "Create Signature", icon: PenTool, color: "bg-purple-500", href: "/dashboard/settings" },
+    {
+      name: "Create Signature",
+      icon: PenTool,
+      color: "bg-purple-500",
+      href: "/dashboard/settings",
+    },
     { name: "New Campaign", icon: Mail, color: "bg-emerald-500", href: "/dashboard/mail" },
     { name: "Import Contacts", icon: Users, color: "bg-orange-500", href: "/dashboard/contacts" },
     { name: "Record Note", icon: Mic, color: "bg-rose-500", href: "/dashboard/voice" },
@@ -57,8 +62,12 @@ function DashboardIndex() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Welcome back, {user?.user_metadata?.full_name?.split(' ')[0] ?? 'User'}</h1>
-          <p className="text-slate-500 dark:text-slate-400">Here's what's happening with your office today.</p>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Welcome back, {user?.user_metadata?.full_name?.split(" ")[0] ?? "User"}
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400">
+            Here's what's happening with your office today.
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="hidden sm:flex">
@@ -74,10 +83,30 @@ function DashboardIndex() {
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <StatCard title="Documents" value={stats?.documents ?? 0} icon={FileText} trend="+2 this week" />
-        <StatCard title="Signatures" value={stats?.signatures ?? 0} icon={PenTool} trend="Default set" />
-        <StatCard title="Emails Sent" value={stats?.emails ?? 0} icon={Mail} trend="84% open rate" />
-        <StatCard title="Contacts" value={stats?.contacts ?? 0} icon={Users} trend="+12 this month" />
+        <StatCard
+          title="Documents"
+          value={stats?.documents ?? 0}
+          icon={FileText}
+          trend="+2 this week"
+        />
+        <StatCard
+          title="Signatures"
+          value={stats?.signatures ?? 0}
+          icon={PenTool}
+          trend="Default set"
+        />
+        <StatCard
+          title="Emails Sent"
+          value={stats?.emails ?? 0}
+          icon={Mail}
+          trend="84% open rate"
+        />
+        <StatCard
+          title="Contacts"
+          value={stats?.contacts ?? 0}
+          icon={Users}
+          trend="+12 this month"
+        />
         <StatCard title="Voice Notes" value={stats?.voices ?? 0} icon={Mic} trend="3 transcribed" />
       </div>
 
@@ -96,7 +125,12 @@ function DashboardIndex() {
                 className="group flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 transition-all hover:border-primary/50 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
               >
                 <div className="flex items-center gap-3">
-                  <div className={cn("flex h-10 w-10 items-center justify-center rounded-lg text-white", action.color)}>
+                  <div
+                    className={cn(
+                      "flex h-10 w-10 items-center justify-center rounded-lg text-white",
+                      action.color,
+                    )}
+                  >
                     <action.icon className="h-5 w-5" />
                   </div>
                   <span className="font-medium">{action.name}</span>
@@ -168,14 +202,28 @@ function RecentActivity() {
 
 function humanizeAction(action: string) {
   switch (action) {
-    case "INSERT": return "Created";
-    case "UPDATE": return "Updated";
-    case "DELETE": return "Deleted";
-    default: return action;
+    case "INSERT":
+      return "Created";
+    case "UPDATE":
+      return "Updated";
+    case "DELETE":
+      return "Deleted";
+    default:
+      return action;
   }
 }
 
-function StatCard({ title, value, icon: Icon, trend }: { title: string, value: number, icon: any, trend: string }) {
+function StatCard({
+  title,
+  value,
+  icon: Icon,
+  trend,
+}: {
+  title: string;
+  value: number;
+  icon: any;
+  trend: string;
+}) {
   return (
     <Card className="overflow-hidden">
       <CardContent className="p-6">
@@ -183,7 +231,9 @@ function StatCard({ title, value, icon: Icon, trend }: { title: string, value: n
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
             <Icon className="h-5 w-5 text-slate-600 dark:text-slate-400" />
           </div>
-          <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">{trend}</span>
+          <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+            {trend}
+          </span>
         </div>
         <div className="mt-4">
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{title}</p>

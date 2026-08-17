@@ -22,13 +22,17 @@ function response(body: unknown, status = 200): Response {
 
 function randomHex(byteLength = 32): string {
   const bytes = crypto.getRandomValues(new Uint8Array(byteLength));
-  return Array.from(bytes).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  return Array.from(bytes)
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 async function sha256Hex(value: string | Uint8Array): Promise<string> {
   const bytes = typeof value === "string" ? new TextEncoder().encode(value) : value;
   const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 async function fingerprint(value: string, secret: string): Promise<string> {
@@ -41,16 +45,23 @@ async function fingerprint(value: string, secret: string): Promise<string> {
     ["sign"],
   );
   const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(value));
-  return Array.from(new Uint8Array(signature)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  return Array.from(new Uint8Array(signature))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 function clientIp(req: Request): string {
-  return req.headers.get("cf-connecting-ip")
-    ?? req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-    ?? "";
+  return (
+    req.headers.get("cf-connecting-ip") ??
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    ""
+  );
 }
 
-function decodeSignature(value: string, explicitMime?: string): { bytes: Uint8Array; mime: string; extension: string } {
+function decodeSignature(
+  value: string,
+  explicitMime?: string,
+): { bytes: Uint8Array; mime: string; extension: string } {
   let encoded = value;
   let mime = explicitMime ?? "image/png";
   const match = value.match(/^data:(image\/(?:png|jpeg));base64,(.+)$/i);
@@ -69,7 +80,11 @@ function decodeSignature(value: string, explicitMime?: string): { bytes: Uint8Ar
   return { bytes, mime, extension: mime.toLowerCase() === "image/jpeg" ? "jpg" : "png" };
 }
 
-async function signedAssetUrl(client: any, pathOrUrl: string | null | undefined, expiresIn = 300): Promise<string | null> {
+async function signedAssetUrl(
+  client: any,
+  pathOrUrl: string | null | undefined,
+  expiresIn = 300,
+): Promise<string | null> {
   if (!pathOrUrl) return null;
   if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
   for (const bucket of ["document-versions", "documents", "exports"]) {
@@ -85,7 +100,8 @@ Deno.serve(async (req: Request) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (!supabaseUrl || !serviceKey) return response({ error: "External signing is not configured" }, 500);
+  if (!supabaseUrl || !serviceKey)
+    return response({ error: "External signing is not configured" }, 500);
 
   const service = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
   const ipHash = await fingerprint(clientIp(req), serviceKey);
@@ -117,9 +133,12 @@ Deno.serve(async (req: Request) => {
         p_user_agent_hash: userAgentHash,
       });
       if (exchangeError) throw new Error(exchangeError.message);
-      const { data: payload, error: payloadError } = await service.rpc("get_signing_session_payload", {
-        p_session_hash: sessionHash,
-      });
+      const { data: payload, error: payloadError } = await service.rpc(
+        "get_signing_session_payload",
+        {
+          p_session_hash: sessionHash,
+        },
+      );
       if (payloadError) throw new Error(payloadError.message);
       const sourceRef = payload?.source?.storagePath || payload?.source?.fileUrl;
       return response({
@@ -135,16 +154,23 @@ Deno.serve(async (req: Request) => {
     const sessionHash = await sha256Hex(sessionToken.toLowerCase());
 
     if (action === "payload") {
-      const { data: payload, error } = await service.rpc("get_signing_session_payload", { p_session_hash: sessionHash });
+      const { data: payload, error } = await service.rpc("get_signing_session_payload", {
+        p_session_hash: sessionHash,
+      });
       if (error) throw new Error(error.message);
       const sourceRef = payload?.source?.storagePath || payload?.source?.fileUrl;
-      return response({ payload: { ...payload, sourceUrl: await signedAssetUrl(service, sourceRef) } });
+      return response({
+        payload: { ...payload, sourceUrl: await signedAssetUrl(service, sourceRef) },
+      });
     }
 
     if (action === "upload_signature") {
       const fieldId = String(input?.fieldId ?? "");
       if (!/^[0-9a-f-]{36}$/i.test(fieldId)) throw new Error("A valid signature field is required");
-      const { data: payload, error: payloadError } = await service.rpc("get_signing_session_payload", { p_session_hash: sessionHash });
+      const { data: payload, error: payloadError } = await service.rpc(
+        "get_signing_session_payload",
+        { p_session_hash: sessionHash },
+      );
       if (payloadError) throw new Error(payloadError.message);
       const field = (payload?.fields ?? []).find((candidate: any) => candidate.id === fieldId);
       if (!field || !["signature", "initial"].includes(field.type)) {
@@ -158,10 +184,12 @@ Deno.serve(async (req: Request) => {
         .single();
       if (requestError || !requestRow) throw new Error("Signing request could not be resolved");
       const path = `${requestRow.workspace_id}/requests/${payload.request.id}/${payload.participant.id}/${fieldId}-${randomHex(8)}.${decoded.extension}`;
-      const { error: uploadError } = await service.storage.from("signatures").upload(path, decoded.bytes, {
-        contentType: decoded.mime,
-        upsert: false,
-      });
+      const { error: uploadError } = await service.storage
+        .from("signatures")
+        .upload(path, decoded.bytes, {
+          contentType: decoded.mime,
+          upsert: false,
+        });
       if (uploadError) throw new Error(uploadError.message);
       return response({ signatureStoragePath: path });
     }
@@ -181,16 +209,27 @@ Deno.serve(async (req: Request) => {
 
       let finalization: any = null;
       if (completion?.finalizationQueued) {
-        const { data, error: finalizationError } = await service.functions.invoke("signing-finalize", {
-          body: { requestId: completion?.request?.id },
-        });
+        const { data, error: finalizationError } = await service.functions.invoke(
+          "signing-finalize",
+          {
+            body: { requestId: completion?.request?.id },
+          },
+        );
         if (finalizationError) throw new Error(finalizationError.message);
         finalization = data;
         if (finalization?.finalExportPath) {
-          finalization.finalDownloadUrl = await signedAssetUrl(service, finalization.finalExportPath, 600);
+          finalization.finalDownloadUrl = await signedAssetUrl(
+            service,
+            finalization.finalExportPath,
+            600,
+          );
         }
         if (finalization?.certificatePath) {
-          finalization.certificateDownloadUrl = await signedAssetUrl(service, finalization.certificatePath, 600);
+          finalization.certificateDownloadUrl = await signedAssetUrl(
+            service,
+            finalization.certificatePath,
+            600,
+          );
         }
       }
       return response({ completion, finalization });
