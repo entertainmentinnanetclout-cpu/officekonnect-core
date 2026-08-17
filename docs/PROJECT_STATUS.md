@@ -18,25 +18,32 @@ During Phase 0, the live Supabase project is treated as the authoritative descri
 - Private storage buckets include documents, document-versions, exports, letterheads, signatures and voice-notes.
 - Existing backend foundations: native documents, structured versions, spreadsheets, workflows/review/approval, secure e-signing, notifications, activity logs and workspace membership.
 
-## Phase 0 critical findings
+## Phase 0 critical findings and disposition
 
-1. GitHub migration history was behind the live database. The repo originally stopped at the early-July migration set while the live project contained 31 additional named migrations from 2026-07-25 through 2026-07-28. All 31 are now recovered on the Phase 0 branch.
-2. The deployed signing Edge Functions were not represented in the repository. All three are now checked in.
-3. Generated Supabase TypeScript types are stale relative to the live schema. Fresh live-schema types have been generated and still need to replace the checked-in file and pass build verification.
-4. Storage path conventions had drifted. Live storage RLS expects workspace_id as the first path segment; the document signed-upload helper is now workspace-first and remaining upload surfaces are being audited.
-5. The frontend signing helper predated the hardened signing state machine. It now creates only unlocked drafts; send/cancel lifecycle transitions route through the controlled signing Edge Function path.
-6. The deployed signing certificate contains a stale CCSF branding string; checked-in finalizer source now uses generic OfficeKonnect branding, but production has not been redeployed yet.
-7. The current frontend shell remains V1 product framing and auth UI; development-identity shell work belongs to Phase 1 after reconciliation.
+1. GitHub migration history was behind the live database. The repo originally stopped at the early-July migration set while the live project contained 31 additional named migrations from 2026-07-25 through 2026-07-28. **Resolved on the Phase 0 branch: 31/31 recovered.**
+2. The deployed signing Edge Functions were not represented in the repository. **Resolved: all three are checked in.**
+3. Generated Supabase TypeScript types were stale relative to the live schema. **Resolved in source: the checked-in types were regenerated from the live project. CI compilation is the remaining verification step.**
+4. Storage path conventions had drifted. Live Storage RLS expects `workspace_id` as the first path segment. **Resolved for Documents; Documents, saved signatures and Voice Notes are confirmed workspace-first. Remaining upload surfaces stay under audit.**
+5. The frontend signing helper predated the hardened signing state machine. **Resolved: it now creates only unlocked drafts; send/cancel lifecycle transitions route through the controlled signing action layer.**
+6. The deployed signing certificate contains a stale CCSF branding string. **Checked-in finalizer source now uses generic OfficeKonnect branding; production deployment remains intentionally deferred until branch validation is green.**
+7. A local `.env` file was tracked by Git. It contained browser-publishable Supabase configuration only, not a service-role secret. **Resolved on the branch: `.env` removed, environment files ignored, `.env.example` added.**
+8. The repository had no executable reconciliation gate. **Resolved structurally: Phase 0 CI now checks canonical source parity, lint, TypeScript and production build.**
+9. The repository currently has no committed npm lockfile. **Open reproducibility item:** CI uses `npm install` rather than deterministic `npm ci` until a canonical lockfile is generated and committed.
+10. The current frontend shell remains V1 product framing and auth UI. **Intentionally deferred to Phase 1.**
 
 ## Reconciliation progress
 
 - **31/31 missing live migrations recovered** with their original version numbers, names and applied SQL.
 - All three deployed signing Edge Functions are represented in repository source.
+- Live Supabase TypeScript types are committed, including workflow/signing tables, view, RPCs and enums.
 - `src/lib/documents.functions.ts` uses the workspace-first storage contract required by live Storage RLS.
-- Signature upload UI already uses workspace-first storage paths.
+- Document upload, saved-signature upload and Voice Note upload paths are confirmed workspace-first.
 - `src/lib/signing.functions.ts` no longer creates requests directly as `sent` or directly forces cancellation state.
-- The legacy signing dialog now correctly reports draft creation rather than claiming the request was sent.
-- Canonical TypeScript types have been generated from the live project and are awaiting repository replacement/build verification.
+- The legacy signing dialog correctly reports draft creation rather than claiming the request was sent.
+- `.env` is no longer tracked and `.env.example` documents safe configuration names.
+- `scripts/check-phase0-parity.mjs` asserts the recovered migration/function/documentation source remains present.
+- `.github/workflows/phase0-validation.yml` provides an executable Phase 0 gate.
+- Vercel successfully deployed an earlier reconciled head after the major schema/type changes; the latest head is revalidating after CI/parity additions.
 - Draft PR #2 tracks the Phase 0 reconciliation against `main`.
 
 ## Phase 0 completion checklist
@@ -46,13 +53,17 @@ During Phase 0, the live Supabase project is treated as the authoritative descri
 - [x] Audit live tables, RLS, storage, RPCs and deployed signing Edge Functions.
 - [x] Recover all missing live migration SQL into `supabase/migrations/` with original versions/names. **31/31 recovered.**
 - [x] Check in all deployed Edge Function source.
-- [x] Remove stale non-OfficeKonnect branding from checked-in signing finalizer source. **Production deployment intentionally deferred until parity review.**
-- [ ] Replace checked-in Supabase TypeScript types with the freshly generated live-schema types and build-check them.
+- [x] Remove stale non-OfficeKonnect branding from checked-in signing finalizer source. **Production deployment intentionally deferred until validation is green.**
+- [x] Replace checked-in Supabase TypeScript types with freshly generated live-schema types.
+- [ ] Obtain a green TypeScript/build verification run against those generated types.
 - [x] Normalize document signed-upload storage helper to `{workspace_id}/{user_id}/...`.
 - [ ] Finish audit of all remaining storage/upload helpers for the same canonical convention.
 - [x] Replace obsolete frontend signing lifecycle mutations with draft creation plus hardened send/cancel action contracts.
-- [ ] Add parity checks/documentation for migration ledger and Edge Functions.
-- [ ] Run build, lint and schema/security checks before Phase 0 merge.
+- [x] Add repository parity checks for recovered migrations, Edge Functions and canonical documentation.
+- [x] Remove tracked `.env` and add safe environment-file hygiene.
+- [ ] Generate and commit a deterministic npm lockfile so CI can use `npm ci`.
+- [ ] Obtain green parity, lint, TypeScript and production-build CI before Phase 0 merge.
+- [ ] Re-run Supabase security/performance advisors at the final Phase 0 checkpoint and document intentional warnings.
 
 ## Non-goals for Phase 0
 
