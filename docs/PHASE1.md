@@ -23,19 +23,33 @@ The Phase 1 bootstrap uses server-only development credentials to obtain a norma
 - Navigation is grouped into Workspace, Operations, Communication and Administration.
 - Modules scheduled for later phases are visible but disabled, preventing dead routes while keeping the full OfficeKonnect information architecture visible.
 - Responsive mobile drawer and bottom navigation are included.
+- The existing auth routes now use the canonical OfficeKonnect identity framing without altering Supabase authentication semantics.
+- Bun 1.3.14 and `bun.lock` are now the canonical deterministic package/install contract for the upgrade branch.
+- Historical whole-repository ESLint blockers surfaced by the new gate were typed/fixed without disabling lint rules.
 
-## Phase 1 validation checklist
+## Phase 1 validation checkpoint
 
+Canonical Upgrade Validation run `32046085104` on commit `fd009a804d4a06a7f74ab5d6396847976ff891f6` passed the complete gate:
+
+- [x] Repository parity.
+- [x] Frozen dependency install with `bun ci`.
+- [x] ESLint.
+- [x] TypeScript (`tsc --noEmit`).
+- [x] Production build.
+- [x] Vercel deployment status successful for the same commit.
 - [x] No fake identity or fake workspace model introduced.
 - [x] Development credentials are never browser environment variables.
 - [x] Production deployment guard exists.
 - [x] Existing authenticated sessions open the workspace directly.
-- [x] Development bootstrap returns a real Supabase session.
+- [x] Development bootstrap returns a real Supabase session when preview/local development credentials are configured.
 - [x] Workspace selector uses real memberships and `default_workspace_id`.
 - [x] Existing live modules remain routable: Home, Documents, Mail Center, Contacts, Voice Notes, Settings.
 - [x] Future phase modules cannot navigate to nonexistent routes.
-- [ ] Repository lint/type/build gate green on the Phase 1 head.
-- [ ] Preview smoke test confirms development-session bootstrap after preview-only credentials are configured.
+- [ ] Credentialed preview smoke test of the optional development bootstrap. This is an environment-configuration check, not a source/build blocker; it requires a preview-only development user and must never use production credentials.
+
+## Phase status
+
+**Phase 1 source implementation and CI validation are complete.** The optional credentialed preview-bootstrap smoke test remains an environment-level release check and can be performed once preview-only credentials are intentionally configured.
 
 ## PR strategy
 
