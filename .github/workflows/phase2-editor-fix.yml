@@ -1,4 +1,4 @@
-name: Phase 2 Source Normalize
+name: Phase 2 Renderer Type Fix
 on:
   push:
     branches: [phase-0-canonical-reconciliation]
@@ -6,7 +6,7 @@ on:
 permissions:
   contents: write
 jobs:
-  normalize:
+  fix:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
@@ -17,42 +17,25 @@ jobs:
         with:
           bun-version: 1.3.14
       - run: bun ci
-      - name: Correct Phase 2 source
+      - name: Narrow paragraph block explicitly
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('src/components/document/uploaded-document-workspace.tsx')
+          p=Path('src/lib/native-document-pdf.server.ts')
           s=p.read_text()
-          s=s.replace('import { useEffect, useMemo, useState } from "react";', 'import { useEffect, useMemo, useState, type MouseEvent } from "react";')
-          s=s.replace('onClick={(event: React.MouseEvent) => event.stopPropagation()}', 'onClick={(event: MouseEvent) => event.stopPropagation()}')
-          p.write_text(s)
-          p=Path('src/routes/dashboard/documents/index.tsx')
-          s=p.read_text().replace('  ArrowDownAZ,\n', '')
-          s=s.replace('\n      <span className="sr-only"><ArrowDownAZ /> Documents are sorted using the selected sort control.</span>', '')
-          p.write_text(s)
+          old='''  return drawTextBlock(state, htmlToPlainText(block.html), {\n    size: 10.5,\n    lineHeight: 14.5,\n    after: 6,\n  });\n}'''
+          new='''  if (block.type === "paragraph") {\n    return drawTextBlock(state, htmlToPlainText(block.html), {\n      size: 10.5,\n      lineHeight: 14.5,\n      after: 6,\n    });\n  }\n\n  return state;\n}'''
+          if old not in s:
+            raise SystemExit('Expected PDF paragraph branch not found')
+          p.write_text(s.replace(old,new,1))
           PY
-      - name: Format and autofix
-        run: |
-          FILES=(
-            src/lib/native-document.ts
-            src/lib/native-document-pdf.server.ts
-            src/lib/documents.functions.ts
-            src/lib/download.ts
-            src/components/document/native-document-editor.tsx
-            src/components/document/uploaded-document-workspace.tsx
-            'src/routes/dashboard/documents/$documentId.tsx'
-            src/routes/dashboard/documents/index.tsx
-          )
-          bunx prettier --write "${FILES[@]}"
-          bunx eslint "${FILES[@]}" --fix
-      - name: Commit normalized source
+          bunx prettier --write src/lib/native-document-pdf.server.ts
+          bunx eslint src/lib/native-document-pdf.server.ts
+          bun run typecheck
+      - name: Commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/lib/native-document.ts src/lib/native-document-pdf.server.ts src/lib/documents.functions.ts src/lib/download.ts src/components/document/native-document-editor.tsx src/components/document/uploaded-document-workspace.tsx 'src/routes/dashboard/documents/$documentId.tsx' src/routes/dashboard/documents/index.tsx
-          if git diff --cached --quiet; then
-            echo "No normalization changes required."
-          else
-            git commit -m "style(phase2): normalize document workspace source"
-            git push origin HEAD:phase-0-canonical-reconciliation
-          fi
+          git add src/lib/native-document-pdf.server.ts
+          git commit -m "fix(phase2): narrow PDF paragraph rendering"
+          git push origin HEAD:phase-0-canonical-reconciliation
