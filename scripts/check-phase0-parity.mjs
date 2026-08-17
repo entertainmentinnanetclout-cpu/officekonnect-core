@@ -52,10 +52,14 @@ const requiredPaths = [
   ".env.example",
 ];
 
-const missing = requiredPaths.filter((path) => !existsSync(resolve(process.cwd(), path)));
+const missing = requiredPaths.filter(
+  (path) => !existsSync(resolve(process.cwd(), path)),
+);
 
 if (existsSync(resolve(process.cwd(), ".env"))) {
-  console.error("Phase 0 parity check failed: .env must not be committed/tracked in the repository checkout.");
+  console.error(
+    "Phase 0 parity check failed: .env must not be committed/tracked in the repository checkout.",
+  );
   process.exit(1);
 }
 
@@ -65,4 +69,6 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
-console.log(`Phase 0 parity check passed: ${requiredMigrations.length}/${requiredMigrations.length} recovered migrations and canonical signing source are present.`);
+console.log(
+  `Phase 0 parity check passed: ${requiredMigrations.length}/${requiredMigrations.length} recovered migrations and canonical signing source are present.`,
+);
