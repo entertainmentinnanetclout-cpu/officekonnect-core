@@ -522,33 +522,120 @@ export type Database = {
           },
         ]
       }
+      document_templates: {
+        Row: {
+          category: string
+          content: Json
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_archived: boolean
+          letterhead_id: string | null
+          name: string
+          template_kind: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          category?: string
+          content?: Json
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_archived?: boolean
+          letterhead_id?: string | null
+          name: string
+          template_kind?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          category?: string
+          content?: Json
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_archived?: boolean
+          letterhead_id?: string | null
+          name?: string
+          template_kind?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_templates_letterhead_id_fkey"
+            columns: ["letterhead_id"]
+            isOneToOne: false
+            referencedRelation: "letterheads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_templates_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_versions: {
         Row: {
+          calculation_version: number | null
+          cell_count: number | null
+          change_summary: string | null
+          content: Json | null
           created_at: string
           created_by: string | null
           document_id: string
-          file_url: string
+          file_url: string | null
+          formula_count: number | null
           id: string
+          letterhead_id: string | null
+          sheet_count: number | null
           storage_path: string | null
+          title: string | null
           version_number: number
+          word_count: number | null
         }
         Insert: {
+          calculation_version?: number | null
+          cell_count?: number | null
+          change_summary?: string | null
+          content?: Json | null
           created_at?: string
           created_by?: string | null
           document_id: string
-          file_url: string
+          file_url?: string | null
+          formula_count?: number | null
           id?: string
+          letterhead_id?: string | null
+          sheet_count?: number | null
           storage_path?: string | null
+          title?: string | null
           version_number: number
+          word_count?: number | null
         }
         Update: {
+          calculation_version?: number | null
+          cell_count?: number | null
+          change_summary?: string | null
+          content?: Json | null
           created_at?: string
           created_by?: string | null
           document_id?: string
-          file_url?: string
+          file_url?: string | null
+          formula_count?: number | null
           id?: string
+          letterhead_id?: string | null
+          sheet_count?: number | null
           storage_path?: string | null
+          title?: string | null
           version_number?: number
+          word_count?: number | null
         }
         Relationships: [
           {
@@ -558,58 +645,115 @@ export type Database = {
             referencedRelation: "documents"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "document_versions_letterhead_id_fkey"
+            columns: ["letterhead_id"]
+            isOneToOne: false
+            referencedRelation: "letterheads"
+            referencedColumns: ["id"]
+          },
         ]
       }
       documents: {
         Row: {
+          calculation_version: number
+          cell_count: number
+          content: Json
           created_at: string
           created_by: string
           current_file_url: string | null
           description: string | null
+          document_kind: string
           document_status: Database["public"]["Enums"]["document_status"]
+          editor_version: number
           file_size: number | null
           file_type: string | null
+          formula_count: number
           id: string
+          last_calculated_at: string | null
+          last_saved_by: string | null
+          letterhead_id: string | null
           original_file_url: string | null
           page_count: number | null
+          sheet_count: number
           storage_path: string | null
+          template_id: string | null
           title: string
           updated_at: string
+          word_count: number
           workspace_id: string
         }
         Insert: {
+          calculation_version?: number
+          cell_count?: number
+          content?: Json
           created_at?: string
           created_by: string
           current_file_url?: string | null
           description?: string | null
+          document_kind?: string
           document_status?: Database["public"]["Enums"]["document_status"]
+          editor_version?: number
           file_size?: number | null
           file_type?: string | null
+          formula_count?: number
           id?: string
+          last_calculated_at?: string | null
+          last_saved_by?: string | null
+          letterhead_id?: string | null
           original_file_url?: string | null
           page_count?: number | null
+          sheet_count?: number
           storage_path?: string | null
+          template_id?: string | null
           title: string
           updated_at?: string
+          word_count?: number
           workspace_id: string
         }
         Update: {
+          calculation_version?: number
+          cell_count?: number
+          content?: Json
           created_at?: string
           created_by?: string
           current_file_url?: string | null
           description?: string | null
+          document_kind?: string
           document_status?: Database["public"]["Enums"]["document_status"]
+          editor_version?: number
           file_size?: number | null
           file_type?: string | null
+          formula_count?: number
           id?: string
+          last_calculated_at?: string | null
+          last_saved_by?: string | null
+          letterhead_id?: string | null
           original_file_url?: string | null
           page_count?: number | null
+          sheet_count?: number
           storage_path?: string | null
+          template_id?: string | null
           title?: string
           updated_at?: string
+          word_count?: number
           workspace_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "documents_letterhead_id_fkey"
+            columns: ["letterhead_id"]
+            isOneToOne: false
+            referencedRelation: "letterheads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "document_templates"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "documents_workspace_id_fkey"
             columns: ["workspace_id"]
@@ -1004,34 +1148,88 @@ export type Database = {
           },
         ]
       }
+      signing_certificates: {
+        Row: {
+          certificate_path: string
+          certificate_sha256: string
+          created_at: string
+          id: string
+          manifest: Json
+          request_id: string
+          workspace_id: string
+        }
+        Insert: {
+          certificate_path: string
+          certificate_sha256: string
+          created_at?: string
+          id?: string
+          manifest: Json
+          request_id: string
+          workspace_id: string
+        }
+        Update: {
+          certificate_path?: string
+          certificate_sha256?: string
+          created_at?: string
+          id?: string
+          manifest?: Json
+          request_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signing_certificates_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: true
+            referencedRelation: "signing_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signing_certificates_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       signing_events: {
         Row: {
           actor_id: string | null
           created_at: string
+          event_hash: string | null
+          event_source: string
           event_type: string
           id: string
           ip: string | null
           metadata: Json
+          previous_event_hash: string | null
           request_id: string
           user_agent: string | null
         }
         Insert: {
           actor_id?: string | null
           created_at?: string
+          event_hash?: string | null
+          event_source?: string
           event_type: string
           id?: string
           ip?: string | null
           metadata?: Json
+          previous_event_hash?: string | null
           request_id: string
           user_agent?: string | null
         }
         Update: {
           actor_id?: string | null
           created_at?: string
+          event_hash?: string | null
+          event_source?: string
           event_type?: string
           id?: string
           ip?: string | null
           metadata?: Json
+          previous_event_hash?: string | null
           request_id?: string
           user_agent?: string | null
         }
@@ -1047,55 +1245,73 @@ export type Database = {
       }
       signing_fields: {
         Row: {
+          completion_metadata: Json
           created_at: string
+          field_key: string
           h: number
           id: string
+          label: string | null
           page: number
           participant_id: string
           request_id: string
           required: boolean
           rotation: number
+          signature_storage_path: string | null
           signed_at: string | null
           signed_signature_id: string | null
           type: Database["public"]["Enums"]["signing_field_type"]
           updated_at: string
+          validation: Json
           value: string | null
+          value_hash: string | null
           w: number
           x: number
           y: number
         }
         Insert: {
+          completion_metadata?: Json
           created_at?: string
+          field_key?: string
           h?: number
           id?: string
+          label?: string | null
           page?: number
           participant_id: string
           request_id: string
           required?: boolean
           rotation?: number
+          signature_storage_path?: string | null
           signed_at?: string | null
           signed_signature_id?: string | null
           type?: Database["public"]["Enums"]["signing_field_type"]
           updated_at?: string
+          validation?: Json
           value?: string | null
+          value_hash?: string | null
           w?: number
           x?: number
           y?: number
         }
         Update: {
+          completion_metadata?: Json
           created_at?: string
+          field_key?: string
           h?: number
           id?: string
+          label?: string | null
           page?: number
           participant_id?: string
           request_id?: string
           required?: boolean
           rotation?: number
+          signature_storage_path?: string | null
           signed_at?: string | null
           signed_signature_id?: string | null
           type?: Database["public"]["Enums"]["signing_field_type"]
           updated_at?: string
+          validation?: Json
           value?: string | null
+          value_hash?: string | null
           w?: number
           x?: number
           y?: number
@@ -1107,6 +1323,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "signing_participants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signing_fields_participant_request_fkey"
+            columns: ["participant_id", "request_id"]
+            isOneToOne: false
+            referencedRelation: "signing_participants"
+            referencedColumns: ["id", "request_id"]
           },
           {
             foreignKeyName: "signing_fields_request_id_fkey"
@@ -1126,46 +1349,85 @@ export type Database = {
       }
       signing_participants: {
         Row: {
+          access_revoked_at: string | null
+          completed_at: string | null
+          completion_hash: string | null
+          consent_at: string | null
+          consent_text_version: string | null
           created_at: string
           decline_reason: string | null
+          declined_at: string | null
           email: string | null
           full_name: string | null
           id: string
+          identity_metadata: Json
+          invited_at: string | null
+          last_access_at: string | null
+          last_notified_at: string | null
+          last_reminded_at: string | null
           order_index: number
           request_id: string
           role: Database["public"]["Enums"]["signing_participant_role"]
           signed_at: string | null
           status: Database["public"]["Enums"]["signing_participant_status"]
+          token_version: number
           updated_at: string
           user_id: string | null
+          viewed_at: string | null
         }
         Insert: {
+          access_revoked_at?: string | null
+          completed_at?: string | null
+          completion_hash?: string | null
+          consent_at?: string | null
+          consent_text_version?: string | null
           created_at?: string
           decline_reason?: string | null
+          declined_at?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
+          identity_metadata?: Json
+          invited_at?: string | null
+          last_access_at?: string | null
+          last_notified_at?: string | null
+          last_reminded_at?: string | null
           order_index?: number
           request_id: string
           role?: Database["public"]["Enums"]["signing_participant_role"]
           signed_at?: string | null
           status?: Database["public"]["Enums"]["signing_participant_status"]
+          token_version?: number
           updated_at?: string
           user_id?: string | null
+          viewed_at?: string | null
         }
         Update: {
+          access_revoked_at?: string | null
+          completed_at?: string | null
+          completion_hash?: string | null
+          consent_at?: string | null
+          consent_text_version?: string | null
           created_at?: string
           decline_reason?: string | null
+          declined_at?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
+          identity_metadata?: Json
+          invited_at?: string | null
+          last_access_at?: string | null
+          last_notified_at?: string | null
+          last_reminded_at?: string | null
           order_index?: number
           request_id?: string
           role?: Database["public"]["Enums"]["signing_participant_role"]
           signed_at?: string | null
           status?: Database["public"]["Enums"]["signing_participant_status"]
+          token_version?: number
           updated_at?: string
           user_id?: string | null
+          viewed_at?: string | null
         }
         Relationships: [
           {
@@ -1180,47 +1442,104 @@ export type Database = {
       signing_requests: {
         Row: {
           app_source: string
+          audit_certificate_path: string | null
+          audit_certificate_sha256: string | null
           completed_at: string | null
           created_at: string
+          current_order_index: number
           document_id: string
+          expires_at: string | null
+          fields_hash: string | null
+          final_document_version_id: string | null
           final_export_path: string | null
+          final_export_sha256: string | null
+          finalization_error: Json | null
+          finalization_status: string
+          finalized_at: string | null
           id: string
+          locked_at: string | null
           message: string | null
+          participants_hash: string | null
+          revision: number
           sender_id: string
           sent_at: string | null
+          signing_order: string
+          source_document_version_id: string | null
+          source_sha256: string | null
           status: Database["public"]["Enums"]["signing_request_status"]
           title: string
           updated_at: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
           workspace_id: string
         }
         Insert: {
           app_source?: string
+          audit_certificate_path?: string | null
+          audit_certificate_sha256?: string | null
           completed_at?: string | null
           created_at?: string
+          current_order_index?: number
           document_id: string
+          expires_at?: string | null
+          fields_hash?: string | null
+          final_document_version_id?: string | null
           final_export_path?: string | null
+          final_export_sha256?: string | null
+          finalization_error?: Json | null
+          finalization_status?: string
+          finalized_at?: string | null
           id?: string
+          locked_at?: string | null
           message?: string | null
+          participants_hash?: string | null
+          revision?: number
           sender_id: string
           sent_at?: string | null
+          signing_order?: string
+          source_document_version_id?: string | null
+          source_sha256?: string | null
           status?: Database["public"]["Enums"]["signing_request_status"]
           title: string
           updated_at?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
           workspace_id: string
         }
         Update: {
           app_source?: string
+          audit_certificate_path?: string | null
+          audit_certificate_sha256?: string | null
           completed_at?: string | null
           created_at?: string
+          current_order_index?: number
           document_id?: string
+          expires_at?: string | null
+          fields_hash?: string | null
+          final_document_version_id?: string | null
           final_export_path?: string | null
+          final_export_sha256?: string | null
+          finalization_error?: Json | null
+          finalization_status?: string
+          finalized_at?: string | null
           id?: string
+          locked_at?: string | null
           message?: string | null
+          participants_hash?: string | null
+          revision?: number
           sender_id?: string
           sent_at?: string | null
+          signing_order?: string
+          source_document_version_id?: string | null
+          source_sha256?: string | null
           status?: Database["public"]["Enums"]["signing_request_status"]
           title?: string
           updated_at?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
           workspace_id?: string
         }
         Relationships: [
@@ -1229,6 +1548,20 @@ export type Database = {
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signing_requests_final_document_version_id_fkey"
+            columns: ["final_document_version_id"]
+            isOneToOne: false
+            referencedRelation: "document_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signing_requests_source_document_version_id_fkey"
+            columns: ["source_document_version_id"]
+            isOneToOne: false
+            referencedRelation: "document_versions"
             referencedColumns: ["id"]
           },
           {
@@ -1243,29 +1576,53 @@ export type Database = {
       signing_tokens: {
         Row: {
           created_at: string
+          created_by: string | null
           expires_at: string
+          first_used_at: string | null
           id: string
+          last_used_at: string | null
           participant_id: string
+          purpose: string
           request_id: string
+          revoked_at: string | null
+          rotated_from_id: string | null
           token_hash: string
+          token_version: number
+          use_count: number
           used_at: string | null
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           expires_at: string
+          first_used_at?: string | null
           id?: string
+          last_used_at?: string | null
           participant_id: string
+          purpose?: string
           request_id: string
+          revoked_at?: string | null
+          rotated_from_id?: string | null
           token_hash: string
+          token_version?: number
+          use_count?: number
           used_at?: string | null
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           expires_at?: string
+          first_used_at?: string | null
           id?: string
+          last_used_at?: string | null
           participant_id?: string
+          purpose?: string
           request_id?: string
+          revoked_at?: string | null
+          rotated_from_id?: string | null
           token_hash?: string
+          token_version?: number
+          use_count?: number
           used_at?: string | null
         }
         Relationships: [
@@ -1277,10 +1634,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "signing_tokens_participant_request_fkey"
+            columns: ["participant_id", "request_id"]
+            isOneToOne: false
+            referencedRelation: "signing_participants"
+            referencedColumns: ["id", "request_id"]
+          },
+          {
             foreignKeyName: "signing_tokens_request_id_fkey"
             columns: ["request_id"]
             isOneToOne: false
             referencedRelation: "signing_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signing_tokens_rotated_from_id_fkey"
+            columns: ["rotated_from_id"]
+            isOneToOne: false
+            referencedRelation: "signing_tokens"
             referencedColumns: ["id"]
           },
         ]
@@ -1594,6 +1965,584 @@ export type Database = {
           },
         ]
       }
+      workflow_comments: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          is_resolved: boolean
+          parent_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          run_id: string
+          step_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          is_resolved?: boolean
+          parent_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          run_id: string
+          step_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          is_resolved?: boolean
+          parent_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          run_id?: string
+          step_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_comments_parent_run_fkey"
+            columns: ["parent_id", "run_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_comments"
+            referencedColumns: ["id", "run_id"]
+          },
+          {
+            foreignKeyName: "workflow_comments_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_comments_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_work_queue"
+            referencedColumns: ["run_id"]
+          },
+          {
+            foreignKeyName: "workflow_comments_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_comments_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_work_queue"
+            referencedColumns: ["step_id"]
+          },
+          {
+            foreignKeyName: "workflow_comments_step_run_fkey"
+            columns: ["step_id", "run_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_steps"
+            referencedColumns: ["id", "run_id"]
+          },
+        ]
+      }
+      workflow_decisions: {
+        Row: {
+          actor_id: string
+          assignment_id: string
+          comment: string | null
+          created_at: string
+          decision: string
+          id: string
+          run_id: string
+          step_id: string
+          workflow_revision: number
+        }
+        Insert: {
+          actor_id: string
+          assignment_id: string
+          comment?: string | null
+          created_at?: string
+          decision: string
+          id?: string
+          run_id: string
+          step_id: string
+          workflow_revision: number
+        }
+        Update: {
+          actor_id?: string
+          assignment_id?: string
+          comment?: string | null
+          created_at?: string
+          decision?: string
+          id?: string
+          run_id?: string
+          step_id?: string
+          workflow_revision?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_decisions_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_step_assignees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_decisions_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_work_queue"
+            referencedColumns: ["assignment_id"]
+          },
+          {
+            foreignKeyName: "workflow_decisions_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_decisions_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_work_queue"
+            referencedColumns: ["run_id"]
+          },
+          {
+            foreignKeyName: "workflow_decisions_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_decisions_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_work_queue"
+            referencedColumns: ["step_id"]
+          },
+        ]
+      }
+      workflow_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          data: Json
+          event_type: string
+          from_status: string | null
+          id: string
+          run_id: string
+          step_id: string | null
+          to_status: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          data?: Json
+          event_type: string
+          from_status?: string | null
+          id?: string
+          run_id: string
+          step_id?: string | null
+          to_status?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          data?: Json
+          event_type?: string
+          from_status?: string | null
+          id?: string
+          run_id?: string
+          step_id?: string | null
+          to_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_events_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_events_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_work_queue"
+            referencedColumns: ["run_id"]
+          },
+          {
+            foreignKeyName: "workflow_events_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_events_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_work_queue"
+            referencedColumns: ["step_id"]
+          },
+        ]
+      }
+      workflow_runs: {
+        Row: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          completed_at: string | null
+          created_at: string
+          current_step_order: number
+          document_editor_version_at_submission: number
+          document_id: string
+          document_version_id: string
+          due_at: string | null
+          id: string
+          metadata: Json
+          started_at: string
+          started_by: string
+          status: string
+          template_id: string | null
+          template_version: number | null
+          title: string
+          updated_at: string
+          workflow_revision: number
+          workspace_id: string
+        }
+        Insert: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          completed_at?: string | null
+          created_at?: string
+          current_step_order?: number
+          document_editor_version_at_submission: number
+          document_id: string
+          document_version_id: string
+          due_at?: string | null
+          id?: string
+          metadata?: Json
+          started_at?: string
+          started_by: string
+          status?: string
+          template_id?: string | null
+          template_version?: number | null
+          title: string
+          updated_at?: string
+          workflow_revision?: number
+          workspace_id: string
+        }
+        Update: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          completed_at?: string | null
+          created_at?: string
+          current_step_order?: number
+          document_editor_version_at_submission?: number
+          document_id?: string
+          document_version_id?: string
+          due_at?: string | null
+          id?: string
+          metadata?: Json
+          started_at?: string
+          started_by?: string
+          status?: string
+          template_id?: string | null
+          template_version?: number | null
+          title?: string
+          updated_at?: string
+          workflow_revision?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_runs_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_runs_document_version_id_fkey"
+            columns: ["document_version_id"]
+            isOneToOne: false
+            referencedRelation: "document_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_runs_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_runs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_step_assignees: {
+        Row: {
+          assigned_by: string
+          created_at: string
+          decided_at: string | null
+          decision_comment: string | null
+          id: string
+          participant_role: string
+          status: string
+          step_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_by: string
+          created_at?: string
+          decided_at?: string | null
+          decision_comment?: string | null
+          id?: string
+          participant_role: string
+          status?: string
+          step_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_by?: string
+          created_at?: string
+          decided_at?: string | null
+          decision_comment?: string | null
+          id?: string
+          participant_role?: string
+          status?: string
+          step_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_step_assignees_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_step_assignees_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_work_queue"
+            referencedColumns: ["step_id"]
+          },
+        ]
+      }
+      workflow_steps: {
+        Row: {
+          allow_changes: boolean
+          allow_reject: boolean
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          due_at: string | null
+          id: string
+          metadata: Json
+          name: string
+          required_decisions: number
+          run_id: string
+          started_at: string | null
+          status: string
+          step_order: number
+          step_type: string
+          updated_at: string
+        }
+        Insert: {
+          allow_changes?: boolean
+          allow_reject?: boolean
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_at?: string | null
+          id?: string
+          metadata?: Json
+          name: string
+          required_decisions?: number
+          run_id: string
+          started_at?: string | null
+          status?: string
+          step_order: number
+          step_type: string
+          updated_at?: string
+        }
+        Update: {
+          allow_changes?: boolean
+          allow_reject?: boolean
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_at?: string | null
+          id?: string
+          metadata?: Json
+          name?: string
+          required_decisions?: number
+          run_id?: string
+          started_at?: string | null
+          status?: string
+          step_order?: number
+          step_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_steps_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_steps_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_work_queue"
+            referencedColumns: ["run_id"]
+          },
+        ]
+      }
+      workflow_template_steps: {
+        Row: {
+          allow_changes: boolean
+          allow_reject: boolean
+          assigned_user_id: string | null
+          assigned_workspace_role:
+            | Database["public"]["Enums"]["workspace_role"]
+            | null
+          assignment_mode: string
+          created_at: string
+          description: string | null
+          due_in_hours: number | null
+          id: string
+          name: string
+          required_decisions: number
+          step_order: number
+          step_type: string
+          template_id: string
+          updated_at: string
+        }
+        Insert: {
+          allow_changes?: boolean
+          allow_reject?: boolean
+          assigned_user_id?: string | null
+          assigned_workspace_role?:
+            | Database["public"]["Enums"]["workspace_role"]
+            | null
+          assignment_mode: string
+          created_at?: string
+          description?: string | null
+          due_in_hours?: number | null
+          id?: string
+          name: string
+          required_decisions?: number
+          step_order: number
+          step_type: string
+          template_id: string
+          updated_at?: string
+        }
+        Update: {
+          allow_changes?: boolean
+          allow_reject?: boolean
+          assigned_user_id?: string | null
+          assigned_workspace_role?:
+            | Database["public"]["Enums"]["workspace_role"]
+            | null
+          assignment_mode?: string
+          created_at?: string
+          description?: string | null
+          due_in_hours?: number | null
+          id?: string
+          name?: string
+          required_decisions?: number
+          step_order?: number
+          step_type?: string
+          template_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_template_steps_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_templates: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          entity_type: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          version: number
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          entity_type?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          version?: number
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          entity_type?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          version?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_templates_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_members: {
         Row: {
           created_at: string
@@ -1685,9 +2634,130 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      workflow_work_queue: {
+        Row: {
+          assignment_id: string | null
+          assignment_status: string | null
+          document_id: string | null
+          document_kind: string | null
+          document_title: string | null
+          document_version_id: string | null
+          due_at: string | null
+          participant_role: string | null
+          run_id: string | null
+          started_at: string | null
+          started_by: string | null
+          step_id: string | null
+          step_name: string | null
+          step_order: number | null
+          step_type: string | null
+          updated_at: string | null
+          workflow_revision: number | null
+          workflow_status: string | null
+          workflow_title: string | null
+          workspace_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_runs_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_runs_document_version_id_fkey"
+            columns: ["document_version_id"]
+            isOneToOne: false
+            referencedRelation: "document_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_runs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      cancel_document_workflow: {
+        Args: { p_reason: string; p_run_id: string }
+        Returns: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          completed_at: string | null
+          created_at: string
+          current_step_order: number
+          document_editor_version_at_submission: number
+          document_id: string
+          document_version_id: string
+          due_at: string | null
+          id: string
+          metadata: Json
+          started_at: string
+          started_by: string
+          status: string
+          template_id: string | null
+          template_version: number | null
+          title: string
+          updated_at: string
+          workflow_revision: number
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "workflow_runs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      cancel_signing_request: {
+        Args: { p_reason: string; p_request_id: string }
+        Returns: {
+          app_source: string
+          audit_certificate_path: string | null
+          audit_certificate_sha256: string | null
+          completed_at: string | null
+          created_at: string
+          current_order_index: number
+          document_id: string
+          expires_at: string | null
+          fields_hash: string | null
+          final_document_version_id: string | null
+          final_export_path: string | null
+          final_export_sha256: string | null
+          finalization_error: Json | null
+          finalization_status: string
+          finalized_at: string | null
+          id: string
+          locked_at: string | null
+          message: string | null
+          participants_hash: string | null
+          revision: number
+          sender_id: string
+          sent_at: string | null
+          signing_order: string
+          source_document_version_id: string | null
+          source_sha256: string | null
+          status: Database["public"]["Enums"]["signing_request_status"]
+          title: string
+          updated_at: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "signing_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       claim_jobs: {
         Args: {
           p_kinds?: Database["public"]["Enums"]["job_kind"][]
@@ -1719,6 +2789,532 @@ export type Database = {
           to: "jobs"
           isOneToOne: false
           isSetofReturn: true
+        }
+      }
+      claim_signing_finalization: {
+        Args: { p_request_id: string }
+        Returns: Json
+      }
+      complete_external_signing_session: {
+        Args: {
+          p_consent_text_version: string
+          p_field_values: Json
+          p_ip_hash: string
+          p_session_hash: string
+          p_user_agent_hash: string
+        }
+        Returns: Json
+      }
+      complete_signing_finalization: {
+        Args: {
+          p_certificate_path: string
+          p_certificate_sha256: string
+          p_final_export_path: string
+          p_final_export_sha256: string
+          p_manifest: Json
+          p_request_id: string
+          p_source_sha256: string
+        }
+        Returns: {
+          app_source: string
+          audit_certificate_path: string | null
+          audit_certificate_sha256: string | null
+          completed_at: string | null
+          created_at: string
+          current_order_index: number
+          document_id: string
+          expires_at: string | null
+          fields_hash: string | null
+          final_document_version_id: string | null
+          final_export_path: string | null
+          final_export_sha256: string | null
+          finalization_error: Json | null
+          finalization_status: string
+          finalized_at: string | null
+          id: string
+          locked_at: string | null
+          message: string | null
+          participants_hash: string | null
+          revision: number
+          sender_id: string
+          sent_at: string | null
+          signing_order: string
+          source_document_version_id: string | null
+          source_sha256: string | null
+          status: Database["public"]["Enums"]["signing_request_status"]
+          title: string
+          updated_at: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "signing_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      complete_signing_participant: {
+        Args: {
+          p_consent_text_version: string
+          p_field_values: Json
+          p_participant_id: string
+        }
+        Returns: Json
+      }
+      decline_external_signing_session: {
+        Args: { p_reason: string; p_session_hash: string }
+        Returns: {
+          app_source: string
+          audit_certificate_path: string | null
+          audit_certificate_sha256: string | null
+          completed_at: string | null
+          created_at: string
+          current_order_index: number
+          document_id: string
+          expires_at: string | null
+          fields_hash: string | null
+          final_document_version_id: string | null
+          final_export_path: string | null
+          final_export_sha256: string | null
+          finalization_error: Json | null
+          finalization_status: string
+          finalized_at: string | null
+          id: string
+          locked_at: string | null
+          message: string | null
+          participants_hash: string | null
+          revision: number
+          sender_id: string
+          sent_at: string | null
+          signing_order: string
+          source_document_version_id: string | null
+          source_sha256: string | null
+          status: Database["public"]["Enums"]["signing_request_status"]
+          title: string
+          updated_at: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "signing_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      decline_signing_participant: {
+        Args: { p_participant_id: string; p_reason: string }
+        Returns: {
+          app_source: string
+          audit_certificate_path: string | null
+          audit_certificate_sha256: string | null
+          completed_at: string | null
+          created_at: string
+          current_order_index: number
+          document_id: string
+          expires_at: string | null
+          fields_hash: string | null
+          final_document_version_id: string | null
+          final_export_path: string | null
+          final_export_sha256: string | null
+          finalization_error: Json | null
+          finalization_status: string
+          finalized_at: string | null
+          id: string
+          locked_at: string | null
+          message: string | null
+          participants_hash: string | null
+          revision: number
+          sender_id: string
+          sent_at: string | null
+          signing_order: string
+          source_document_version_id: string | null
+          source_sha256: string | null
+          status: Database["public"]["Enums"]["signing_request_status"]
+          title: string
+          updated_at: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "signing_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      exchange_signing_token: {
+        Args: {
+          p_ip_hash: string
+          p_session_expires_at: string
+          p_session_hash: string
+          p_token_hash: string
+          p_user_agent_hash: string
+        }
+        Returns: Json
+      }
+      fail_signing_finalization: {
+        Args: { p_error: Json; p_request_id: string }
+        Returns: {
+          app_source: string
+          audit_certificate_path: string | null
+          audit_certificate_sha256: string | null
+          completed_at: string | null
+          created_at: string
+          current_order_index: number
+          document_id: string
+          expires_at: string | null
+          fields_hash: string | null
+          final_document_version_id: string | null
+          final_export_path: string | null
+          final_export_sha256: string | null
+          finalization_error: Json | null
+          finalization_status: string
+          finalized_at: string | null
+          id: string
+          locked_at: string | null
+          message: string | null
+          participants_hash: string | null
+          revision: number
+          sender_id: string
+          sent_at: string | null
+          signing_order: string
+          source_document_version_id: string | null
+          source_sha256: string | null
+          status: Database["public"]["Enums"]["signing_request_status"]
+          title: string
+          updated_at: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "signing_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      get_signing_session_payload: {
+        Args: { p_session_hash: string }
+        Returns: Json
+      }
+      mark_signing_participant_viewed: {
+        Args: { p_participant_id: string }
+        Returns: {
+          access_revoked_at: string | null
+          completed_at: string | null
+          completion_hash: string | null
+          consent_at: string | null
+          consent_text_version: string | null
+          created_at: string
+          decline_reason: string | null
+          declined_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          identity_metadata: Json
+          invited_at: string | null
+          last_access_at: string | null
+          last_notified_at: string | null
+          last_reminded_at: string | null
+          order_index: number
+          request_id: string
+          role: Database["public"]["Enums"]["signing_participant_role"]
+          signed_at: string | null
+          status: Database["public"]["Enums"]["signing_participant_status"]
+          token_version: number
+          updated_at: string
+          user_id: string | null
+          viewed_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "signing_participants"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      reassign_workflow_assignment: {
+        Args: {
+          p_assignment_id: string
+          p_new_user_id: string
+          p_reason: string
+        }
+        Returns: {
+          assigned_by: string
+          created_at: string
+          decided_at: string | null
+          decision_comment: string | null
+          id: string
+          participant_role: string
+          status: string
+          step_id: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "workflow_step_assignees"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      resolve_workflow_comment: {
+        Args: { p_comment_id: string; p_resolved: boolean }
+        Returns: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          is_resolved: boolean
+          parent_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          run_id: string
+          step_id: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "workflow_comments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      restore_structured_document_version: {
+        Args: {
+          p_document_id: string
+          p_expected_editor_version: number
+          p_version_id: string
+        }
+        Returns: {
+          calculation_version: number
+          cell_count: number
+          content: Json
+          created_at: string
+          created_by: string
+          current_file_url: string | null
+          description: string | null
+          document_kind: string
+          document_status: Database["public"]["Enums"]["document_status"]
+          editor_version: number
+          file_size: number | null
+          file_type: string | null
+          formula_count: number
+          id: string
+          last_calculated_at: string | null
+          last_saved_by: string | null
+          letterhead_id: string | null
+          original_file_url: string | null
+          page_count: number | null
+          sheet_count: number
+          storage_path: string | null
+          template_id: string | null
+          title: string
+          updated_at: string
+          word_count: number
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "documents"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      resubmit_document_workflow: {
+        Args: {
+          p_comment?: string
+          p_expected_document_editor_version: number
+          p_run_id: string
+        }
+        Returns: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          completed_at: string | null
+          created_at: string
+          current_step_order: number
+          document_editor_version_at_submission: number
+          document_id: string
+          document_version_id: string
+          due_at: string | null
+          id: string
+          metadata: Json
+          started_at: string
+          started_by: string
+          status: string
+          template_id: string | null
+          template_version: number | null
+          title: string
+          updated_at: string
+          workflow_revision: number
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "workflow_runs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      rotate_signing_invitation: {
+        Args: { p_expires_at?: string; p_participant_id: string }
+        Returns: Json
+      }
+      save_structured_document: {
+        Args: {
+          p_cell_count?: number
+          p_change_summary?: string
+          p_content: Json
+          p_create_version?: boolean
+          p_document_id: string
+          p_expected_editor_version: number
+          p_formula_count?: number
+          p_sheet_count?: number
+          p_version_title?: string
+          p_word_count?: number
+        }
+        Returns: {
+          calculation_version: number
+          cell_count: number
+          content: Json
+          created_at: string
+          created_by: string
+          current_file_url: string | null
+          description: string | null
+          document_kind: string
+          document_status: Database["public"]["Enums"]["document_status"]
+          editor_version: number
+          file_size: number | null
+          file_type: string | null
+          formula_count: number
+          id: string
+          last_calculated_at: string | null
+          last_saved_by: string | null
+          letterhead_id: string | null
+          original_file_url: string | null
+          page_count: number | null
+          sheet_count: number
+          storage_path: string | null
+          template_id: string | null
+          title: string
+          updated_at: string
+          word_count: number
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "documents"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      send_signing_request: {
+        Args: { p_expires_at?: string; p_request_id: string }
+        Returns: Json
+      }
+      start_document_workflow: {
+        Args: {
+          p_document_id: string
+          p_due_at?: string
+          p_template_id: string
+        }
+        Returns: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          completed_at: string | null
+          created_at: string
+          current_step_order: number
+          document_editor_version_at_submission: number
+          document_id: string
+          document_version_id: string
+          due_at: string | null
+          id: string
+          metadata: Json
+          started_at: string
+          started_by: string
+          status: string
+          template_id: string | null
+          template_version: number | null
+          title: string
+          updated_at: string
+          workflow_revision: number
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "workflow_runs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      submit_workflow_decision: {
+        Args: {
+          p_assignment_id: string
+          p_comment?: string
+          p_decision: string
+        }
+        Returns: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          completed_at: string | null
+          created_at: string
+          current_step_order: number
+          document_editor_version_at_submission: number
+          document_id: string
+          document_version_id: string
+          due_at: string | null
+          id: string
+          metadata: Json
+          started_at: string
+          started_by: string
+          status: string
+          template_id: string | null
+          template_version: number | null
+          title: string
+          updated_at: string
+          workflow_revision: number
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "workflow_runs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      update_workflow_comment: {
+        Args: { p_body: string; p_comment_id: string }
+        Returns: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          is_resolved: boolean
+          parent_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          run_id: string
+          step_id: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "workflow_comments"
+          isOneToOne: true
+          isSetofReturn: false
         }
       }
     }
