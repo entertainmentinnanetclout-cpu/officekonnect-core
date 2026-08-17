@@ -9,7 +9,8 @@ const capabilities = [
   {
     icon: FileCheck2,
     title: "Document operations",
-    description: "Create, manage, review and finalize office documents from one governed workspace.",
+    description:
+      "Create, manage, review and finalize office documents from one governed workspace.",
   },
   {
     icon: Workflow,
@@ -19,7 +20,8 @@ const capabilities = [
   {
     icon: ShieldCheck,
     title: "Workspace security",
-    description: "Supabase identity, membership and row-level security remain authoritative throughout.",
+    description:
+      "Supabase identity, membership and row-level security remain authoritative throughout.",
   },
 ];
 
@@ -50,7 +52,9 @@ function AuthLayout() {
               Move office work from draft to decision without losing control of the record.
             </h1>
             <p className="mt-6 max-w-xl text-sm leading-7 text-slate-400">
-              OfficeKonnect brings documents, communication, approvals and secure e-signatures into a single workspace built around real identity, auditability and operational continuity.
+              OfficeKonnect brings documents, communication, approvals and secure e-signatures into
+              a single workspace built around real identity, auditability and operational
+              continuity.
             </p>
 
             <div className="mt-10 grid gap-4">
@@ -66,7 +70,9 @@ function AuthLayout() {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-slate-100">{capability.title}</p>
-                      <p className="mt-1 text-xs leading-5 text-slate-500">{capability.description}</p>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">
+                        {capability.description}
+                      </p>
                     </div>
                   </div>
                 );
@@ -75,7 +81,8 @@ function AuthLayout() {
           </div>
 
           <p className="relative z-10 text-[11px] leading-5 text-slate-600">
-            Development access can skip the visible login step only by creating a real Supabase session. No fake identity or RLS bypass is used.
+            Development access can skip the visible login step only by creating a real Supabase
+            session. No fake identity or RLS bypass is used.
           </p>
         </section>
 
@@ -98,7 +105,8 @@ function AuthLayout() {
             </div>
 
             <p className="mt-6 text-center text-[11px] leading-5 text-slate-500">
-              Authentication is handled by Supabase. Workspace access remains subject to membership and row-level security.
+              Authentication is handled by Supabase. Workspace access remains subject to membership
+              and row-level security.
             </p>
           </div>
         </section>

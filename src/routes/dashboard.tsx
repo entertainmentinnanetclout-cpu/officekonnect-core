@@ -92,7 +92,9 @@ function WorkspaceBootScreen() {
           OK
         </div>
         <p className="mt-5 text-sm font-semibold">Opening OfficeKonnect</p>
-        <p className="mt-1 text-xs text-slate-400">Resolving secure identity and workspace access.</p>
+        <p className="mt-1 text-xs text-slate-400">
+          Resolving secure identity and workspace access.
+        </p>
         <Loader2 className="mt-5 h-5 w-5 animate-spin text-slate-400" />
       </div>
     </div>
@@ -112,13 +114,19 @@ function UnauthenticatedWorkspace({ message }: { message: string | null }) {
               Office operations, documents and approvals in one workspace.
             </h1>
             <p className="mt-4 max-w-xl text-sm leading-6 text-slate-400">
-              Development access only skips the visible login step when a server-side development identity is configured. It never bypasses Supabase authentication, workspace membership or RLS.
+              Development access only skips the visible login step when a server-side development
+              identity is configured. It never bypasses Supabase authentication, workspace
+              membership or RLS.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild className="bg-white text-slate-950 hover:bg-slate-100">
                 <Link to="/auth/login">Sign in securely</Link>
               </Button>
-              <Button asChild variant="outline" className="border-slate-700 bg-transparent text-white hover:bg-slate-800">
+              <Button
+                asChild
+                variant="outline"
+                className="border-slate-700 bg-transparent text-white hover:bg-slate-800"
+              >
                 <Link to="/">Back to site</Link>
               </Button>
             </div>
@@ -130,7 +138,9 @@ function UnauthenticatedWorkspace({ message }: { message: string | null }) {
           </div>
 
           <div className="border-t border-slate-800 bg-slate-950/70 p-8 md:border-l md:border-t-0 sm:p-12">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Identity model</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+              Identity model
+            </p>
             <div className="mt-6 space-y-5">
               <div className="flex gap-3">
                 <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-emerald-400/10 text-emerald-300">
@@ -150,7 +160,8 @@ function UnauthenticatedWorkspace({ message }: { message: string | null }) {
                 <div>
                   <p className="text-sm font-medium">RLS remains authoritative</p>
                   <p className="mt-1 text-xs leading-5 text-slate-500">
-                    No fake user IDs, fake workspace IDs or client-side security bypasses are introduced.
+                    No fake user IDs, fake workspace IDs or client-side security bypasses are
+                    introduced.
                   </p>
                 </div>
               </div>

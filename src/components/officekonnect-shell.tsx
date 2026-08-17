@@ -173,7 +173,9 @@ export function OfficeKonnectShell({
                 <SelectItem key={option.id} value={option.id}>
                   <div className="flex min-w-0 items-center gap-2">
                     <span className="truncate">{option.name}</span>
-                    <span className="text-[10px] uppercase text-muted-foreground">{option.role}</span>
+                    <span className="text-[10px] uppercase text-muted-foreground">
+                      {option.role}
+                    </span>
                   </div>
                 </SelectItem>
               ))}
@@ -316,7 +318,11 @@ export function OfficeKonnectShell({
                 <Button variant="ghost" className="h-10 gap-2 px-2">
                   <Avatar className="h-8 w-8 border">
                     <AvatarImage
-                      src={typeof user.user_metadata?.avatar_url === "string" ? user.user_metadata.avatar_url : undefined}
+                      src={
+                        typeof user.user_metadata?.avatar_url === "string"
+                          ? user.user_metadata.avatar_url
+                          : undefined
+                      }
                       alt={user.email ?? "OfficeKonnect user"}
                     />
                     <AvatarFallback>{user.email?.slice(0, 1).toUpperCase() ?? "U"}</AvatarFallback>
@@ -343,7 +349,10 @@ export function OfficeKonnectShell({
                   <Link to="/dashboard/settings">Settings</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => void onSignOut()} className="text-red-600 focus:text-red-600">
+                <DropdownMenuItem
+                  onClick={() => void onSignOut()}
+                  className="text-red-600 focus:text-red-600"
+                >
                   Sign out
                 </DropdownMenuItem>
               </DropdownMenuContent>

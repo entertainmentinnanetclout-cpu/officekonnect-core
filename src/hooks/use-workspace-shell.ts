@@ -28,11 +28,7 @@ export function useWorkspaceShell(user: User | null) {
 
     const [{ data: profile, error: profileError }, { data: memberships, error: membershipError }] =
       await Promise.all([
-        supabase
-          .from("profiles")
-          .select("default_workspace_id")
-          .eq("id", user.id)
-          .maybeSingle(),
+        supabase.from("profiles").select("default_workspace_id").eq("id", user.id).maybeSingle(),
         supabase
           .from("workspace_members")
           .select("workspace_id, role")
