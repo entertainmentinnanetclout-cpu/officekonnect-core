@@ -20,24 +20,32 @@ During Phase 0, the live Supabase project is treated as the authoritative descri
 
 ## Phase 0 critical findings
 
-1. GitHub migration history is behind the live database. The repo currently stops at the early-July migration set while the live project contains 31 additional named migrations from 2026-07-25 through 2026-07-28.
-2. Deployed signing Edge Functions are not represented in the repository and must be checked in.
+1. GitHub migration history is behind the live database. The repo originally stopped at the early-July migration set while the live project contains 31 additional named migrations from 2026-07-25 through 2026-07-28.
+2. The deployed signing Edge Functions were not represented in the repository.
 3. Generated Supabase TypeScript types are stale relative to the live schema.
-4. Storage path conventions have drifted. Live storage RLS expects workspace_id as the first path segment; an older server helper still assumes user_id first.
+4. Storage path conventions had drifted. Live storage RLS expects workspace_id as the first path segment; an older server helper assumed user_id first.
 5. The current frontend signing helper predates the hardened signing state machine and must be replaced with the current RPC/Edge Function contract.
-6. The live signing certificate contains a stale CCSF branding string that must be generic OfficeKonnect branding.
+6. The deployed signing certificate contains a stale CCSF branding string; checked-in finalizer source now uses generic OfficeKonnect branding, but production has not been redeployed yet.
 7. The current frontend shell remains V1 product framing and auth UI; development-identity shell work belongs to Phase 1 after reconciliation.
+
+## Reconciliation progress
+
+- 10 of the 31 missing live migrations have been recovered into GitHub: Phase 0 hardening, Phase 2 native documents, and all Phase 3 spreadsheet/reconciliation/hardening migrations.
+- All three deployed signing Edge Functions are now represented in repository source.
+- `src/lib/documents.functions.ts` now uses the workspace-first storage contract required by live Storage RLS.
+- Canonical TypeScript types have been generated from the live project and are awaiting repository replacement/build verification.
 
 ## Phase 0 completion checklist
 
 - [x] Create dedicated reconciliation branch.
 - [x] Audit live migration ledger.
 - [x] Audit live tables, RLS, storage, RPCs and deployed signing Edge Functions.
-- [ ] Recover all missing live migration SQL into `supabase/migrations/` with original versions/names.
-- [ ] Check in all deployed Edge Function source.
-- [ ] Remove stale non-OfficeKonnect branding from checked-in signing finalizer source and deploy only after parity review.
-- [ ] Regenerate Supabase TypeScript types from the reconciled schema.
-- [ ] Normalize storage path helpers to `{workspace_id}/{user_id}/...`.
+- [ ] Recover all missing live migration SQL into `supabase/migrations/` with original versions/names. **10/31 recovered.**
+- [x] Check in all deployed Edge Function source.
+- [x] Remove stale non-OfficeKonnect branding from checked-in signing finalizer source. **Production deployment intentionally deferred until parity review.**
+- [ ] Replace checked-in Supabase TypeScript types with the freshly generated live-schema types and build-check them.
+- [x] Normalize document signed-upload storage helper to `{workspace_id}/{user_id}/...`.
+- [ ] Audit remaining storage helpers for the same canonical convention.
 - [ ] Replace obsolete frontend signing mutation path with hardened send/cancel/action contracts.
 - [ ] Add parity checks/documentation for migration ledger and Edge Functions.
 - [ ] Run build, lint and schema/security checks before Phase 0 merge.
