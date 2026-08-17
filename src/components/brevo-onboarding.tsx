@@ -92,8 +92,8 @@ export function BrevoOnboarding() {
           <div className="animate-in slide-in-from-right-4 space-y-4 fade-in duration-300">
             <h3 className="text-lg font-semibold">Step 1: Create Brevo Account</h3>
             <p className="text-slate-600 dark:text-slate-400">
-              If you don&apos;t have a Brevo account yet, you&apos;ll need to create one. It&apos;s free and
-              takes 2 minutes.
+              If you don&apos;t have a Brevo account yet, you&apos;ll need to create one. It&apos;s
+              free and takes 2 minutes.
             </p>
             <Button className="w-full sm:w-auto" asChild>
               <a href="https://brevo.com" target="_blank" rel="noopener noreferrer">

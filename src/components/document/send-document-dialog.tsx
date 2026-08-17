@@ -79,8 +79,8 @@ export function SendDocumentDialog({
         <DialogHeader>
           <DialogTitle>Create signing request</DialogTitle>
           <DialogDescription>
-            Create the recipient draft first. Signature and initial fields must be assigned before the
-            secure request can be sent.
+            Create the recipient draft first. Signature and initial fields must be assigned before
+            the secure request can be sent.
           </DialogDescription>
         </DialogHeader>
 
@@ -117,9 +117,7 @@ export function SendDocumentDialog({
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() =>
-                    setRecipients((arr) => arr.filter((_, idx) => idx !== i))
-                  }
+                  onClick={() => setRecipients((arr) => arr.filter((_, idx) => idx !== i))}
                   disabled={recipients.length === 1}
                 >
                   <Trash2 className="h-4 w-4" />
@@ -129,9 +127,7 @@ export function SendDocumentDialog({
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
-                setRecipients((arr) => [...arr, { email: "", fullName: "" }])
-              }
+              onClick={() => setRecipients((arr) => [...arr, { email: "", fullName: "" }])}
             >
               <Plus className="mr-2 h-4 w-4" /> Add recipient
             </Button>

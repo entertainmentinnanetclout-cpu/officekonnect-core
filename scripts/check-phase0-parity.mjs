@@ -52,9 +52,7 @@ const requiredPaths = [
   ".env.example",
 ];
 
-const missing = requiredPaths.filter(
-  (path) => !existsSync(resolve(process.cwd(), path)),
-);
+const missing = requiredPaths.filter((path) => !existsSync(resolve(process.cwd(), path)));
 
 if (existsSync(resolve(process.cwd(), ".env"))) {
   console.error(

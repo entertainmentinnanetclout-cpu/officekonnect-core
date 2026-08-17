@@ -269,9 +269,7 @@ export function PdfWorkspace({
                       renderTextLayer={false}
                       rotate={rotation}
                     />
-                    <div className="py-0.5 text-center text-[10px] text-slate-500">
-                      Page {p}
-                    </div>
+                    <div className="py-0.5 text-center text-[10px] text-slate-500">Page {p}</div>
                   </button>
                 ))}
             </Document>
@@ -383,9 +381,7 @@ function PageWrapper({
       />
       {rect && overlay && (
         <div className="pointer-events-none absolute inset-0">
-          <div className="pointer-events-auto absolute inset-0">
-            {overlay(pageNumber, rect)}
-          </div>
+          <div className="pointer-events-auto absolute inset-0">{overlay(pageNumber, rect)}</div>
         </div>
       )}
       <div className="absolute -left-8 top-2 hidden text-[10px] text-slate-400 md:block">
