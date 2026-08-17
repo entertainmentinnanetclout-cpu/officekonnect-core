@@ -1,4 +1,4 @@
-name: Phase 0 Normalize Repository
+name: Upgrade Normalize Repository
 
 on:
   push:
@@ -25,27 +25,36 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install dependencies and create lockfile
-        run: npm install --no-audit --no-fund
+      - name: Rebuild deterministic npm lockfile
+        run: |
+          rm -f package-lock.json
+          npm install --package-lock-only --no-audit --no-fund
 
-      - name: Format Phase 0 lint blockers
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Format upgrade lint blockers
         run: >-
           npx prettier --write
           scripts/check-phase0-parity.mjs
           src/components/brevo-onboarding.tsx
           src/components/document/send-document-dialog.tsx
           src/components/document/pdf-workspace.tsx
+          src/components/officekonnect-shell.tsx
+          src/hooks/use-workspace-shell.ts
+          src/lib/development-session.functions.ts
           src/lib/documents.functions.ts
           src/lib/signing.functions.ts
+          src/routes/dashboard.tsx
 
       - name: Commit deterministic outputs
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package-lock.json scripts/check-phase0-parity.mjs src/components/brevo-onboarding.tsx src/components/document/send-document-dialog.tsx src/components/document/pdf-workspace.tsx src/lib/documents.functions.ts src/lib/signing.functions.ts
+          git add package-lock.json scripts/check-phase0-parity.mjs src/components/brevo-onboarding.tsx src/components/document/send-document-dialog.tsx src/components/document/pdf-workspace.tsx src/components/officekonnect-shell.tsx src/hooks/use-workspace-shell.ts src/lib/development-session.functions.ts src/lib/documents.functions.ts src/lib/signing.functions.ts src/routes/dashboard.tsx
           if git diff --cached --quiet; then
             echo "No normalization changes required."
           else
-            git commit -m "chore: normalize Phase 0 sources and lock dependencies"
+            git commit -m "chore: normalize upgrade sources and lock dependencies"
             git push origin HEAD:phase-0-canonical-reconciliation
           fi
