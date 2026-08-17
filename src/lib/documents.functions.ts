@@ -3,6 +3,17 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getActiveWorkspaceId } from "@/lib/workspace.server";
 import { enqueueJob } from "@/lib/jobs/enqueue.server";
 
+function workspaceStoragePath(workspaceId: string, userId: string, requestedPath: string) {
+  const normalized = requestedPath.replace(/^\/+/, "");
+  const workspacePrefix = `${workspaceId}/`;
+
+  if (normalized.startsWith(workspacePrefix)) {
+    return normalized;
+  }
+
+  return `${workspaceId}/${userId}/${normalized}`;
+}
+
 export const createDocumentRecord = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
@@ -11,13 +22,15 @@ export const createDocumentRecord = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const workspaceId = await getActiveWorkspaceId(supabase, userId);
+    const storagePath = workspaceStoragePath(workspaceId, userId, data.storagePath);
+
     const { data: doc, error } = await supabase
       .from("documents")
       .insert({
         workspace_id: workspaceId,
         created_by: userId,
         title: data.title,
-        storage_path: data.storagePath,
+        storage_path: storagePath,
         file_type: data.fileType,
         file_size: data.fileSize,
         document_status: "draft",
@@ -33,8 +46,11 @@ export const createSignedUploadUrl = createServerFn({ method: "POST" })
   .inputValidator((d: { bucket: string; path: string }) => d)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    // Namespace path with userId to satisfy storage RLS that expects auth.uid() prefix.
-    const path = data.path.startsWith(`${userId}/`) ? data.path : `${userId}/${data.path}`;
+    const workspaceId = await getActiveWorkspaceId(supabase, userId);
+
+    // Live Storage RLS resolves workspace membership from the first folder segment.
+    // Keep userId as the second segment to preserve per-user namespacing inside a workspace.
+    const path = workspaceStoragePath(workspaceId, userId, data.path);
     const { data: signed, error } = await supabase.storage
       .from(data.bucket)
       .createSignedUploadUrl(path);
