@@ -274,11 +274,15 @@ function drawBlock(state: RendererState, block: NativeDocumentBlock) {
     return rendered;
   }
 
-  return drawTextBlock(state, htmlToPlainText(block.html), {
-    size: 10.5,
-    lineHeight: 14.5,
-    after: 6,
-  });
+  if (block.type === "paragraph") {
+    return drawTextBlock(state, htmlToPlainText(block.html), {
+      size: 10.5,
+      lineHeight: 14.5,
+      after: 6,
+    });
+  }
+
+  return state;
 }
 
 function drawPageChrome(
