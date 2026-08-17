@@ -4,13 +4,7 @@ import { ArrowRight, CheckCircle2, ExternalLink, Loader2, Lock, Mail, Zap } from
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -42,7 +36,8 @@ export function BrevoOnboarding() {
       setStep(4);
       toast.success("Brevo connected successfully!");
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Unable to validate the Brevo API key.";
+      const message =
+        error instanceof Error ? error.message : "Unable to validate the Brevo API key.";
       toast.error(message);
     } finally {
       setIsValidating(false);
