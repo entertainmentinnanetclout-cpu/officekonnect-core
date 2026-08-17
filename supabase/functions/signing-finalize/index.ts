@@ -2,6 +2,44 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "@supabase/supabase-js";
 import { PDFDocument, StandardFonts, degrees, rgb } from "pdf-lib";
 
+interface FinalizationPayload {
+  request: {
+    id: string;
+    workspaceId: string;
+    documentId: string;
+    sourceDocumentVersionId: string | null;
+    title: string;
+    participantsHash: string;
+    fieldsHash: string;
+  };
+  source?: { storagePath?: string | null; fileUrl?: string | null };
+  participants?: Array<{
+    id: string;
+    fullName?: string | null;
+    email?: string | null;
+    role: string;
+    status: string;
+    signedAt?: string | null;
+  }>;
+  events?: Array<{
+    createdAt: string;
+    eventType: string;
+    eventHash?: string | null;
+  }>;
+  fields?: Array<{
+    id: string;
+    page: number | string;
+    x: number | string;
+    y: number | string;
+    w: number | string;
+    h: number | string;
+    rotation?: number | string | null;
+    type: string;
+    signatureStoragePath?: string | null;
+    value?: unknown;
+  }>;
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -23,7 +61,7 @@ async function sha256Hex(bytes: Uint8Array): Promise<string> {
 }
 
 async function downloadFromBuckets(
-  client: any,
+  client: ReturnType<typeof createClient>,
   path: string,
   buckets: string[],
 ): Promise<Uint8Array> {
@@ -56,10 +94,10 @@ function wrapText(value: string, max = 88): string[] {
 }
 
 async function buildCertificate(
-  payload: any,
+  payload: FinalizationPayload,
   sourceHash: string,
   finalHash: string,
-): Promise<{ bytes: Uint8Array; manifest: any }> {
+): Promise<{ bytes: Uint8Array; manifest: Record<string, unknown> }> {
   const generatedAt = new Date().toISOString();
   const manifest = {
     schemaVersion: 1,
@@ -144,7 +182,7 @@ Deno.serve(async (req: Request) => {
   const bearer = authorization.replace(/^Bearer\s+/i, "");
   if (!bearer) return json({ error: "Authorization required" }, 401);
 
-  let input: any;
+  let input: Record<string, unknown>;
   try {
     input = await req.json();
   } catch {
@@ -179,8 +217,10 @@ Deno.serve(async (req: Request) => {
     });
     if (claimError) throw new Error(claimError.message);
     claimed = true;
+    const finalizationPayload = payload as FinalizationPayload;
 
-    const sourceRef = payload?.source?.storagePath || payload?.source?.fileUrl;
+    const sourceRef =
+      finalizationPayload.source?.storagePath || finalizationPayload.source?.fileUrl;
     if (!sourceRef) throw new Error("Immutable source PDF reference is missing");
     const sourceBytes = await downloadFromBuckets(service, sourceRef, [
       "documents",
@@ -191,7 +231,7 @@ Deno.serve(async (req: Request) => {
     const pdf = await PDFDocument.load(sourceBytes, { ignoreEncryption: false });
     const font = await pdf.embedFont(StandardFonts.Helvetica);
 
-    for (const field of payload.fields ?? []) {
+    for (const field of finalizationPayload.fields ?? []) {
       const pageIndex = Number(field.page) - 1;
       if (!Number.isInteger(pageIndex) || pageIndex < 0 || pageIndex >= pdf.getPageCount()) {
         throw new Error(`Signing field ${field.id} references an invalid page`);
@@ -234,12 +274,12 @@ Deno.serve(async (req: Request) => {
     const finalBytes = new Uint8Array(await pdf.save());
     const finalHash = await sha256Hex(finalBytes);
     const { bytes: certificateBytes, manifest } = await buildCertificate(
-      payload,
+      finalizationPayload,
       sourceHash,
       finalHash,
     );
     const certificateHash = await sha256Hex(certificateBytes);
-    const workspaceId = payload.request.workspaceId;
+    const workspaceId = finalizationPayload.request.workspaceId;
     const basePath = `${workspaceId}/signing/${requestId}`;
     const finalPath = `${basePath}/completed-${finalHash.slice(0, 16)}.pdf`;
     const certificatePath = `${basePath}/certificate-${certificateHash.slice(0, 16)}.pdf`;

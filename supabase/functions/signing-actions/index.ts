@@ -42,7 +42,7 @@ Deno.serve(async (req: Request) => {
   const { data: userData, error: userError } = await userClient.auth.getUser();
   if (userError || !userData.user) return response({ error: "Invalid authentication" }, 401);
 
-  let input: any;
+  let input: Record<string, unknown>;
   try {
     input = await req.json();
   } catch {
@@ -112,7 +112,7 @@ Deno.serve(async (req: Request) => {
       });
       if (error) throw new Error(error.message);
 
-      let finalization: any = null;
+      let finalization: unknown = null;
       if (completion?.finalizationQueued) {
         const { data, error: finalizationError } = await service.functions.invoke(
           "signing-finalize",

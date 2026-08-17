@@ -117,8 +117,9 @@ function DocumentsIndex() {
       toast.success("Document uploaded successfully");
       setIsUploading(false);
     },
-    onError: (error: any) => {
-      toast.error(`Upload failed: ${error.message}`);
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : "Unknown upload error";
+      toast.error(`Upload failed: ${message}`);
       setIsUploading(false);
     },
   });

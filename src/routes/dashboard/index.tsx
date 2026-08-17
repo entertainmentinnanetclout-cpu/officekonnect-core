@@ -10,6 +10,7 @@ import {
   Clock,
   ChevronRight,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
@@ -221,7 +222,7 @@ function StatCard({
 }: {
   title: string;
   value: number;
-  icon: any;
+  icon: LucideIcon;
   trend: string;
 }) {
   return (

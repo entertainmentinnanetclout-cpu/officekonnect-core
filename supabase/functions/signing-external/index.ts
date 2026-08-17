@@ -81,7 +81,7 @@ function decodeSignature(
 }
 
 async function signedAssetUrl(
-  client: any,
+  client: ReturnType<typeof createClient>,
   pathOrUrl: string | null | undefined,
   expiresIn = 300,
 ): Promise<string | null> {
@@ -107,7 +107,7 @@ Deno.serve(async (req: Request) => {
   const ipHash = await fingerprint(clientIp(req), serviceKey);
   const userAgentHash = await fingerprint(req.headers.get("user-agent") ?? "", serviceKey);
 
-  let input: any;
+  let input: Record<string, unknown>;
   try {
     input = await req.json();
   } catch {
@@ -172,11 +172,16 @@ Deno.serve(async (req: Request) => {
         { p_session_hash: sessionHash },
       );
       if (payloadError) throw new Error(payloadError.message);
-      const field = (payload?.fields ?? []).find((candidate: any) => candidate.id === fieldId);
-      if (!field || !["signature", "initial"].includes(field.type)) {
+      const field = (payload?.fields ?? []).find(
+        (candidate: { id?: string }) => candidate.id === fieldId,
+      );
+      if (!field || !["signature", "initial"].includes(String(field.type ?? ""))) {
         throw new Error("This field does not accept a signature image");
       }
-      const decoded = decodeSignature(String(input?.imageBase64 ?? ""), input?.mimeType);
+      const decoded = decodeSignature(
+        String(input?.imageBase64 ?? ""),
+        typeof input?.mimeType === "string" ? input.mimeType : undefined,
+      );
       const { data: requestRow, error: requestError } = await service
         .from("signing_requests")
         .select("workspace_id")
@@ -207,7 +212,14 @@ Deno.serve(async (req: Request) => {
       });
       if (error) throw new Error(error.message);
 
-      let finalization: any = null;
+      let finalization:
+        | (Record<string, unknown> & {
+            finalExportPath?: string;
+            certificatePath?: string;
+            finalDownloadUrl?: string | null;
+            certificateDownloadUrl?: string | null;
+          })
+        | null = null;
       if (completion?.finalizationQueued) {
         const { data, error: finalizationError } = await service.functions.invoke(
           "signing-finalize",

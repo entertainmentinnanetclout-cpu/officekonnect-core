@@ -14,6 +14,7 @@ import {
   ExternalLink,
   ChevronRight,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -196,7 +197,7 @@ function StatItem({
 }: {
   title: string;
   value: string;
-  icon: any;
+  icon: LucideIcon;
   trend: string;
 }) {
   return (
