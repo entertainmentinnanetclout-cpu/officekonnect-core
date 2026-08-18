@@ -4,9 +4,9 @@ Last audited: 2026-08-18
 
 ## Current phase
 
-Phase 3 — OfficeKonnect Sheets: **source implementation and validation complete**.
+Phase 4 — Files and Templates: **source implementation, live backend reconciliation and validation complete**.
 
-Next implementation phase: Phase 4 — Files and Templates.
+Next implementation phase: **Phase 5 — Workflows and Approvals**.
 
 ## Upgrade branch policy
 
@@ -14,96 +14,107 @@ Draft PR #2 is the single long-running upgrade PR for Phases 0–11. All phase w
 
 ## Source of truth policy
 
-The live Supabase project was treated as the authoritative description of already-deployed database behavior during Phase 0. GitHub has now been brought forward to represent that behavior without destructive production changes. GitHub migrations and checked-in Edge Function source are the reproducible source of truth for future changes.
+The live Supabase project is authoritative for deployed database behavior. GitHub must carry the exact applied migration history, generated types and application integrations. Phase 4 therefore applied the required additive schema first, recorded the exact live migration versions in GitHub, and built the frontend/server functions against those contracts.
 
 ## Confirmed architecture
 
 - Frontend: React 19, TanStack Start/Router/Query, TypeScript, Tailwind, Radix UI.
 - Backend: Supabase Auth, Postgres, RLS, Storage, RPCs and Edge Functions.
-- Public application tables: 43; RLS enabled on all 43 at Phase 0 audit time.
 - Private storage buckets include documents, document-versions, exports, letterheads, signatures and voice-notes.
-- Existing backend foundations: native documents, structured versions, spreadsheets, workflows/review/approval, secure e-signing, notifications, activity logs and workspace membership.
+- Existing foundations remain canonical: documents, versions, native editor, Sheets, workflows/review/approval, secure e-signing, notifications, activity and workspace membership.
 - Canonical package manager: Bun 1.3.14 with committed `bun.lock` and frozen `bun ci` validation.
 - Spreadsheet office-file interoperability: locked `xlsx` dependency.
 
-## Phase 0 reconciliation result
+## Phase 0 result
 
-1. GitHub migration history was behind the live database. **Resolved: 31/31 missing live migrations recovered.**
-2. Deployed signing Edge Functions were absent from source control. **Resolved: all three are checked in.**
-3. Generated Supabase TypeScript types were stale. **Resolved in source with live-generated types.**
-4. Storage path conventions had drifted. **Documents, saved signatures and Voice Notes are confirmed workspace-first.**
-5. The frontend signing helper predated the hardened signing state machine. **Resolved: draft creation plus controlled lifecycle actions.**
-6. Signing certificate source contained stale CCSF branding. **Checked-in finalizer source now uses OfficeKonnect-only branding; production deployment remains deferred.**
-7. `.env` was tracked. **Resolved: removed from version control, `.env.example` added.**
-8. Repository parity/validation gates were absent. **Resolved with repository parity and the canonical Upgrade Validation workflow.**
-9. The invalid secondary npm lock path was removed. **Resolved: Bun 1.3.14 + `bun.lock` are canonical and `bun ci` is green.**
-10. Supabase advisor findings were documented without weakening intentional signing-token isolation.
+- Recovered 31/31 missing live migrations into GitHub.
+- Checked in deployed signing Edge Function source.
+- Regenerated live Supabase TypeScript types.
+- Reconciled workspace-first Storage and hardened signing contracts.
+- Removed tracked `.env`; added a safe environment contract.
+- Added permanent parity and Upgrade Validation gates.
 
 ## Phase 1 result
 
-- Added server-only development identity bootstrap using a real Supabase sign-in.
-- Development bootstrap cannot run on Vercel production deployments.
-- Browser code never receives development email/password credentials.
-- Existing Supabase JWT identity, `auth.uid()`, workspace membership and RLS remain authoritative.
-- Replaced the V1 dashboard chrome with the canonical OfficeKonnect shell.
-- Reframed existing auth routes in the canonical OfficeKonnect visual/identity system without changing auth semantics.
-- Added authenticated workspace discovery and workspace switching through `profiles.default_workspace_id`.
-- Added grouped canonical navigation for Workspace, Operations, Communication and Administration.
-- Added responsive mobile drawer and bottom navigation.
-- Added a production-safe unauthenticated workspace state and secure sign-in path.
-- Repaired historical ESLint blockers without weakening lint rules.
+- Added server-only development-session bootstrap using a real Supabase identity without exposing credentials to browser code.
+- Preserved `auth.uid()`, workspace membership and RLS.
+- Replaced the V1 chrome with the canonical responsive OfficeKonnect workspace shell and real workspace switching.
 
 ## Phase 2 result
 
-- Preserved the existing `documents` + `document_versions` + private Storage architecture rather than creating a competing document model.
-- Kept the real document library and its native creation, signed uploads, drag-and-drop, search/filter/sort, table/grid, rename, duplicate, archive, Trash/restore, native PDF export and uploaded-file download flows.
-- Hardened the native structured-document contract with persisted indentation and stable block identity.
-- Prevented ordinary autosave refreshes from unnecessarily replacing editor `innerHTML` and disturbing the active cursor/selection.
-- Added a mandatory save barrier before PDF export, print preparation and static signing-copy generation.
-- Upgraded the server-side native `pdf-lib` renderer for page setup, multi-page layout, rich inline formatting, tables, letterheads/logos, headers/footers and page numbers.
-- Added an immutable native-document PDF signing-copy bridge using the existing document/version/storage model.
-- Added real Bun regression tests for native-document normalization and actual `pdf-lib` output.
-- No new Phase 2 database table or migration was required.
+- Preserved `documents`, `document_versions` and private Storage as the only native/uploaded document architecture.
+- Completed the native structured-document editor, autosave/version lifecycle and deterministic server-side PDF output.
+- Added static PDF signing-copy generation over the existing document/version architecture.
 
 ## Phase 3 result
 
-- Activated **OfficeKonnect Sheets** as a real desktop/mobile navigation destination at `/dashboard/sheets`.
-- Added a dedicated workspace-scoped Sheets library with blank creation, search, sorting, archive, Trash/restore, duplicate and XLSX/XLS/CSV import.
-- Replaced the old spreadsheet placeholder with the production editor on both the canonical Sheets detail route and the shared document detail route.
-- Centralized the canonical `kind: "workbook"`, `schemaVersion: 1` workbook model in one spreadsheet module; legacy two-dimensional sheet data is normalized into that model instead of preserved as a second persistence format.
-- Added sparse A1-addressed cells, multi-sheet add/delete/rename/reorder, row/column sizing, persisted frozen panes, merges, formatting, selection, clipboard paste/copy, fill, sorting and active-column filtering.
-- Added a deterministic formula parser/evaluator without JavaScript `eval`, including ranges, cross-sheet references, arithmetic/comparison and the focused office-function set documented in `docs/PHASE3.md`.
-- Preserved `save_structured_document` and `restore_structured_document_version` as the authoritative save/restore RPCs; server functions recompute workbook metrics before save.
-- Added whole-workbook XLSX export and active-sheet CSV export through the locked `xlsx` dependency.
-- Added server-side spreadsheet PDF/Print with worksheet selection, print area, orientation, scale, fit-to-width, margins, repeated top rows, gridlines and deterministic metadata.
-- Added a spreadsheet static signing-copy bridge that writes `<Original> — Signing Copy` into the existing private PDF document/version architecture after a mandatory save barrier.
-- Added real Bun regression coverage for workbook normalization, formulas, cross-sheet calculation, cycle detection, editing helpers and actual `pdf-lib` spreadsheet output.
-- Regenerated and checked in the TanStack route tree so the new Sheets routes are first-class typed routes.
-- No new Phase 3 database migration was required during completion because the live/reconciled Phase 3 migrations already contain the workbook constraints, ACL hardening, metadata and structured-save/restore RPC contract.
+- Activated `/dashboard/sheets` and the production OfficeKonnect Sheets editor.
+- Preserved `documents.content` with `kind: "workbook"`, `schemaVersion: 1` and one deterministic formula/calculation engine.
+- Added XLSX/XLS/CSV interoperability, spreadsheet PDF/Print and static signing-copy generation.
+- Added real workbook/formula/PDF regression coverage.
 
-## Latest validated Phase 3 source checkpoint
+## Phase 4 result
 
-Upgrade Validation run `32101707386` completed successfully on the clean Phase 3 source after compiler/route-tree reconciliation:
+### Files
+
+- Activated `/dashboard/files` as a real workspace for native documents, spreadsheets and uploaded files.
+- Added nested folders, breadcrumbs, real upload/drag-drop, search/sort, Favourites, Shared with me, Archive, Trash/restore, rename, move, duplicate and download/export.
+- Added `workspace_folders`, `document_folder_items`, `document_favorites` and `document_shares` as additive organization relations; `documents` remains the canonical file record.
+- Folder moves do not relocate private Storage binaries. Uploaded-file duplication copies the actual private object to a fresh document-owned path and creates a fresh document plus version 1.
+- Added a PostgreSQL folder-cycle guard so self-parenting/descendant cycles cannot bypass the UI.
+- Explicit shares are restricted to existing members of the same workspace and `view` permission. Because existing document SELECT visibility is workspace-wide, Phase 4 uses these records for the explicit **Shared with me** surface rather than pretending to replace the existing workspace privacy boundary.
+- Added `list_workspace_member_directory` for the controlled share picker with membership enforcement and a restricted security-definer search path.
+
+### Templates
+
+- Activated `/dashboard/templates` over the existing `document_templates` table; no competing template model was created.
+- Added the canonical categories: General, Letters, Reports, Meeting Notes, Agreements, Forms, Policies, Proposals, Internal Memos and Spreadsheets.
+- Added real preview, save-from-existing, create-from-template, duplicate, metadata editing, archive and restore.
+- New documents created from a template remain normal `documents` rows and record `template_id`.
+- Existing Mail Center email templates remain separate and untouched.
+- No fabricated/sample document templates are inserted into production.
+
+### Phase 4 migrations
+
+- `20260818051912_phase_4_files_templates_workspace_organization`
+- `20260818052526_phase_4_folder_hierarchy_cycle_guard`
+
+Both are applied to the live Supabase project and checked into the repository with their live version numbers.
+
+### Live security verification
+
+RLS is enabled on every new Phase 4 organization relation:
+
+- `workspace_folders`: 4 policies
+- `document_folder_items`: 2 policies
+- `document_favorites`: 3 policies
+- `document_shares`: 3 policies
+
+`list_workspace_member_directory` is present as a security-definer function with membership enforcement.
+
+## Latest validated Phase 4 source checkpoint
+
+Clean source checkpoint `0ac628ccd536538199c159cedb92f50ece13410e` passed Upgrade Validation run `32103495621`:
 
 - Repository parity: **PASS**.
 - Deterministic dependency install (`bun ci`): **PASS**.
-- ESLint: **PASS**.
+- ESLint: **PASS — 0 errors** (7 pre-existing Fast Refresh warnings remain non-blocking).
 - TypeScript (`tsc --noEmit`): **PASS**.
-- Bun regression tests: **PASS**.
+- Bun regression tests: **19 passed / 0 failed**, 66 expectations across 5 files.
 - Production build: **PASS**.
 
-The final documentation/cleanup head is revalidated after this record is committed and becomes the authoritative Phase 3 completion SHA.
+The final documentation head is revalidated after these records are committed and becomes the authoritative Phase 4 completion SHA.
 
-## Known Phase 3 limitations carried forward
+## Known Phase 4 limitations carried forward
 
-- The formula engine intentionally implements a focused office-function set rather than claiming full Excel parity.
-- Macros, pivot tables, charts, external workbook links and advanced Excel-only constructs are not native OfficeKonnect workbook features in Phase 3.
-- XLSX round-trip prioritizes values, formulas and core worksheet geometry rather than pixel-perfect preservation of every Excel-specific style/feature.
-- Spreadsheet PDF currently follows the existing PDF Standard Font/WinAnsi-safe fallback strategy.
-- Folders, favourites, controlled sharing and richer document/spreadsheet templates remain Phase 4.
-- Full workflow/approval submission remains Phase 5.
+- Explicit sharing is workspace-internal and view-only; external/public-link sharing is not introduced in Phase 4.
+- Existing workspace-wide document read visibility remains unchanged; explicit shares are an organizational/intent marker, not a replacement ACL model.
+- Folder moves deliberately keep Storage object paths stable.
+- Template previews are structured summaries rather than image-rendered thumbnails.
+- The production build still reports non-blocking large-chunk optimization warnings; bundle optimization remains a later performance-hardening task.
+- Full workflow/approval UX remains Phase 5.
 - Full production signing request preparation, participants, fields, external sessions, finalization, audit and certificates remain Phase 6.
 
 ## Non-negotiable release rule
 
-Do not merge Draft PR #2 after an individual phase. Continue Phases 4–11 on the same branch/PR. Merge to `main` only when the complete Phase 11 upgrade passes release-candidate validation.
+Do not merge Draft PR #2 after an individual phase. Continue Phases 5–11 on the same branch/PR. Merge to `main` only when the complete Phase 11 upgrade passes release-candidate validation.
