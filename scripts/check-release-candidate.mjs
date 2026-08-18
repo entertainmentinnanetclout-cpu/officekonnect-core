@@ -16,7 +16,9 @@ function requirePath(relativePath) {
 
 function read(relativePath) {
   requirePath(relativePath);
-  return fs.existsSync(absolute(relativePath)) ? fs.readFileSync(absolute(relativePath), "utf8") : "";
+  return fs.existsSync(absolute(relativePath))
+    ? fs.readFileSync(absolute(relativePath), "utf8")
+    : "";
 }
 
 function requireText(relativePath, markers) {
@@ -75,11 +77,7 @@ requireText("src/lib/workflows.functions.ts", [
   'rpc("submit_workflow_decision"',
   'rpc("resubmit_document_workflow"',
 ]);
-requireText("src/lib/workflows.ts", [
-  '"changes_requested"',
-  '"approved"',
-  '"rejected"',
-]);
+requireText("src/lib/workflows.ts", ['"changes_requested"', '"approved"', '"rejected"']);
 requireText("src/lib/document-signing-copy.functions.ts", [
   "createNativeDocumentSigningCopy",
   "— Signing Copy",
@@ -109,7 +107,9 @@ requirePath("supabase/migrations/20260818101750_phase_10_files_fk_covering_index
 requirePath("tests/signing-finalization-pdf.integration.test.ts");
 requirePath("e2e/public-routes.spec.ts");
 requirePath(".env.example");
-if (fs.existsSync(absolute(".env"))) failures.push("Tracked .env must not exist in the release candidate");
+if (fs.existsSync(absolute(".env"))) {
+  failures.push("Tracked .env must not exist in the release candidate");
+}
 
 const workflowsDir = absolute(".github/workflows");
 if (!fs.existsSync(workflowsDir)) {
