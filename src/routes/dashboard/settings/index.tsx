@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -81,6 +81,7 @@ function SettingsPage() {
             {TABS.map((tab) => (
               <button
                 key={tab.id}
+                type="button"
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
                   "flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition",
@@ -288,10 +289,10 @@ function WorkspaceSettings({
       <Info label="Plan" value={data?.plan ?? "—"} />
       <div className="mt-5 flex gap-2">
         <Button asChild>
-          <a href="/dashboard/workspace">Manage workspace</a>
+          <Link to="/dashboard/workspace">Manage workspace</Link>
         </Button>
         <Button asChild variant="outline">
-          <a href="/dashboard/team">Manage team</a>
+          <Link to="/dashboard/team">Manage team</Link>
         </Button>
       </div>
     </RealBehaviorCard>
@@ -329,7 +330,7 @@ function DocumentsSettings({ workspaceId }: { workspaceId: string | null }) {
       <Info label="Versioning" value="Immutable version ledger" />
       <Info label="Autosave" value="Canonical structured save RPC" />
       <Button asChild className="mt-5">
-        <a href="/dashboard/documents">Open Documents</a>
+        <Link to="/dashboard/documents">Open Documents</Link>
       </Button>
     </RealBehaviorCard>
   );
@@ -346,10 +347,10 @@ function PdfSettings() {
       <Info label="Signing" value="Immutable PDF signing copy before request creation" />
       <div className="mt-5 flex gap-2">
         <Button asChild>
-          <a href="/dashboard/documents">Documents</a>
+          <Link to="/dashboard/documents">Documents</Link>
         </Button>
         <Button asChild variant="outline">
-          <a href="/dashboard/sheets">Sheets</a>
+          <Link to="/dashboard/sheets">Sheets</Link>
         </Button>
       </div>
     </RealBehaviorCard>
@@ -371,7 +372,7 @@ function NotificationSettings({ workspaceId }: { workspaceId: string | null }) {
       <Info label="Task assignment" value="In-app notification enabled" />
       <Info label="Workflow & signing events" value="Canonical backend producers" />
       <Button asChild className="mt-5">
-        <a href="/dashboard/notifications">Open notification center</a>
+        <Link to="/dashboard/notifications">Open notification center</Link>
       </Button>
     </RealBehaviorCard>
   );
@@ -515,7 +516,7 @@ function TemplateSettings({ workspaceId }: { workspaceId: string | null }) {
       <Info label="Supported kinds" value="Documents and spreadsheets" />
       <Info label="Lifecycle" value="Create, duplicate, edit metadata, archive, restore" />
       <Button asChild className="mt-5">
-        <a href="/dashboard/templates">Manage templates</a>
+        <Link to="/dashboard/templates">Manage templates</Link>
       </Button>
     </RealBehaviorCard>
   );
@@ -647,6 +648,7 @@ function AppearanceTab({ userId }: { userId: string }) {
           {["light", "dark", "system"].map((option) => (
             <button
               key={option}
+              type="button"
               onClick={() => {
                 setTheme(option);
                 saveTheme.mutate(option);
@@ -701,8 +703,8 @@ function IntegrationsTab({ userId, workspaceId }: { userId: string; workspaceId:
       <CardHeader>
         <CardTitle>Integrations</CardTitle>
         <CardDescription>
-          Only integrations already connected through a real provider flow are shown here.
-          OfficeKonnect does not expose fake Connect actions.
+          Connected provider accounts appear here when a configured integration flow has authorized
+          them. You can review status and disconnect existing connections.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -768,7 +770,7 @@ function BillingTab({ workspaceId }: { workspaceId: string | null }) {
   return (
     <RealBehaviorCard
       title="Billing"
-      description="This view reflects the real workspace subscription record. No fake upgrade/checkout action is shown until a billing checkout flow is actually configured."
+      description="This view reflects the current workspace subscription and linked payment-provider state."
     >
       <Info label="Plan" value={data?.plan ?? "free"} />
       <Info label="Status" value={data?.status ?? "active"} />
@@ -886,9 +888,9 @@ function AccountTab() {
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground">
-          Account deletion is intentionally not presented as a dead control. A production deletion
-          workflow must first define ownership transfer, retention and legal/audit behavior for
-          shared workspaces.
+          Account deletion is unavailable while shared-workspace ownership transfer and
+          audit-retention requirements are enforced. You can export the account data currently
+          available through your authenticated access.
         </p>
       </CardContent>
       <CardFooter className="justify-end">

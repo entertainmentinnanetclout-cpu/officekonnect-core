@@ -18,7 +18,6 @@ import {
   Search,
   Settings,
   ShieldCheck,
-  Sparkles,
   Users,
   Workflow,
   X,
@@ -266,18 +265,6 @@ export function OfficeKonnectShell({
           ))}
         </div>
       </nav>
-
-      <div className="border-t border-slate-800 p-3">
-        <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-3">
-          <div className="flex items-center gap-2 text-xs font-medium text-slate-200">
-            <Sparkles className="h-4 w-4 text-violet-300" />
-            Upgrade programme
-          </div>
-          <p className="mt-1 text-[11px] leading-4 text-slate-500">
-            PR #2 carries Phases 0–11. Main remains untouched until release-candidate approval.
-          </p>
-        </div>
-      </div>
     </>
   );
 
@@ -302,8 +289,9 @@ export function OfficeKonnectShell({
           size="icon"
           className="absolute right-2 top-3 z-10 text-slate-400 hover:bg-slate-800 hover:text-white"
           onClick={() => onMobileOpenChange(false)}
+          aria-label="Close navigation"
         >
-          <X className="h-5 w-5" />
+          <X className="h-5 w-5" aria-hidden="true" />
         </Button>
         {sidebarContent}
       </aside>
@@ -315,8 +303,9 @@ export function OfficeKonnectShell({
             size="icon"
             className="mr-2 lg:hidden"
             onClick={() => onMobileOpenChange(true)}
+            aria-label="Open navigation"
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-5 w-5" aria-hidden="true" />
           </Button>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">{pageTitle}</p>
@@ -340,7 +329,7 @@ export function OfficeKonnectShell({
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-10 gap-2 px-2">
+                <Button variant="ghost" className="h-10 gap-2 px-2" aria-label="Open user menu">
                   <Avatar className="h-8 w-8 border">
                     <AvatarImage
                       src={
@@ -417,8 +406,9 @@ export function OfficeKonnectShell({
             type="button"
             className="flex flex-col items-center justify-center gap-1 text-[10px] font-medium text-slate-500"
             onClick={() => onMobileOpenChange(true)}
+            aria-label="Open navigation"
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-5 w-5" aria-hidden="true" />
             More
           </button>
         </nav>

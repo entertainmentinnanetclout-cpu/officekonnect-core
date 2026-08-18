@@ -27,7 +27,11 @@ function DashboardIndex() {
   const workspace = useWorkspaceShell(user);
   const workspaceId = workspace.activeWorkspaceId;
 
-  const { data: stats, isLoading: statsLoading, error: statsError } = useQuery({
+  const {
+    data: stats,
+    isLoading: statsLoading,
+    error: statsError,
+  } = useQuery({
     queryKey: ["dashboard-stats", workspaceId],
     enabled: Boolean(workspaceId),
     queryFn: async () => {
@@ -59,7 +63,10 @@ function DashboardIndex() {
       return {
         documents: docs.count ?? 0,
         signingRequests: signingRequests.count ?? 0,
-        emailsSent: (campaigns.data ?? []).reduce((total, campaign) => total + campaign.emails_sent, 0),
+        emailsSent: (campaigns.data ?? []).reduce(
+          (total, campaign) => total + campaign.emails_sent,
+          0,
+        ),
         contacts: contacts.count ?? 0,
         voices: voices.count ?? 0,
       };
@@ -67,11 +74,36 @@ function DashboardIndex() {
   });
 
   const quickActions = [
-    { name: "Documents", description: "Create, upload and manage files", icon: FileText, href: "/dashboard/documents" as const },
-    { name: "E-signatures", description: "Prepare and track signature requests", icon: FileSignature, href: "/dashboard/signing" as const },
-    { name: "Mail Center", description: "Create and manage office campaigns", icon: Mail, href: "/dashboard/mail" as const },
-    { name: "Contacts", description: "Import and manage workspace contacts", icon: Users, href: "/dashboard/contacts" as const },
-    { name: "Voice Notes", description: "Record and organize voice notes", icon: Mic, href: "/dashboard/voice" as const },
+    {
+      name: "Documents",
+      description: "Create, upload and manage files",
+      icon: FileText,
+      href: "/dashboard/documents" as const,
+    },
+    {
+      name: "E-signatures",
+      description: "Prepare and track signature requests",
+      icon: FileSignature,
+      href: "/dashboard/signing" as const,
+    },
+    {
+      name: "Mail Center",
+      description: "Create and manage office campaigns",
+      icon: Mail,
+      href: "/dashboard/mail" as const,
+    },
+    {
+      name: "Contacts",
+      description: "Import and manage workspace contacts",
+      icon: Users,
+      href: "/dashboard/contacts" as const,
+    },
+    {
+      name: "Voice Notes",
+      description: "Record and organize voice notes",
+      icon: Mic,
+      href: "/dashboard/voice" as const,
+    },
   ];
 
   return (
@@ -114,11 +146,36 @@ function DashboardIndex() {
       ) : null}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5" aria-busy={statsLoading}>
-        <StatCard title="Documents" value={stats?.documents ?? 0} icon={FileText} detail="Active workspace" />
-        <StatCard title="E-sign requests" value={stats?.signingRequests ?? 0} icon={FileSignature} detail="All request states" />
-        <StatCard title="Emails sent" value={stats?.emailsSent ?? 0} icon={Mail} detail="Recorded campaign sends" />
-        <StatCard title="Contacts" value={stats?.contacts ?? 0} icon={Users} detail="Workspace contacts" />
-        <StatCard title="Voice notes" value={stats?.voices ?? 0} icon={Mic} detail="Workspace notes" />
+        <StatCard
+          title="Documents"
+          value={stats?.documents ?? 0}
+          icon={FileText}
+          detail="Active workspace"
+        />
+        <StatCard
+          title="E-sign requests"
+          value={stats?.signingRequests ?? 0}
+          icon={FileSignature}
+          detail="All request states"
+        />
+        <StatCard
+          title="Emails sent"
+          value={stats?.emailsSent ?? 0}
+          icon={Mail}
+          detail="Recorded campaign sends"
+        />
+        <StatCard
+          title="Contacts"
+          value={stats?.contacts ?? 0}
+          icon={Users}
+          detail="Workspace contacts"
+        />
+        <StatCard
+          title="Voice notes"
+          value={stats?.voices ?? 0}
+          icon={Mic}
+          detail="Workspace notes"
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -143,7 +200,10 @@ function DashboardIndex() {
                     <p className="truncate text-xs text-muted-foreground">{action.description}</p>
                   </div>
                 </div>
-                <ArrowUpRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
+                <ArrowUpRight
+                  className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                  aria-hidden="true"
+                />
               </Link>
             ))}
           </CardContent>
@@ -164,17 +224,27 @@ function DashboardIndex() {
 }
 
 function RecentActivity({ workspaceId }: { workspaceId: string | null }) {
-  const { data = [], isLoading, isError } = useQuery({
+  const {
+    data = [],
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["dashboard-activity", workspaceId],
     enabled: Boolean(workspaceId),
     queryFn: () => listWorkspaceActivity(workspaceId!, 6, 0),
   });
 
-  if (!workspaceId) return <p className="text-sm text-muted-foreground">Select a workspace to view activity.</p>;
+  if (!workspaceId)
+    return <p className="text-sm text-muted-foreground">Select a workspace to view activity.</p>;
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading recent activity…</p>;
-  if (isError) return <p className="text-sm text-destructive">Recent activity could not be loaded.</p>;
+  if (isError)
+    return <p className="text-sm text-destructive">Recent activity could not be loaded.</p>;
   if (data.length === 0) {
-    return <p className="text-sm text-muted-foreground">No auditable workspace activity has been recorded yet.</p>;
+    return (
+      <p className="text-sm text-muted-foreground">
+        No auditable workspace activity has been recorded yet.
+      </p>
+    );
   }
 
   return (
@@ -184,10 +254,13 @@ function RecentActivity({ workspaceId }: { workspaceId: string | null }) {
           <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden="true" />
           <div className="min-w-0 space-y-1">
             <p className="truncate text-sm font-medium leading-none">
-              {humanizeAction(row.action)} <span className="text-muted-foreground">· {humanizeEntity(row.entity_type)}</span>
+              {humanizeAction(row.action)}{" "}
+              <span className="text-muted-foreground">· {humanizeEntity(row.entity_type)}</span>
             </p>
             <p className="truncate text-xs text-muted-foreground">{row.actor_name}</p>
-            <p className="text-xs text-muted-foreground">{new Date(row.occurred_at).toLocaleString()}</p>
+            <p className="text-xs text-muted-foreground">
+              {new Date(row.occurred_at).toLocaleString()}
+            </p>
           </div>
         </div>
       ))}
@@ -204,7 +277,17 @@ function humanizeEntity(entityType: string) {
   return entityType.replaceAll("_", " ");
 }
 
-function StatCard({ title, value, icon: Icon, detail }: { title: string; value: number; icon: LucideIcon; detail: string }) {
+function StatCard({
+  title,
+  value,
+  icon: Icon,
+  detail,
+}: {
+  title: string;
+  value: number;
+  icon: LucideIcon;
+  detail: string;
+}) {
   return (
     <Card className="overflow-hidden">
       <CardContent className="p-6">
@@ -212,11 +295,20 @@ function StatCard({ title, value, icon: Icon, detail }: { title: string; value: 
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
             <Icon className="h-5 w-5 text-slate-600 dark:text-slate-400" aria-hidden="true" />
           </div>
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{detail}</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            {detail}
+          </span>
         </div>
         <div className="mt-4">
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{title}</p>
-          <h3 className={cn("text-2xl font-bold tracking-tight", value === 0 && "text-muted-foreground")}>{value}</h3>
+          <h3
+            className={cn(
+              "text-2xl font-bold tracking-tight",
+              value === 0 && "text-muted-foreground",
+            )}
+          >
+            {value}
+          </h3>
         </div>
       </CardContent>
     </Card>

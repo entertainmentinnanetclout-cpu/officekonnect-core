@@ -15,15 +15,24 @@ function walk(dir) {
 }
 
 const checks = [
-  { name: "internal upgrade programme text", pattern: /Upgrade programme|PR #\d+ carries|Phases? 0[–-]11/i },
+  {
+    name: "internal upgrade programme text",
+    pattern: /Upgrade programme|PR #\d+ carries|Phases? 0[–-]11/i,
+  },
   { name: "fake/dead implementation wording", pattern: /\bfake\b|\bdead control\b/i },
   { name: "legacy V1 residue", pattern: /\bV1\b/ },
   { name: "raw console logging", pattern: /console\.(?:log|debug|error)\s*\(/ },
   { name: "native browser alert/confirm", pattern: /(?:window\.)?(?:alert|confirm)\s*\(/ },
   { name: "dead href/to target", pattern: /(?:href|to)\s*=\s*["'](?:#|javascript:)/i },
   { name: "internal dashboard hard reload", pattern: /<a\s+[^>]*href=["']\/dashboard(?:\/|["'])/i },
-  { name: "browser service-role exposure", pattern: /(?:VITE_|PUBLIC_).*SERVICE_ROLE|SERVICE_ROLE.*(?:VITE_|PUBLIC_)/i },
-  { name: "persistent token storage", pattern: /localStorage[^\n]*(?:token|secret)|(?:token|secret)[^\n]*localStorage/i },
+  {
+    name: "browser service-role exposure",
+    pattern: /(?:VITE_|PUBLIC_).*SERVICE_ROLE|SERVICE_ROLE.*(?:VITE_|PUBLIC_)/i,
+  },
+  {
+    name: "persistent token storage",
+    pattern: /localStorage[^\n]*(?:token|secret)|(?:token|secret)[^\n]*localStorage/i,
+  },
 ];
 
 const findings = [];
@@ -36,14 +45,17 @@ for (const absolute of walk(sourceRoot)) {
   const lines = text.split("\n");
   lines.forEach((line, index) => {
     for (const check of checks) {
-      if (check.pattern.test(line)) findings.push(`${file}:${index + 1} ${check.name}: ${line.trim()}`);
+      if (check.pattern.test(line))
+        findings.push(`${file}:${index + 1} ${check.name}: ${line.trim()}`);
       check.pattern.lastIndex = 0;
     }
   });
 }
 
 if (findings.length) {
-  console.error("Phase 9 product hardening audit failed:\n" + findings.map((item) => `- ${item}`).join("\n"));
+  console.error(
+    "Phase 9 product hardening audit failed:\n" + findings.map((item) => `- ${item}`).join("\n"),
+  );
   process.exit(1);
 }
 

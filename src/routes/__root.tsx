@@ -41,7 +41,6 @@ function NotFoundComponent() {
 }
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
-  console.error(error);
   const router = useRouter();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
@@ -84,9 +83,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "OfficeKonnect" },
-      { name: "description", content: "Professional Office Productivity Platform" },
+      { name: "description", content: "The connected workspace for modern offices." },
       { property: "og:title", content: "OfficeKonnect" },
-      { property: "og:description", content: "Professional Office Productivity Platform" },
+      { property: "og:description", content: "The connected workspace for modern offices." },
       { property: "og:type", content: "website" },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
