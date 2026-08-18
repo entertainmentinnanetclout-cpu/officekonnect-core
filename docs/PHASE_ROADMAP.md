@@ -20,30 +20,30 @@ Expose the existing workbook backend through a production spreadsheet UI, determ
 
 Add nested folders, personal favourites, workspace-internal controlled sharing, full file lifecycle actions and reusable native-document/spreadsheet templates while retaining the canonical `documents`, private Storage and `document_templates` architecture.
 
-## Phase 5 — Workflows and Approvals — **Next**
+## Phase 5 — Workflows and Approvals — **Completed**
 
-Build template management, work queue, immutable review UI, decisions, comments, changes and resubmission over the existing workflow state machine.
+Expose the existing workflow state machine through versioned workflow-template management, workflow launch, immutable submitted-version review, authenticated work queue, decisions, comments, reassignment, request-changes editing, optimistic-concurrency resubmission and audited cancellation.
 
-## Phase 6 — Production e-signatures
+## Phase 6 — Production E-Signatures — **Next**
 
-Replace obsolete frontend signing mutations with the hardened signing request/participant/field/session/finalization system. Build internal/external signer UX, audit timeline and certificate access.
+Replace obsolete frontend signing mutations with the hardened signing request/participant/field/session/finalization system. Build signing dashboard/status buckets, preparation workspace, participant assignment/order, normalized fields, internal and external signer UX, finalization, audit timeline, final PDF and certificate access.
 
-## Phase 7 — Tasks, calendar and global search
+## Phase 7 — Tasks, Calendar and Global Search
 
-Add the minimal missing task/event persistence and aggregate operational deadlines. Implement command/search navigation.
+Add the minimal missing task/event persistence and aggregate workflow/signing/task deadlines. Implement command/search navigation.
 
-## Phase 8 — Notifications, activity, team, workspace and settings
+## Phase 8 — Notifications, Activity, Team, Workspace and Settings
 
 Expose existing platform infrastructure through complete user-facing management surfaces.
 
-## Phase 9 — Product-wide UX and route hardening
+## Phase 9 — Product-wide UX and Route Hardening
 
 Eliminate dead actions, mocks, placeholders, fake metrics, broken links and unhandled states. Complete responsive/accessibility work.
 
-## Phase 10 — Security, performance, automated testing and CI
+## Phase 10 — Security, Performance, Automated Testing and CI
 
-Add unit/integration/E2E testing, deterministic real-PDF signing tests, CI gates, security checks and performance hardening.
+Expand unit/integration/E2E testing, deterministic real-PDF signing tests, CI gates, security checks and performance hardening.
 
-## Phase 11 — Release candidate and documentation
+## Phase 11 — Release Candidate and Documentation
 
-Complete handoff documentation, release QA and the canonical create→review→approve→sign→finalize product journey.
+Complete handoff documentation, Vercel release-candidate validation, release QA and the canonical create → review → changes → resubmit → approve → sign → finalize product journey.
