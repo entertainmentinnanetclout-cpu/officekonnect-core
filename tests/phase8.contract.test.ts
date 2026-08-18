@@ -4,7 +4,10 @@ import { join } from "node:path";
 
 const root = process.cwd();
 const migration = readFileSync(
-  join(root, "supabase/migrations/20260818082337_phase_8_notifications_team_workspace_activity.sql"),
+  join(
+    root,
+    "supabase/migrations/20260818082337_phase_8_notifications_team_workspace_activity.sql",
+  ),
   "utf8",
 );
 const invitationDirectoryMigration = readFileSync(
@@ -65,10 +68,16 @@ describe("Phase 8 operational contracts", () => {
 
   test("team role changes preserve owner/admin hierarchy", () => {
     const sql = normalized(migration);
-    expect(sql).toContain("if p_role='owner' then raise exception 'owner transfer is not supported here'");
-    expect(sql).toContain("if v_target='owner' then raise exception 'the workspace owner role cannot be changed'");
+    expect(sql).toContain(
+      "if p_role='owner' then raise exception 'owner transfer is not supported here'",
+    );
+    expect(sql).toContain(
+      "if v_target='owner' then raise exception 'the workspace owner role cannot be changed'",
+    );
     expect(sql).toContain("if v_actor='admin' and (v_target='admin' or p_role='admin')");
-    expect(sql).toContain("if v_target='owner' then raise exception 'the workspace owner cannot leave or be removed'");
+    expect(sql).toContain(
+      "if v_target='owner' then raise exception 'the workspace owner cannot leave or be removed'",
+    );
   });
 
   test("activity aggregates canonical audit ledgers instead of copying them", () => {
