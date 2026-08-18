@@ -20,10 +20,14 @@ async function getServerEntry(): Promise<ServerEntry> {
 
 function isServerFunctionRequest(request: Request) {
   const url = new URL(request.url);
+  const pathname = url.pathname.replace(/\/+$/, "");
   return (
-    url.pathname.includes("/_serverFn/") ||
+    pathname === "/_serverFn" ||
+    pathname.startsWith("/_serverFn/") ||
     url.searchParams.has("_serverFnId") ||
-    request.headers.get("x-tsr-redirect") !== null
+    request.headers.get("x-tsr-redirect") !== null ||
+    request.headers.get("x-tsr-server-fn") !== null ||
+    request.headers.get("x-tanstack-server-fn") !== null
   );
 }
 
@@ -41,19 +45,50 @@ function describeError(error: unknown) {
 function jsonServerFunctionError(error: unknown, status = 500) {
   return new Response(JSON.stringify({ error: describeError(error) }), {
     status,
-    headers: { "content-type": "application/json; charset=utf-8" },
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store",
+    },
   });
 }
 
-// h3 can swallow an in-handler throw into a normal 500 JSON response such as
-// {"unhandled":true,"message":"HTTPError"}. Browser document requests still
-// receive the branded HTML failure page; server functions must stay JSON so the
-// client can display the original Supabase/RLS/validation failure.
+async function responseError(response: Response) {
+  const captured = consumeLastCapturedError();
+  if (captured) return captured;
+
+  const body = await response.clone().text();
+  if (body) {
+    try {
+      const parsed = JSON.parse(body) as { error?: unknown; message?: unknown };
+      if (typeof parsed.error === "string" && parsed.error.trim()) return new Error(parsed.error);
+      if (typeof parsed.message === "string" && parsed.message.trim()) return new Error(parsed.message);
+    } catch {
+      const title = body.match(/<title>(.*?)<\/title>/is)?.[1]?.trim();
+      if (title) return new Error(title);
+      const heading = body.match(/<h1[^>]*>(.*?)<\/h1>/is)?.[1]?.replace(/<[^>]+>/g, "").trim();
+      if (heading) return new Error(heading);
+    }
+  }
+
+  return new Error(`Server request failed with HTTP ${response.status}`);
+}
+
+// Never allow TanStack/Nitro/Lovable's branded HTML SSR fallback to cross the
+// server-function RPC boundary. The browser expects a serialized data/error
+// response; receiving HTML is what caused OfficeKonnect to render the full
+// "This page didn't load" document inside upload/create/signature errors.
 async function normalizeCatastrophicSsrResponse(
   request: Request,
   response: Response,
 ): Promise<Response> {
   if (response.status < 500) return response;
+
+  if (isServerFunctionRequest(request)) {
+    const error = await responseError(response);
+    console.error(error);
+    return jsonServerFunctionError(error, response.status);
+  }
+
   const contentType = response.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) return response;
 
@@ -65,10 +100,6 @@ async function normalizeCatastrophicSsrResponse(
   const capturedError =
     consumeLastCapturedError() ?? new Error(`h3 swallowed server error: ${body}`);
   console.error(capturedError);
-
-  if (isServerFunctionRequest(request)) {
-    return jsonServerFunctionError(capturedError, response.status);
-  }
 
   return new Response(renderErrorPage(), {
     status: response.status,

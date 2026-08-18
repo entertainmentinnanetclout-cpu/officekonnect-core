@@ -52,14 +52,12 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import {
-  createDocumentRecord,
-  createNativeDocument,
-  createSignedUploadUrl,
   duplicateNativeDocument,
   exportNativeDocumentPdf,
   renameDocument,
   updateDocumentStatus,
 } from "@/lib/documents.functions";
+import { createNativeDocumentClient, uploadDocumentClient } from "@/lib/document-client";
 import { downloadDocumentFromStorage } from "@/lib/download";
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
@@ -113,9 +111,6 @@ function DocumentsIndex() {
   const [renameTarget, setRenameTarget] = useState<DocumentRow | null>(null);
   const [renameValue, setRenameValue] = useState("");
 
-  const createNativeFn = useServerFn(createNativeDocument);
-  const createUploadUrlFn = useServerFn(createSignedUploadUrl);
-  const createRecordFn = useServerFn(createDocumentRecord);
   const renameFn = useServerFn(renameDocument);
   const duplicateFn = useServerFn(duplicateNativeDocument);
   const statusFn = useServerFn(updateDocumentStatus);
@@ -168,7 +163,7 @@ function DocumentsIndex() {
   const refreshLibrary = () => queryClient.invalidateQueries({ queryKey: ["documents"] });
 
   const createMutation = useMutation({
-    mutationFn: () => createNativeFn({ data: { title: "Untitled document" } }),
+    mutationFn: () => createNativeDocumentClient("Untitled document"),
     onSuccess: async (document) => {
       await refreshLibrary();
       toast.success("Document created");
@@ -187,29 +182,7 @@ function DocumentsIndex() {
       if (!ALLOWED_EXTENSIONS.has(extension)) {
         throw new Error("Supported uploads: PDF, DOC/DOCX, XLS/XLSX, PNG and JPG");
       }
-
-      const objectName = `${crypto.randomUUID()}.${extension || "bin"}`;
-      const signed = await createUploadUrlFn({ data: { bucket: "documents", path: objectName } });
-      const { error: uploadError } = await supabase.storage
-        .from("documents")
-        .uploadToSignedUrl(signed.path, signed.token, file, {
-          contentType: file.type || "application/octet-stream",
-        });
-      if (uploadError) throw uploadError;
-
-      try {
-        return await createRecordFn({
-          data: {
-            title: file.name,
-            storagePath: signed.path,
-            fileType: file.type || "application/octet-stream",
-            fileSize: file.size,
-          },
-        });
-      } catch (error) {
-        await supabase.storage.from("documents").remove([signed.path]);
-        throw error;
-      }
+      return uploadDocumentClient(file);
     },
     onSuccess: async () => {
       setUploadOpen(false);
