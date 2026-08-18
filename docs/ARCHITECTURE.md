@@ -58,6 +58,35 @@ Spreadsheet saves use the existing `save_structured_document` RPC and restores u
 
 The static spreadsheet signing bridge creates a PDF `documents` row plus version 1. It does not create or bypass the signing request state machine; full signing preparation/finalization remains owned by the Phase 6 signing architecture.
 
+## Files organization
+
+Phase 4 adds an organizational layer over `documents`; it does not create a second file store.
+
+- `workspace_folders` stores nested workspace folders.
+- `document_folder_items` stores a document's current folder assignment.
+- `document_favorites` stores user-specific favourites.
+- `document_shares` stores explicit workspace-internal, view-only share markers.
+
+Moving a document between folders updates only relational organization metadata. Uploaded binaries remain at their stable workspace-first private Storage paths, which avoids copying or invalidating objects during routine organization.
+
+Folder hierarchy integrity is enforced in PostgreSQL as well as in the application. The Phase 4 cycle-guard trigger rejects self-parenting and descendant cycles. Folder deletion cascades the folder hierarchy/assignments but never deletes the underlying `documents` rows.
+
+Uploaded-file duplication is the one Files operation that creates a new binary: it copies the actual private Storage object to a fresh document-owned path, creates a fresh `documents` row and creates version 1. Native documents and spreadsheets continue to use their existing canonical duplicate flows.
+
+### Controlled sharing
+
+`document_shares.permission` is restricted to `view`, and share recipients must already be members of the same workspace. `list_workspace_member_directory` is a security-definer RPC with membership enforcement and a restricted search path; it exposes only the directory data required by the share picker.
+
+The pre-existing document SELECT policy already grants workspace members access to workspace documents. Explicit Phase 4 shares therefore power the **Shared with me** organizational surface and do not claim to replace the existing workspace visibility boundary. No public/external sharing model is introduced.
+
+## Document and spreadsheet templates
+
+`document_templates` remains the canonical reusable-template table. Phase 4 does not repurpose the separate Mail Center email-template feature.
+
+Template content stores the same native-document or canonical workbook JSON used by the source editor. Creating from a template produces a normal new `documents` row and records `template_id`; no template-specific document model exists.
+
+Canonical user-facing categories are General, Letters, Reports, Meeting Notes, Agreements, Forms, Policies, Proposals, Internal Memos and Spreadsheets. Normal members may create templates they own; owners/admins retain management authority according to RLS.
+
 ## Workflows
 
 Canonical tables:
@@ -103,6 +132,8 @@ A raw invitation token is exchanged once for a short-lived session. The raw toke
 - State-machine tables are mutated through approved RPCs/Edge Functions where structural locks require it.
 - No development-mode work may replace `auth.uid()` or workspace RLS with fake client identity.
 - Spreadsheet imports/exports do not weaken document ownership or create public workbook storage.
+- Files organization metadata remains workspace-scoped and does not move binaries outside private Storage.
+- Explicit Phase 4 shares are workspace-internal and view-only.
 
 ## Phase 0 repository parity
 
