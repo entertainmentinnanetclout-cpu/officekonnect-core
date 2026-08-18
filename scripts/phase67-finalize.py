@@ -24,8 +24,8 @@ root = replace_once(
 )
 root = replace_once(
     root,
-    '    !isDashboardPage &&\n',
-    '    !isDashboardPage &&\n    !isExternalSigningPage &&\n',
+    '    if (!user && !isAuthPage && !isPublicPage && !isDashboardPage) {',
+    '    if (!user && !isAuthPage && !isPublicPage && !isDashboardPage && !isExternalSigningPage) {',
     "root redirect exclusion",
 )
 write(str(root_path), root)
