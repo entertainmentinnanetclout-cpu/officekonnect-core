@@ -42,7 +42,7 @@ Phase 10 extracts the completed-PDF field renderer into:
 - out-of-page normalized geometry is rejected;
 - fields referencing pages outside the immutable source are rejected.
 
-The source test suite now contains **42 unit/integration tests**, all passing.
+The source test suite contains **42 unit/integration tests**, all passing.
 
 ## Live signing finalizer
 
@@ -92,9 +92,9 @@ Added:
 - `playwright.config.ts`;
 - `e2e/public-routes.spec.ts`.
 
-The CI browser runner is pinned to `@playwright/test@1.62.1` and installed only after the frozen application install, build and budget gates.
+The Playwright test runner is pinned to `@playwright/test@1.62.1`. Permanent CI resolves the Chrome/Chromium executable already provisioned on the GitHub Ubuntu runner and passes that executable to Playwright rather than downloading a second browser runtime on every validation.
 
-Four Chromium E2E tests pass:
+Four Chromium-family E2E tests pass:
 
 1. current OfficeKonnect landing page/title/section navigation with no browser runtime errors;
 2. real login controls with no runtime errors;
@@ -114,7 +114,11 @@ The TanStack generated route registry is synchronized with both legal routes.
 
 ## Permanent CI gate
 
-`.github/workflows/phase0-deterministic-validation.yml` is read-only (`contents: read`) and now runs:
+`.github/workflows/phase0-deterministic-validation.yml` is read-only (`contents: read`) and PR-driven for Draft PR #2.
+
+Concurrency is scoped to the PR number with `cancel-in-progress: true`, so newer branch heads cancel stale validation runs rather than consuming the runner on obsolete commits.
+
+The gate runs:
 
 1. repository parity;
 2. frozen `bun ci`;
@@ -126,12 +130,12 @@ The TanStack generated route registry is synchronized with both legal routes.
 8. production client/SSR/Nitro build;
 9. production asset budget;
 10. pinned Playwright runner installation;
-11. Chromium installation;
+11. runner-provisioned Chrome/Chromium resolution/version check;
 12. browser E2E.
 
 All temporary/write-capable reconciliation workflows used during implementation were removed.
 
-## Final validation
+## Validated source checkpoint
 
 Upgrade Validation run `32129565222` passed on `ddb2edf65ef07da6d4ae5bcaa2a6129966a46c3d`:
 
@@ -144,10 +148,10 @@ Upgrade Validation run `32129565222` passed on `ddb2edf65ef07da6d4ae5bcaa2a61299
 - Unit/integration tests — **42/42 PASS**
 - Production build — PASS
 - Production asset budget — PASS
-- Playwright/Chromium installation — PASS
+- Playwright/Chromium setup — PASS
 - Browser E2E — **4/4 PASS**
 
-A final documentation-head run must pass the same read-only gate before Phase 10 is formally frozen.
+The final documentation/CI head must clear the same substantive gate with the optimized runner-provisioned browser path before Phase 10 is formally frozen.
 
 ## Reviewed residual advisor findings
 
