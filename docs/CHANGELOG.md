@@ -1,5 +1,75 @@
 # OfficeKonnect Changelog
 
+## 2026-08-18 — Phases 6 and 7 completed
+
+### Phase 6 — Production E-Signatures
+
+#### Added
+
+- Production `/dashboard/signing` request dashboard and status filtering.
+- Production `/dashboard/signing/$requestId/prepare` three-column PDF preparation workspace.
+- Production `/dashboard/signing/$requestId` authenticated request/signing/audit workspace.
+- Public `/sign/$token` one-time invitation exchange and `/sign/active` short-lived external signing session.
+- Internal signer support for saved, drawn and typed signatures, consent, text/date fields and sequential eligibility.
+- External signature-image upload/completion/decline through the hardened `signing-external` session gateway.
+- Participant configuration for workspace/external identities, signer/approver/CC roles and parallel/sequential order.
+- Normalized drag/resize signature, initial, text and date fields.
+- Sender invitation rotation, cancellation, finalization retry, completed PDF and certificate access.
+- Signing-event timeline with event hashes.
+- Five Phase 6 signing-contract regression tests.
+
+#### Changed
+
+- Native Documents and Sheets now use **Send for signature**: flush-save → deterministic PDF signing copy → prefilled signing request → preparation workspace.
+- `signing-finalize` live deployment advanced to version 2 with generic `OfficeKonnect Signing Certificate` branding while preserving JWT enforcement and the existing finalization state machine.
+- The legacy send dialog now creates a standards-compliant signing draft and routes to preparation.
+
+#### Removed
+
+- Obsolete `signing-public.functions.ts`, which used privileged direct access and the pre-hardened signing model.
+
+#### Security / architecture
+
+- Existing signing tables/RPCs/Edge Functions remain canonical; no second signing engine was created.
+- Raw external invitation tokens are exchange-only; only short-lived session tokens remain in `sessionStorage` after exchange.
+- Internal signing completes through authenticated RPC/Edge Function paths.
+- RLS remains enabled on requests, participants, fields, events and certificates.
+- No fake signing transactions were inserted into production.
+
+### Phase 7 — Tasks, Calendar and Global Search
+
+#### Added
+
+- Live migration `20260818062157_phase_7_tasks_calendar_search`.
+- RLS-protected `tasks` persistence with assignment, status, priority, start/due/completion dates and operational object links.
+- Production `/dashboard/tasks` board/list views, filters, search, CRUD, assignment and lifecycle controls.
+- RLS-protected `calendar_events` persistence for manual office events.
+- Production `/dashboard/calendar` month/agenda UI combining manual events with derived task/workflow/signing operational dates.
+- Membership-checked `search_workspace_objects` RPC.
+- Production `/dashboard/search` route.
+- Ctrl/Cmd+K global workspace command-search dialog.
+- Four Phase 7 migration/security/search contract regression tests.
+
+#### Security / architecture
+
+- `tasks` and `calendar_events` each retain four live RLS policies.
+- Operational task/workflow/signing dates are derived in Calendar rather than copied into `calendar_events`.
+- Global Search uses live workspace data and membership checking; no duplicate search-copy index/table was introduced.
+- No fake tasks or calendar events were inserted into production.
+
+### Validation
+
+Clean read-only combined Phase 6/7 source checkpoint `35c9c948c727b206feab21f994bba5ecc085786a` passed Upgrade Validation run `32108717386`:
+
+- Repository parity ✅
+- Frozen `bun ci` ✅
+- ESLint ✅ — 0 errors
+- TypeScript ✅
+- **33 tests / 0 failures** ✅
+- Production build ✅
+
+Deployment-platform/Vercel validation remains intentionally deferred until Phase 11.
+
 ## 2026-08-18 — Phase 5 completed
 
 ### Added
