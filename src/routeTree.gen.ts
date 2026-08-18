@@ -15,24 +15,29 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as SignActiveRouteImport } from './routes/sign/active'
 import { Route as SignTokenRouteImport } from './routes/sign/$token'
+import { Route as InviteTokenRouteImport } from './routes/invite/$token'
 import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-password'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
+import { Route as DashboardWorkspaceIndexRouteImport } from './routes/dashboard/workspace/index'
 import { Route as DashboardWorkflowsIndexRouteImport } from './routes/dashboard/workflows/index'
 import { Route as DashboardVoiceIndexRouteImport } from './routes/dashboard/voice/index'
 import { Route as DashboardTemplatesIndexRouteImport } from './routes/dashboard/templates/index'
+import { Route as DashboardTeamIndexRouteImport } from './routes/dashboard/team/index'
 import { Route as DashboardTasksIndexRouteImport } from './routes/dashboard/tasks/index'
 import { Route as DashboardSigningIndexRouteImport } from './routes/dashboard/signing/index'
 import { Route as DashboardSheetsIndexRouteImport } from './routes/dashboard/sheets/index'
 import { Route as DashboardSettingsIndexRouteImport } from './routes/dashboard/settings/index'
 import { Route as DashboardSearchIndexRouteImport } from './routes/dashboard/search/index'
+import { Route as DashboardNotificationsIndexRouteImport } from './routes/dashboard/notifications/index'
 import { Route as DashboardMailIndexRouteImport } from './routes/dashboard/mail/index'
 import { Route as DashboardFilesIndexRouteImport } from './routes/dashboard/files/index'
 import { Route as DashboardDocumentsIndexRouteImport } from './routes/dashboard/documents/index'
 import { Route as DashboardContactsIndexRouteImport } from './routes/dashboard/contacts/index'
 import { Route as DashboardCalendarIndexRouteImport } from './routes/dashboard/calendar/index'
 import { Route as DashboardApprovalsIndexRouteImport } from './routes/dashboard/approvals/index'
+import { Route as DashboardActivityIndexRouteImport } from './routes/dashboard/activity/index'
 import { Route as DashboardWorkflowsRunIdRouteImport } from './routes/dashboard/workflows/$runId'
 import { Route as DashboardSheetsDocumentIdRouteImport } from './routes/dashboard/sheets/$documentId'
 import { Route as DashboardDocumentsDocumentIdRouteImport } from './routes/dashboard/documents/$documentId'
@@ -71,6 +76,11 @@ const SignTokenRoute = SignTokenRouteImport.update({
   path: '/sign/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRegisterRoute = AuthRegisterRouteImport.update({
   id: '/register',
   path: '/register',
@@ -91,6 +101,11 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/callback',
   getParentRoute: () => AuthRoute,
 } as any)
+const DashboardWorkspaceIndexRoute = DashboardWorkspaceIndexRouteImport.update({
+  id: '/workspace/',
+  path: '/workspace/',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardWorkflowsIndexRoute = DashboardWorkflowsIndexRouteImport.update({
   id: '/workflows/',
   path: '/workflows/',
@@ -104,6 +119,11 @@ const DashboardVoiceIndexRoute = DashboardVoiceIndexRouteImport.update({
 const DashboardTemplatesIndexRoute = DashboardTemplatesIndexRouteImport.update({
   id: '/templates/',
   path: '/templates/',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardTeamIndexRoute = DashboardTeamIndexRouteImport.update({
+  id: '/team/',
+  path: '/team/',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardTasksIndexRoute = DashboardTasksIndexRouteImport.update({
@@ -131,6 +151,12 @@ const DashboardSearchIndexRoute = DashboardSearchIndexRouteImport.update({
   path: '/search/',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardNotificationsIndexRoute =
+  DashboardNotificationsIndexRouteImport.update({
+    id: '/notifications/',
+    path: '/notifications/',
+    getParentRoute: () => DashboardRoute,
+  } as any)
 const DashboardMailIndexRoute = DashboardMailIndexRouteImport.update({
   id: '/mail/',
   path: '/mail/',
@@ -159,6 +185,11 @@ const DashboardCalendarIndexRoute = DashboardCalendarIndexRouteImport.update({
 const DashboardApprovalsIndexRoute = DashboardApprovalsIndexRouteImport.update({
   id: '/approvals/',
   path: '/approvals/',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardActivityIndexRoute = DashboardActivityIndexRouteImport.update({
+  id: '/activity/',
+  path: '/activity/',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardWorkflowsRunIdRoute = DashboardWorkflowsRunIdRouteImport.update({
@@ -209,6 +240,7 @@ export interface FileRoutesByFullPath {
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/sign/$token': typeof SignTokenRoute
   '/sign/active': typeof SignActiveRoute
   '/dashboard/': typeof DashboardIndexRoute
@@ -217,20 +249,24 @@ export interface FileRoutesByFullPath {
   '/dashboard/documents/$documentId': typeof DashboardDocumentsDocumentIdRoute
   '/dashboard/sheets/$documentId': typeof DashboardSheetsDocumentIdRoute
   '/dashboard/workflows/$runId': typeof DashboardWorkflowsRunIdRoute
+  '/dashboard/activity/': typeof DashboardActivityIndexRoute
   '/dashboard/approvals/': typeof DashboardApprovalsIndexRoute
   '/dashboard/calendar/': typeof DashboardCalendarIndexRoute
   '/dashboard/contacts/': typeof DashboardContactsIndexRoute
   '/dashboard/documents/': typeof DashboardDocumentsIndexRoute
   '/dashboard/files/': typeof DashboardFilesIndexRoute
   '/dashboard/mail/': typeof DashboardMailIndexRoute
+  '/dashboard/notifications/': typeof DashboardNotificationsIndexRoute
   '/dashboard/search/': typeof DashboardSearchIndexRoute
   '/dashboard/settings/': typeof DashboardSettingsIndexRoute
   '/dashboard/sheets/': typeof DashboardSheetsIndexRoute
   '/dashboard/signing/': typeof DashboardSigningIndexRoute
   '/dashboard/tasks/': typeof DashboardTasksIndexRoute
+  '/dashboard/team/': typeof DashboardTeamIndexRoute
   '/dashboard/templates/': typeof DashboardTemplatesIndexRoute
   '/dashboard/voice/': typeof DashboardVoiceIndexRoute
   '/dashboard/workflows/': typeof DashboardWorkflowsIndexRoute
+  '/dashboard/workspace/': typeof DashboardWorkspaceIndexRoute
   '/dashboard/signing/$requestId/prepare': typeof DashboardSigningRequestIdPrepareRoute
   '/dashboard/signing/$requestId/': typeof DashboardSigningRequestIdIndexRoute
 }
@@ -241,6 +277,7 @@ export interface FileRoutesByTo {
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/sign/$token': typeof SignTokenRoute
   '/sign/active': typeof SignActiveRoute
   '/dashboard': typeof DashboardIndexRoute
@@ -249,20 +286,24 @@ export interface FileRoutesByTo {
   '/dashboard/documents/$documentId': typeof DashboardDocumentsDocumentIdRoute
   '/dashboard/sheets/$documentId': typeof DashboardSheetsDocumentIdRoute
   '/dashboard/workflows/$runId': typeof DashboardWorkflowsRunIdRoute
+  '/dashboard/activity': typeof DashboardActivityIndexRoute
   '/dashboard/approvals': typeof DashboardApprovalsIndexRoute
   '/dashboard/calendar': typeof DashboardCalendarIndexRoute
   '/dashboard/contacts': typeof DashboardContactsIndexRoute
   '/dashboard/documents': typeof DashboardDocumentsIndexRoute
   '/dashboard/files': typeof DashboardFilesIndexRoute
   '/dashboard/mail': typeof DashboardMailIndexRoute
+  '/dashboard/notifications': typeof DashboardNotificationsIndexRoute
   '/dashboard/search': typeof DashboardSearchIndexRoute
   '/dashboard/settings': typeof DashboardSettingsIndexRoute
   '/dashboard/sheets': typeof DashboardSheetsIndexRoute
   '/dashboard/signing': typeof DashboardSigningIndexRoute
   '/dashboard/tasks': typeof DashboardTasksIndexRoute
+  '/dashboard/team': typeof DashboardTeamIndexRoute
   '/dashboard/templates': typeof DashboardTemplatesIndexRoute
   '/dashboard/voice': typeof DashboardVoiceIndexRoute
   '/dashboard/workflows': typeof DashboardWorkflowsIndexRoute
+  '/dashboard/workspace': typeof DashboardWorkspaceIndexRoute
   '/dashboard/signing/$requestId/prepare': typeof DashboardSigningRequestIdPrepareRoute
   '/dashboard/signing/$requestId': typeof DashboardSigningRequestIdIndexRoute
 }
@@ -275,6 +316,7 @@ export interface FileRoutesById {
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/sign/$token': typeof SignTokenRoute
   '/sign/active': typeof SignActiveRoute
   '/dashboard/': typeof DashboardIndexRoute
@@ -283,20 +325,24 @@ export interface FileRoutesById {
   '/dashboard/documents/$documentId': typeof DashboardDocumentsDocumentIdRoute
   '/dashboard/sheets/$documentId': typeof DashboardSheetsDocumentIdRoute
   '/dashboard/workflows/$runId': typeof DashboardWorkflowsRunIdRoute
+  '/dashboard/activity/': typeof DashboardActivityIndexRoute
   '/dashboard/approvals/': typeof DashboardApprovalsIndexRoute
   '/dashboard/calendar/': typeof DashboardCalendarIndexRoute
   '/dashboard/contacts/': typeof DashboardContactsIndexRoute
   '/dashboard/documents/': typeof DashboardDocumentsIndexRoute
   '/dashboard/files/': typeof DashboardFilesIndexRoute
   '/dashboard/mail/': typeof DashboardMailIndexRoute
+  '/dashboard/notifications/': typeof DashboardNotificationsIndexRoute
   '/dashboard/search/': typeof DashboardSearchIndexRoute
   '/dashboard/settings/': typeof DashboardSettingsIndexRoute
   '/dashboard/sheets/': typeof DashboardSheetsIndexRoute
   '/dashboard/signing/': typeof DashboardSigningIndexRoute
   '/dashboard/tasks/': typeof DashboardTasksIndexRoute
+  '/dashboard/team/': typeof DashboardTeamIndexRoute
   '/dashboard/templates/': typeof DashboardTemplatesIndexRoute
   '/dashboard/voice/': typeof DashboardVoiceIndexRoute
   '/dashboard/workflows/': typeof DashboardWorkflowsIndexRoute
+  '/dashboard/workspace/': typeof DashboardWorkspaceIndexRoute
   '/dashboard/signing/$requestId/prepare': typeof DashboardSigningRequestIdPrepareRoute
   '/dashboard/signing/$requestId/': typeof DashboardSigningRequestIdIndexRoute
 }
@@ -310,6 +356,7 @@ export interface FileRouteTypes {
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/register'
+    | '/invite/$token'
     | '/sign/$token'
     | '/sign/active'
     | '/dashboard/'
@@ -318,20 +365,24 @@ export interface FileRouteTypes {
     | '/dashboard/documents/$documentId'
     | '/dashboard/sheets/$documentId'
     | '/dashboard/workflows/$runId'
+    | '/dashboard/activity/'
     | '/dashboard/approvals/'
     | '/dashboard/calendar/'
     | '/dashboard/contacts/'
     | '/dashboard/documents/'
     | '/dashboard/files/'
     | '/dashboard/mail/'
+    | '/dashboard/notifications/'
     | '/dashboard/search/'
     | '/dashboard/settings/'
     | '/dashboard/sheets/'
     | '/dashboard/signing/'
     | '/dashboard/tasks/'
+    | '/dashboard/team/'
     | '/dashboard/templates/'
     | '/dashboard/voice/'
     | '/dashboard/workflows/'
+    | '/dashboard/workspace/'
     | '/dashboard/signing/$requestId/prepare'
     | '/dashboard/signing/$requestId/'
   fileRoutesByTo: FileRoutesByTo
@@ -342,6 +393,7 @@ export interface FileRouteTypes {
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/register'
+    | '/invite/$token'
     | '/sign/$token'
     | '/sign/active'
     | '/dashboard'
@@ -350,20 +402,24 @@ export interface FileRouteTypes {
     | '/dashboard/documents/$documentId'
     | '/dashboard/sheets/$documentId'
     | '/dashboard/workflows/$runId'
+    | '/dashboard/activity'
     | '/dashboard/approvals'
     | '/dashboard/calendar'
     | '/dashboard/contacts'
     | '/dashboard/documents'
     | '/dashboard/files'
     | '/dashboard/mail'
+    | '/dashboard/notifications'
     | '/dashboard/search'
     | '/dashboard/settings'
     | '/dashboard/sheets'
     | '/dashboard/signing'
     | '/dashboard/tasks'
+    | '/dashboard/team'
     | '/dashboard/templates'
     | '/dashboard/voice'
     | '/dashboard/workflows'
+    | '/dashboard/workspace'
     | '/dashboard/signing/$requestId/prepare'
     | '/dashboard/signing/$requestId'
   id:
@@ -375,6 +431,7 @@ export interface FileRouteTypes {
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/register'
+    | '/invite/$token'
     | '/sign/$token'
     | '/sign/active'
     | '/dashboard/'
@@ -383,20 +440,24 @@ export interface FileRouteTypes {
     | '/dashboard/documents/$documentId'
     | '/dashboard/sheets/$documentId'
     | '/dashboard/workflows/$runId'
+    | '/dashboard/activity/'
     | '/dashboard/approvals/'
     | '/dashboard/calendar/'
     | '/dashboard/contacts/'
     | '/dashboard/documents/'
     | '/dashboard/files/'
     | '/dashboard/mail/'
+    | '/dashboard/notifications/'
     | '/dashboard/search/'
     | '/dashboard/settings/'
     | '/dashboard/sheets/'
     | '/dashboard/signing/'
     | '/dashboard/tasks/'
+    | '/dashboard/team/'
     | '/dashboard/templates/'
     | '/dashboard/voice/'
     | '/dashboard/workflows/'
+    | '/dashboard/workspace/'
     | '/dashboard/signing/$requestId/prepare'
     | '/dashboard/signing/$requestId/'
   fileRoutesById: FileRoutesById
@@ -405,6 +466,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRouteWithChildren
   DashboardRoute: typeof DashboardRouteWithChildren
+  InviteTokenRoute: typeof InviteTokenRoute
   SignTokenRoute: typeof SignTokenRoute
   SignActiveRoute: typeof SignActiveRoute
   ApiPublicBrevoWebhookRoute: typeof ApiPublicBrevoWebhookRoute
@@ -455,6 +517,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/register': {
       id: '/auth/register'
       path: '/register'
@@ -483,6 +552,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/dashboard/workspace/': {
+      id: '/dashboard/workspace/'
+      path: '/workspace'
+      fullPath: '/dashboard/workspace/'
+      preLoaderRoute: typeof DashboardWorkspaceIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/workflows/': {
       id: '/dashboard/workflows/'
       path: '/workflows'
@@ -502,6 +578,13 @@ declare module '@tanstack/react-router' {
       path: '/templates'
       fullPath: '/dashboard/templates/'
       preLoaderRoute: typeof DashboardTemplatesIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/team/': {
+      id: '/dashboard/team/'
+      path: '/team'
+      fullPath: '/dashboard/team/'
+      preLoaderRoute: typeof DashboardTeamIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/tasks/': {
@@ -537,6 +620,13 @@ declare module '@tanstack/react-router' {
       path: '/search'
       fullPath: '/dashboard/search/'
       preLoaderRoute: typeof DashboardSearchIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/notifications/': {
+      id: '/dashboard/notifications/'
+      path: '/notifications'
+      fullPath: '/dashboard/notifications/'
+      preLoaderRoute: typeof DashboardNotificationsIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/mail/': {
@@ -579,6 +669,13 @@ declare module '@tanstack/react-router' {
       path: '/approvals'
       fullPath: '/dashboard/approvals/'
       preLoaderRoute: typeof DashboardApprovalsIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/activity/': {
+      id: '/dashboard/activity/'
+      path: '/activity'
+      fullPath: '/dashboard/activity/'
+      preLoaderRoute: typeof DashboardActivityIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/workflows/$runId': {
@@ -654,20 +751,24 @@ interface DashboardRouteChildren {
   DashboardDocumentsDocumentIdRoute: typeof DashboardDocumentsDocumentIdRoute
   DashboardSheetsDocumentIdRoute: typeof DashboardSheetsDocumentIdRoute
   DashboardWorkflowsRunIdRoute: typeof DashboardWorkflowsRunIdRoute
+  DashboardActivityIndexRoute: typeof DashboardActivityIndexRoute
   DashboardApprovalsIndexRoute: typeof DashboardApprovalsIndexRoute
   DashboardCalendarIndexRoute: typeof DashboardCalendarIndexRoute
   DashboardContactsIndexRoute: typeof DashboardContactsIndexRoute
   DashboardDocumentsIndexRoute: typeof DashboardDocumentsIndexRoute
   DashboardFilesIndexRoute: typeof DashboardFilesIndexRoute
   DashboardMailIndexRoute: typeof DashboardMailIndexRoute
+  DashboardNotificationsIndexRoute: typeof DashboardNotificationsIndexRoute
   DashboardSearchIndexRoute: typeof DashboardSearchIndexRoute
   DashboardSettingsIndexRoute: typeof DashboardSettingsIndexRoute
   DashboardSheetsIndexRoute: typeof DashboardSheetsIndexRoute
   DashboardSigningIndexRoute: typeof DashboardSigningIndexRoute
   DashboardTasksIndexRoute: typeof DashboardTasksIndexRoute
+  DashboardTeamIndexRoute: typeof DashboardTeamIndexRoute
   DashboardTemplatesIndexRoute: typeof DashboardTemplatesIndexRoute
   DashboardVoiceIndexRoute: typeof DashboardVoiceIndexRoute
   DashboardWorkflowsIndexRoute: typeof DashboardWorkflowsIndexRoute
+  DashboardWorkspaceIndexRoute: typeof DashboardWorkspaceIndexRoute
   DashboardSigningRequestIdPrepareRoute: typeof DashboardSigningRequestIdPrepareRoute
   DashboardSigningRequestIdIndexRoute: typeof DashboardSigningRequestIdIndexRoute
 }
@@ -677,20 +778,24 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardDocumentsDocumentIdRoute: DashboardDocumentsDocumentIdRoute,
   DashboardSheetsDocumentIdRoute: DashboardSheetsDocumentIdRoute,
   DashboardWorkflowsRunIdRoute: DashboardWorkflowsRunIdRoute,
+  DashboardActivityIndexRoute: DashboardActivityIndexRoute,
   DashboardApprovalsIndexRoute: DashboardApprovalsIndexRoute,
   DashboardCalendarIndexRoute: DashboardCalendarIndexRoute,
   DashboardContactsIndexRoute: DashboardContactsIndexRoute,
   DashboardDocumentsIndexRoute: DashboardDocumentsIndexRoute,
   DashboardFilesIndexRoute: DashboardFilesIndexRoute,
   DashboardMailIndexRoute: DashboardMailIndexRoute,
+  DashboardNotificationsIndexRoute: DashboardNotificationsIndexRoute,
   DashboardSearchIndexRoute: DashboardSearchIndexRoute,
   DashboardSettingsIndexRoute: DashboardSettingsIndexRoute,
   DashboardSheetsIndexRoute: DashboardSheetsIndexRoute,
   DashboardSigningIndexRoute: DashboardSigningIndexRoute,
   DashboardTasksIndexRoute: DashboardTasksIndexRoute,
+  DashboardTeamIndexRoute: DashboardTeamIndexRoute,
   DashboardTemplatesIndexRoute: DashboardTemplatesIndexRoute,
   DashboardVoiceIndexRoute: DashboardVoiceIndexRoute,
   DashboardWorkflowsIndexRoute: DashboardWorkflowsIndexRoute,
+  DashboardWorkspaceIndexRoute: DashboardWorkspaceIndexRoute,
   DashboardSigningRequestIdPrepareRoute: DashboardSigningRequestIdPrepareRoute,
   DashboardSigningRequestIdIndexRoute: DashboardSigningRequestIdIndexRoute,
 }
@@ -703,6 +808,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRouteWithChildren,
   DashboardRoute: DashboardRouteWithChildren,
+  InviteTokenRoute: InviteTokenRoute,
   SignTokenRoute: SignTokenRoute,
   SignActiveRoute: SignActiveRoute,
   ApiPublicBrevoWebhookRoute: ApiPublicBrevoWebhookRoute,
