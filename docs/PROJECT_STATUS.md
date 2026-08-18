@@ -1,12 +1,12 @@
 # OfficeKonnect Project Status
 
-Last audited: 2026-08-17
+Last audited: 2026-08-18
 
 ## Current phase
 
-Phase 1 — Development Identity and Application Shell: **source implementation and CI validation complete**.
+Phase 2 — Documents, Native Editor and PDF Engine: **source implementation and validation complete**.
 
-Next implementation phase: Phase 2 — Documents, native editor and PDF engine.
+Next implementation phase: Phase 3 — OfficeKonnect Sheets.
 
 ## Upgrade branch policy
 
@@ -55,19 +55,44 @@ The live Supabase project was treated as the authoritative description of alread
 - Repaired historical ESLint blockers discovered by the stricter whole-repository validation gate without weakening lint rules.
 - Added `docs/PHASE1.md` with security invariants and the validation record.
 
-## Latest validated checkpoint
+## Phase 2 result
 
-Upgrade Validation run `32046085104` on commit `fd009a804d4a06a7f74ab5d6396847976ff891f6` completed successfully:
+- Preserved the existing `documents` + `document_versions` + private Storage architecture rather than creating a competing document model.
+- Kept the real document library and its native creation, signed uploads, drag-and-drop, search/filter/sort, table/grid, rename, duplicate, archive, Trash/restore, native PDF export and uploaded-file download flows.
+- Hardened the native structured-document contract with persisted indentation and stable block identity.
+- Preserved the existing editor capabilities: rich text, headings, lists, links, quotes, tables, rules, page breaks, page setup, headers/footers/page numbers, letterheads, find/replace, zoom, autosave and version history/restore.
+- Prevented ordinary autosave refreshes from unnecessarily replacing editor `innerHTML` and disturbing the active cursor/selection.
+- Added a mandatory save barrier before PDF export, print preparation and static signing-copy generation so those operations cannot use stale editor state.
+- Upgraded the server-side `pdf-lib` renderer for A4/Letter, portrait/landscape, margins, multi-page layout, alignment, indentation, rich inline formatting, tables, letterheads/logos, headers/footers and page numbers.
+- Made PDF metadata deterministic from the persisted source update timestamp.
+- Added an immutable static signing-copy bridge that creates `<Original> — Signing Copy` as a normal PDF `documents` record plus version 1 in the existing `document_versions` table.
+- Added real Bun regression tests for native-document normalization and actual `pdf-lib` output.
+- Added `bun test` to the permanent Upgrade Validation gate.
+- No new Phase 2 database table or migration was required in this completion pass; the live/reconciled Supabase schema already contained the required document/version/storage/signing-source foundations.
+- Full signing-request preparation, participant fields, external sessions, finalization, audit and certificates remain Phase 6 work.
+
+## Latest validated Phase 2 source checkpoint
+
+Upgrade Validation run `32093695102` on clean source checkpoint `7d6a9e39df6003637e01746571378eaa1305cc27` completed successfully:
 
 - Repository parity: **PASS**.
 - Deterministic dependency install (`bun ci`): **PASS**.
 - ESLint: **PASS**.
 - TypeScript (`tsc --noEmit`): **PASS**.
+- Bun regression tests: **PASS**.
 - Production build: **PASS**.
-- Vercel deployment status for the same commit: **SUCCESS**.
+- Vercel deployment status for the same checkpoint: **SUCCESS**.
 
-The remaining optional Phase 1 operational check is a credentialed preview smoke test of the development bootstrap after a dedicated preview-only Supabase user is configured. Production credentials must not be used for this check.
+The final documentation/status head is revalidated after this record is updated so the PR carries one authoritative Phase 2 completion checkpoint.
+
+## Known Phase 2 limitations carried forward
+
+- The native PDF renderer currently uses PDF Standard Fonts/WinAnsi; unsupported Unicode glyphs are safely replaced rather than crashing export. Broader embedded-font coverage remains future hardening work.
+- The current native structured-document contract does not claim arbitrary inline/native image blocks; letterhead/logo imagery is supported through the existing letterhead contract.
+- Folders, favourites and broader controlled sharing remain Phase 4.
+- Spreadsheet editing/import-export/PDF remains Phase 3.
+- Full production e-signature UX remains Phase 6.
 
 ## Non-negotiable release rule
 
-Do not merge draft PR #2 after an individual phase. Continue Phases 2–11 on the same branch/PR. Merge to `main` only when the complete Phase 11 upgrade passes release-candidate validation.
+Do not merge draft PR #2 after an individual phase. Continue Phases 3–11 on the same branch/PR. Merge to `main` only when the complete Phase 11 upgrade passes release-candidate validation.
