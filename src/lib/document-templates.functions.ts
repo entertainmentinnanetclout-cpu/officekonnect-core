@@ -19,12 +19,16 @@ export const createTemplateFromDocument = createServerFn({ method: "POST" })
     const workspaceId = await getActiveWorkspaceId(supabase, userId);
     const { data: source, error: sourceError } = await supabase
       .from("documents")
-      .select("id,workspace_id,title,description,document_kind,content,letterhead_id,document_status")
+      .select(
+        "id,workspace_id,title,description,document_kind,content,letterhead_id,document_status",
+      )
       .eq("id", data.documentId)
       .single();
     if (sourceError) throw new Error(sourceError.message);
-    if (source.workspace_id !== workspaceId) throw new Error("Document is outside the active workspace");
-    if (source.document_status === "deleted") throw new Error("Restore this document before saving it as a template");
+    if (source.workspace_id !== workspaceId)
+      throw new Error("Document is outside the active workspace");
+    if (source.document_status === "deleted")
+      throw new Error("Restore this document before saving it as a template");
     if (source.document_kind !== "native" && source.document_kind !== "spreadsheet") {
       throw new Error("Only native documents and OfficeKonnect Sheets can be saved as templates");
     }
@@ -70,7 +74,8 @@ export const createDocumentFromTemplate = createServerFn({ method: "POST" })
       .eq("id", data.templateId)
       .single();
     if (templateError) throw new Error(templateError.message);
-    if (template.workspace_id !== workspaceId) throw new Error("Template is outside the active workspace");
+    if (template.workspace_id !== workspaceId)
+      throw new Error("Template is outside the active workspace");
     if (template.is_archived) throw new Error("Restore this template before using it");
 
     const kind = normalizeTemplateKind(template.template_kind);
@@ -138,7 +143,8 @@ export const duplicateDocumentTemplate = createServerFn({ method: "POST" })
       .eq("id", data.templateId)
       .single();
     if (sourceError) throw new Error(sourceError.message);
-    if (source.workspace_id !== workspaceId) throw new Error("Template is outside the active workspace");
+    if (source.workspace_id !== workspaceId)
+      throw new Error("Template is outside the active workspace");
     const { data: template, error } = await supabase
       .from("document_templates")
       .insert({

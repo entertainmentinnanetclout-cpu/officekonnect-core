@@ -5,7 +5,12 @@ import {
   TEMPLATE_CATEGORIES,
   templateSummary,
 } from "@/lib/templates";
-import { createEmptyWorkbook, updateCellInput, setWorkbookSheet, workbookToJson } from "@/lib/spreadsheet";
+import {
+  createEmptyWorkbook,
+  updateCellInput,
+  setWorkbookSheet,
+  workbookToJson,
+} from "@/lib/spreadsheet";
 import { nativeDocumentToJson, type NativeDocumentContent } from "@/lib/native-document";
 
 describe("OfficeKonnect document templates", () => {

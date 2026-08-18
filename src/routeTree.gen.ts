@@ -18,9 +18,11 @@ import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-password'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as DashboardVoiceIndexRouteImport } from './routes/dashboard/voice/index'
+import { Route as DashboardTemplatesIndexRouteImport } from './routes/dashboard/templates/index'
 import { Route as DashboardSheetsIndexRouteImport } from './routes/dashboard/sheets/index'
 import { Route as DashboardSettingsIndexRouteImport } from './routes/dashboard/settings/index'
 import { Route as DashboardMailIndexRouteImport } from './routes/dashboard/mail/index'
+import { Route as DashboardFilesIndexRouteImport } from './routes/dashboard/files/index'
 import { Route as DashboardDocumentsIndexRouteImport } from './routes/dashboard/documents/index'
 import { Route as DashboardContactsIndexRouteImport } from './routes/dashboard/contacts/index'
 import { Route as DashboardSheetsDocumentIdRouteImport } from './routes/dashboard/sheets/$documentId'
@@ -73,6 +75,11 @@ const DashboardVoiceIndexRoute = DashboardVoiceIndexRouteImport.update({
   path: '/voice/',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardTemplatesIndexRoute = DashboardTemplatesIndexRouteImport.update({
+  id: '/templates/',
+  path: '/templates/',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardSheetsIndexRoute = DashboardSheetsIndexRouteImport.update({
   id: '/sheets/',
   path: '/sheets/',
@@ -86,6 +93,11 @@ const DashboardSettingsIndexRoute = DashboardSettingsIndexRouteImport.update({
 const DashboardMailIndexRoute = DashboardMailIndexRouteImport.update({
   id: '/mail/',
   path: '/mail/',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardFilesIndexRoute = DashboardFilesIndexRouteImport.update({
+  id: '/files/',
+  path: '/files/',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardDocumentsIndexRoute = DashboardDocumentsIndexRouteImport.update({
@@ -136,9 +148,11 @@ export interface FileRoutesByFullPath {
   '/dashboard/sheets/$documentId': typeof DashboardSheetsDocumentIdRoute
   '/dashboard/contacts/': typeof DashboardContactsIndexRoute
   '/dashboard/documents/': typeof DashboardDocumentsIndexRoute
+  '/dashboard/files/': typeof DashboardFilesIndexRoute
   '/dashboard/mail/': typeof DashboardMailIndexRoute
   '/dashboard/settings/': typeof DashboardSettingsIndexRoute
   '/dashboard/sheets/': typeof DashboardSheetsIndexRoute
+  '/dashboard/templates/': typeof DashboardTemplatesIndexRoute
   '/dashboard/voice/': typeof DashboardVoiceIndexRoute
 }
 export interface FileRoutesByTo {
@@ -155,9 +169,11 @@ export interface FileRoutesByTo {
   '/dashboard/sheets/$documentId': typeof DashboardSheetsDocumentIdRoute
   '/dashboard/contacts': typeof DashboardContactsIndexRoute
   '/dashboard/documents': typeof DashboardDocumentsIndexRoute
+  '/dashboard/files': typeof DashboardFilesIndexRoute
   '/dashboard/mail': typeof DashboardMailIndexRoute
   '/dashboard/settings': typeof DashboardSettingsIndexRoute
   '/dashboard/sheets': typeof DashboardSheetsIndexRoute
+  '/dashboard/templates': typeof DashboardTemplatesIndexRoute
   '/dashboard/voice': typeof DashboardVoiceIndexRoute
 }
 export interface FileRoutesById {
@@ -176,9 +192,11 @@ export interface FileRoutesById {
   '/dashboard/sheets/$documentId': typeof DashboardSheetsDocumentIdRoute
   '/dashboard/contacts/': typeof DashboardContactsIndexRoute
   '/dashboard/documents/': typeof DashboardDocumentsIndexRoute
+  '/dashboard/files/': typeof DashboardFilesIndexRoute
   '/dashboard/mail/': typeof DashboardMailIndexRoute
   '/dashboard/settings/': typeof DashboardSettingsIndexRoute
   '/dashboard/sheets/': typeof DashboardSheetsIndexRoute
+  '/dashboard/templates/': typeof DashboardTemplatesIndexRoute
   '/dashboard/voice/': typeof DashboardVoiceIndexRoute
 }
 export interface FileRouteTypes {
@@ -198,9 +216,11 @@ export interface FileRouteTypes {
     | '/dashboard/sheets/$documentId'
     | '/dashboard/contacts/'
     | '/dashboard/documents/'
+    | '/dashboard/files/'
     | '/dashboard/mail/'
     | '/dashboard/settings/'
     | '/dashboard/sheets/'
+    | '/dashboard/templates/'
     | '/dashboard/voice/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -217,9 +237,11 @@ export interface FileRouteTypes {
     | '/dashboard/sheets/$documentId'
     | '/dashboard/contacts'
     | '/dashboard/documents'
+    | '/dashboard/files'
     | '/dashboard/mail'
     | '/dashboard/settings'
     | '/dashboard/sheets'
+    | '/dashboard/templates'
     | '/dashboard/voice'
   id:
     | '__root__'
@@ -237,9 +259,11 @@ export interface FileRouteTypes {
     | '/dashboard/sheets/$documentId'
     | '/dashboard/contacts/'
     | '/dashboard/documents/'
+    | '/dashboard/files/'
     | '/dashboard/mail/'
     | '/dashboard/settings/'
     | '/dashboard/sheets/'
+    | '/dashboard/templates/'
     | '/dashboard/voice/'
   fileRoutesById: FileRoutesById
 }
@@ -316,6 +340,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardVoiceIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/templates/': {
+      id: '/dashboard/templates/'
+      path: '/templates'
+      fullPath: '/dashboard/templates/'
+      preLoaderRoute: typeof DashboardTemplatesIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/sheets/': {
       id: '/dashboard/sheets/'
       path: '/sheets'
@@ -335,6 +366,13 @@ declare module '@tanstack/react-router' {
       path: '/mail'
       fullPath: '/dashboard/mail/'
       preLoaderRoute: typeof DashboardMailIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/files/': {
+      id: '/dashboard/files/'
+      path: '/files'
+      fullPath: '/dashboard/files/'
+      preLoaderRoute: typeof DashboardFilesIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/documents/': {
@@ -404,9 +442,11 @@ interface DashboardRouteChildren {
   DashboardSheetsDocumentIdRoute: typeof DashboardSheetsDocumentIdRoute
   DashboardContactsIndexRoute: typeof DashboardContactsIndexRoute
   DashboardDocumentsIndexRoute: typeof DashboardDocumentsIndexRoute
+  DashboardFilesIndexRoute: typeof DashboardFilesIndexRoute
   DashboardMailIndexRoute: typeof DashboardMailIndexRoute
   DashboardSettingsIndexRoute: typeof DashboardSettingsIndexRoute
   DashboardSheetsIndexRoute: typeof DashboardSheetsIndexRoute
+  DashboardTemplatesIndexRoute: typeof DashboardTemplatesIndexRoute
   DashboardVoiceIndexRoute: typeof DashboardVoiceIndexRoute
 }
 
@@ -416,9 +456,11 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardSheetsDocumentIdRoute: DashboardSheetsDocumentIdRoute,
   DashboardContactsIndexRoute: DashboardContactsIndexRoute,
   DashboardDocumentsIndexRoute: DashboardDocumentsIndexRoute,
+  DashboardFilesIndexRoute: DashboardFilesIndexRoute,
   DashboardMailIndexRoute: DashboardMailIndexRoute,
   DashboardSettingsIndexRoute: DashboardSettingsIndexRoute,
   DashboardSheetsIndexRoute: DashboardSheetsIndexRoute,
+  DashboardTemplatesIndexRoute: DashboardTemplatesIndexRoute,
   DashboardVoiceIndexRoute: DashboardVoiceIndexRoute,
 }
 

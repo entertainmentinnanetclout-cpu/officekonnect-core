@@ -325,6 +325,118 @@ export type Database = {
           },
         ];
       };
+      document_favorites: {
+        Row: {
+          created_at: string;
+          document_id: string;
+          user_id: string;
+          workspace_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          document_id: string;
+          user_id: string;
+          workspace_id: string;
+        };
+        Update: {
+          created_at?: string;
+          document_id?: string;
+          user_id?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "document_favorites_document_workspace_fkey";
+            columns: ["document_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "documents";
+            referencedColumns: ["id", "workspace_id"];
+          },
+        ];
+      };
+      document_folder_items: {
+        Row: {
+          created_at: string;
+          document_id: string;
+          folder_id: string;
+          moved_by: string;
+          updated_at: string;
+          workspace_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          document_id: string;
+          folder_id: string;
+          moved_by: string;
+          updated_at?: string;
+          workspace_id: string;
+        };
+        Update: {
+          created_at?: string;
+          document_id?: string;
+          folder_id?: string;
+          moved_by?: string;
+          updated_at?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "document_folder_items_document_workspace_fkey";
+            columns: ["document_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "documents";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "document_folder_items_folder_workspace_fkey";
+            columns: ["folder_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspace_folders";
+            referencedColumns: ["id", "workspace_id"];
+          },
+        ];
+      };
+      document_shares: {
+        Row: {
+          created_at: string;
+          document_id: string;
+          id: string;
+          permission: string;
+          shared_by: string;
+          shared_with: string;
+          updated_at: string;
+          workspace_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          document_id: string;
+          id?: string;
+          permission?: string;
+          shared_by: string;
+          shared_with: string;
+          updated_at?: string;
+          workspace_id: string;
+        };
+        Update: {
+          created_at?: string;
+          document_id?: string;
+          id?: string;
+          permission?: string;
+          shared_by?: string;
+          shared_with?: string;
+          updated_at?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "document_shares_document_workspace_fkey";
+            columns: ["document_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "documents";
+            referencedColumns: ["id", "workspace_id"];
+          },
+        ];
+      };
       document_fields: {
         Row: {
           assigned_email: string | null;
@@ -2531,6 +2643,51 @@ export type Database = {
           },
         ];
       };
+      workspace_folders: {
+        Row: {
+          created_at: string;
+          created_by: string;
+          id: string;
+          name: string;
+          parent_id: string | null;
+          updated_at: string;
+          workspace_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by: string;
+          id?: string;
+          name: string;
+          parent_id?: string | null;
+          updated_at?: string;
+          workspace_id: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string;
+          id?: string;
+          name?: string;
+          parent_id?: string | null;
+          updated_at?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "workspace_folders_parent_workspace_fkey";
+            columns: ["parent_id", "workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspace_folders";
+            referencedColumns: ["id", "workspace_id"];
+          },
+          {
+            foreignKeyName: "workspace_folders_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       workspace_members: {
         Row: {
           created_at: string;
@@ -2994,6 +3151,15 @@ export type Database = {
       get_signing_session_payload: {
         Args: { p_session_hash: string };
         Returns: Json;
+      };
+      list_workspace_member_directory: {
+        Args: { p_workspace_id: string };
+        Returns: {
+          email: string;
+          full_name: string;
+          role: Database["public"]["Enums"]["workspace_role"];
+          user_id: string;
+        }[];
       };
       mark_signing_participant_viewed: {
         Args: { p_participant_id: string };

@@ -47,6 +47,8 @@ export type OfficeKonnectRoute =
   | "/dashboard"
   | "/dashboard/documents"
   | "/dashboard/sheets"
+  | "/dashboard/files"
+  | "/dashboard/templates"
   | "/dashboard/mail"
   | "/dashboard/voice"
   | "/dashboard/contacts"
@@ -71,8 +73,8 @@ const navGroups: NavGroup[] = [
       { label: "Home", href: "/dashboard", icon: LayoutDashboard },
       { label: "Documents", href: "/dashboard/documents", icon: FileText },
       { label: "Sheets", href: "/dashboard/sheets", icon: FileSpreadsheet },
-      { label: "Files", href: null, icon: Files, phase: 4 },
-      { label: "Templates", href: null, icon: FolderKanban, phase: 4 },
+      { label: "Files", href: "/dashboard/files", icon: Files },
+      { label: "Templates", href: "/dashboard/templates", icon: FolderKanban },
     ],
   },
   {
@@ -103,6 +105,8 @@ const navGroups: NavGroup[] = [
 ];
 
 const pageTitles: Array<[string, string]> = [
+  ["/dashboard/templates", "Templates"],
+  ["/dashboard/files", "Files"],
   ["/dashboard/sheets", "Sheets"],
   ["/dashboard/documents", "Documents"],
   ["/dashboard/mail", "Mail Center"],

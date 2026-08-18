@@ -13,12 +13,15 @@ async function requireWorkspaceDocument(
     .eq("id", documentId)
     .single();
   if (error) throw new Error(error.message);
-  if (document.workspace_id !== workspaceId) throw new Error("File is outside the active workspace");
+  if (document.workspace_id !== workspaceId)
+    throw new Error("File is outside the active workspace");
   return document;
 }
 
 function safeStorageName(title: string, fileType: string | null) {
-  const extensionFromTitle = title.includes(".") ? title.split(".").pop()?.toLowerCase() : undefined;
+  const extensionFromTitle = title.includes(".")
+    ? title.split(".").pop()?.toLowerCase()
+    : undefined;
   const extensionFromMime =
     fileType === "application/pdf"
       ? "pdf"
@@ -48,12 +51,18 @@ export const createWorkspaceFolder = createServerFn({ method: "POST" })
         .eq("id", data.parentId)
         .single();
       if (parentError) throw new Error(parentError.message);
-      if (parent.workspace_id !== workspaceId) throw new Error("Parent folder is outside the active workspace");
+      if (parent.workspace_id !== workspaceId)
+        throw new Error("Parent folder is outside the active workspace");
     }
 
     const { data: folder, error } = await supabase
       .from("workspace_folders")
-      .insert({ workspace_id: workspaceId, parent_id: data.parentId ?? null, created_by: userId, name })
+      .insert({
+        workspace_id: workspaceId,
+        parent_id: data.parentId ?? null,
+        created_by: userId,
+        name,
+      })
       .select("*")
       .single();
     if (error) {
@@ -97,7 +106,8 @@ export const moveWorkspaceFolder = createServerFn({ method: "POST" })
       let cursor: string | null = data.parentId;
       const seen = new Set<string>();
       while (cursor) {
-        if (cursor === data.folderId) throw new Error("A folder cannot be moved inside one of its descendants");
+        if (cursor === data.folderId)
+          throw new Error("A folder cannot be moved inside one of its descendants");
         if (seen.has(cursor)) throw new Error("The folder hierarchy is invalid");
         seen.add(cursor);
         const { data: parent, error: parentError } = await supabase
@@ -106,7 +116,8 @@ export const moveWorkspaceFolder = createServerFn({ method: "POST" })
           .eq("id", cursor)
           .single();
         if (parentError) throw new Error(parentError.message);
-        if (parent.workspace_id !== workspaceId) throw new Error("Destination folder is outside the active workspace");
+        if (parent.workspace_id !== workspaceId)
+          throw new Error("Destination folder is outside the active workspace");
         cursor = parent.parent_id;
       }
     }
@@ -118,7 +129,8 @@ export const moveWorkspaceFolder = createServerFn({ method: "POST" })
       .select("*")
       .single();
     if (error) {
-      if (error.code === "23505") throw new Error("A folder with this name already exists at the destination");
+      if (error.code === "23505")
+        throw new Error("A folder with this name already exists at the destination");
       throw new Error(error.message);
     }
     return folder;
@@ -165,7 +177,8 @@ export const moveDocumentToFolder = createServerFn({ method: "POST" })
       .eq("id", data.folderId)
       .single();
     if (folderError) throw new Error(folderError.message);
-    if (folder.workspace_id !== workspaceId) throw new Error("Destination folder is outside the active workspace");
+    if (folder.workspace_id !== workspaceId)
+      throw new Error("Destination folder is outside the active workspace");
 
     const { error } = await supabase.from("document_folder_items").upsert(
       {
@@ -188,10 +201,12 @@ export const setDocumentFavorite = createServerFn({ method: "POST" })
     const workspaceId = await getActiveWorkspaceId(supabase, userId);
     await requireWorkspaceDocument(supabase, workspaceId, data.documentId);
     if (data.favorite) {
-      const { error } = await supabase.from("document_favorites").upsert(
-        { document_id: data.documentId, workspace_id: workspaceId, user_id: userId },
-        { onConflict: "document_id,user_id" },
-      );
+      const { error } = await supabase
+        .from("document_favorites")
+        .upsert(
+          { document_id: data.documentId, workspace_id: workspaceId, user_id: userId },
+          { onConflict: "document_id,user_id" },
+        );
       if (error) throw new Error(error.message);
     } else {
       const { error } = await supabase
@@ -214,16 +229,13 @@ export const shareDocumentWithMember = createServerFn({ method: "POST" })
     const document = await requireWorkspaceDocument(supabase, workspaceId, data.documentId);
     const { data: share, error } = await supabase
       .from("document_shares")
-      .upsert(
-        {
-          document_id: document.id,
-          workspace_id: workspaceId,
-          shared_with: data.userId,
-          shared_by: userId,
-          permission: "view",
-        },
-        { onConflict: "document_id,shared_with" },
-      )
+      .insert({
+        document_id: document.id,
+        workspace_id: workspaceId,
+        shared_with: data.userId,
+        shared_by: userId,
+        permission: "view",
+      })
       .select("*")
       .single();
     if (error) throw new Error(error.message);
@@ -256,7 +268,7 @@ export const getWorkspaceMemberDirectory = createServerFn({ method: "POST" })
       p_workspace_id: workspaceId,
     });
     if (error) throw new Error(error.message);
-    return data.filter((member) => member.user_id !== userId);
+    return (data ?? []).filter((member) => member.user_id !== userId);
   });
 
 export const duplicateUploadedFile = createServerFn({ method: "POST" })

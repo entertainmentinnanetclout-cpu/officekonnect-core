@@ -19,9 +19,7 @@ export type TemplateCategory = (typeof TEMPLATE_CATEGORIES)[number];
 
 export function normalizeTemplateCategory(value: string | null | undefined): TemplateCategory {
   const normalized = value?.trim().toLowerCase();
-  return (
-    TEMPLATE_CATEGORIES.find((category) => category.toLowerCase() === normalized) ?? "General"
-  );
+  return TEMPLATE_CATEGORIES.find((category) => category.toLowerCase() === normalized) ?? "General";
 }
 
 export function normalizeTemplateKind(value: string | null | undefined) {
@@ -34,7 +32,11 @@ export function templateSummary(kind: string, content: Json | unknown) {
     const metrics = workbookMetrics(workbook);
     return {
       label: `${metrics.sheetCount} sheet${metrics.sheetCount === 1 ? "" : "s"} · ${metrics.cellCount.toLocaleString()} populated cell${metrics.cellCount === 1 ? "" : "s"}`,
-      detail: workbook.sheets.map((sheet) => sheet.name).slice(0, 5).join(", ") || "Blank workbook",
+      detail:
+        workbook.sheets
+          .map((sheet) => sheet.name)
+          .slice(0, 5)
+          .join(", ") || "Blank workbook",
     };
   }
 
