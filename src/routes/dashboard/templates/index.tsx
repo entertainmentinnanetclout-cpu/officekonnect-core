@@ -79,7 +79,7 @@ function TemplatesIndex() {
   const [editCategory, setEditCategory] = useState<string>("General");
 
   const createTemplateFn = useServerFn(createTemplateFromDocument);
-  const useTemplateFn = useServerFn(createDocumentFromTemplate);
+  const createFromTemplateFn = useServerFn(createDocumentFromTemplate);
   const duplicateTemplateFn = useServerFn(duplicateDocumentTemplate);
   const updateTemplateFn = useServerFn(updateDocumentTemplate);
 
@@ -142,7 +142,8 @@ function TemplatesIndex() {
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["document-templates"] });
 
   const useMutationTemplate = useMutation({
-    mutationFn: (template: TemplateRow) => useTemplateFn({ data: { templateId: template.id } }),
+    mutationFn: (template: TemplateRow) =>
+      createFromTemplateFn({ data: { templateId: template.id } }),
     onSuccess: async (document) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["documents"] }),
