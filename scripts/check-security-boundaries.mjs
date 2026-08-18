@@ -79,8 +79,7 @@ if (existsSync(obsoleteBypass))
 
 if (findings.length) {
   console.error(
-    "Phase 10 security boundary audit failed:\n" +
-      findings.map((item) => `- ${item}`).join("\n"),
+    "Phase 10 security boundary audit failed:\n" + findings.map((item) => `- ${item}`).join("\n"),
   );
   process.exit(1);
 }

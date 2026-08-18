@@ -25,8 +25,7 @@ for (const name of readdirSync(assets)) {
 
 if (findings.length) {
   console.error(
-    "Phase 10 production asset budget failed:\n" +
-      findings.map((item) => `- ${item}`).join("\n"),
+    "Phase 10 production asset budget failed:\n" + findings.map((item) => `- ${item}`).join("\n"),
   );
   process.exit(1);
 }

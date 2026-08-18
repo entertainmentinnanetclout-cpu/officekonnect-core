@@ -9,41 +9,39 @@ function captureRuntimeErrors(page: Page) {
   return failures;
 }
 
-test(
-  "landing page exposes the current OfficeKonnect product without runtime errors",
-  async ({ page }) => {
-    const failures = captureRuntimeErrors(page);
-    await page.goto("/");
+test("landing page exposes the current OfficeKonnect product without runtime errors", async ({
+  page,
+}) => {
+  const failures = captureRuntimeErrors(page);
+  await page.goto("/");
 
-    await expect(page).toHaveTitle("OfficeKonnect");
-    await expect(
-      page.getByRole("heading", { name: /One workspace for every office task/i }),
-    ).toBeVisible();
-    await expect(page.getByText("Connected office workspace")).toBeVisible();
-    await expect(page.locator("#features")).toBeVisible();
-    await expect(page.locator("#how")).toBeVisible();
-    await expect(page.locator("#security")).toBeVisible();
+  await expect(page).toHaveTitle("OfficeKonnect");
+  await expect(
+    page.getByRole("heading", { name: /One workspace for every office task/i }),
+  ).toBeVisible();
+  await expect(page.getByText("Connected office workspace")).toBeVisible();
+  await expect(page.locator("#features")).toBeVisible();
+  await expect(page.locator("#how")).toBeVisible();
+  await expect(page.locator("#security")).toBeVisible();
 
-    await page.getByRole("link", { name: "Features" }).click();
-    await expect(page).toHaveURL(/#features$/);
-    expect(failures).toEqual([]);
-  },
-);
+  await page.getByRole("link", { name: "Features" }).click();
+  await expect(page).toHaveURL(/#features$/);
+  expect(failures).toEqual([]);
+});
 
-test(
-  "login route renders real authentication controls without runtime errors",
-  async ({ page }) => {
-    const failures = captureRuntimeErrors(page);
-    await page.goto("/auth/login");
+test("login route renders real authentication controls without runtime errors", async ({
+  page,
+}) => {
+  const failures = captureRuntimeErrors(page);
+  await page.goto("/auth/login");
 
-    await expect(page.getByRole("heading", { name: "Sign In" })).toBeVisible();
-    await expect(page.getByLabel("Email")).toBeVisible();
-    await expect(page.getByLabel("Password")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Sign In" })).toBeEnabled();
-    await expect(page.getByRole("link", { name: /Forgot password/i })).toBeVisible();
-    expect(failures).toEqual([]);
-  },
-);
+  await expect(page.getByRole("heading", { name: "Sign In" })).toBeVisible();
+  await expect(page.getByLabel("Email")).toBeVisible();
+  await expect(page.getByLabel("Password")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Sign In" })).toBeEnabled();
+  await expect(page.getByRole("link", { name: /Forgot password/i })).toBeVisible();
+  expect(failures).toEqual([]);
+});
 
 test("authentication layout remains usable on a mobile viewport", async ({ page }) => {
   const failures = captureRuntimeErrors(page);
