@@ -129,7 +129,7 @@ function RootComponent() {
     );
 
     if (user && !isWorkspaceInvitePage) {
-      const pendingInvite = localStorage.getItem(PENDING_WORKSPACE_INVITE_KEY);
+      const pendingInvite = sessionStorage.getItem(PENDING_WORKSPACE_INVITE_KEY);
       if (pendingInvite) {
         navigate({ to: "/invite/$token", params: { token: pendingInvite }, replace: true });
         return;
