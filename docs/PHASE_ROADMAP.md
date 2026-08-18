@@ -26,24 +26,24 @@ Expose the existing workflow state machine through versioned workflow-template m
 
 ## Phase 6 — Production E-Signatures — **Completed**
 
-Complete the hardened signing request/participant/field/session/finalization system: signing dashboard, PDF preparation workspace, internal and external signer UX, participant roles/order, normalized fields, consent, secure invitation exchange/session handling, finalization, audit timeline, final PDF and certificate access. Documents/Sheets now hand directly into the production signing workflow through immutable PDF signing copies.
+Complete the hardened signing request/participant/field/session/finalization system: signing dashboard, PDF preparation workspace, internal and external signer UX, participant roles/order, normalized fields, consent, secure invitation exchange/session handling, finalization, audit timeline, final PDF and certificate access. Documents/Sheets hand directly into the production signing workflow through immutable PDF signing copies.
 
 ## Phase 7 — Tasks, Calendar and Global Search — **Completed**
 
 Add real RLS-protected task/manual-calendar persistence, production task management, an aggregate operational calendar derived from canonical task/workflow/signing dates, membership-checked server-side workspace search, `/dashboard/search` and Ctrl/Cmd+K command navigation.
 
-## Phase 8 — Notifications, Activity, Team, Workspace and Settings — **Next**
+## Phase 8 — Notifications, Activity, Team, Workspace and Settings — **Completed**
 
-Expose existing platform infrastructure through complete user-facing management surfaces and persist remaining workspace/user preferences without introducing duplicate identity/role/notification systems.
+Complete the operational administration layer with receipt-aware Notifications, cross-module Activity, secure workspace invitations and role management, workspace identity/creation/switching, and real Settings surfaces over existing profile/signature/template/integration/subscription infrastructure. No duplicate identity, role, notification or audit engine is introduced.
 
-## Phase 9 — Product-wide UX and Route Hardening
+## Phase 9 — Product-wide UX and Route Hardening — **Next**
 
-Eliminate dead actions, mocks, placeholders, fake metrics, broken links and unhandled states. Complete responsive/accessibility work.
+Eliminate remaining dead actions, mocks, placeholders, fake metrics, broken links, unhandled states and route inconsistencies. Complete responsive, keyboard, accessibility and cross-module interaction hardening while preserving the completed backend contracts.
 
 ## Phase 10 — Security, Performance, Automated Testing and CI
 
-Expand unit/integration/E2E testing, deterministic real-PDF signing tests, CI gates, security checks and performance hardening.
+Expand unit/integration/E2E testing, deterministic real-PDF signing tests, CI gates, security checks and performance hardening. Review inherited RLS planner warnings, advisor findings and scale-sensitive indexes using real query behavior rather than low-traffic assumptions.
 
 ## Phase 11 — Release Candidate and Documentation
 
-Complete handoff documentation, Vercel release-candidate validation, release QA and the canonical create → review → changes → resubmit → approve → sign → finalize product journey.
+Complete handoff documentation, Vercel release-candidate validation, release QA and the canonical create → review → changes → resubmit → approve → sign → finalize product journey. Only after this phase may Draft PR #2 be marked ready and merged to `main`.
