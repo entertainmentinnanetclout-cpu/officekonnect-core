@@ -12,7 +12,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     env:
       SUPABASE_URL: https://ci-placeholder.supabase.co
       SUPABASE_PUBLISHABLE_KEY: ci-placeholder-key
@@ -32,10 +32,18 @@ jobs:
       - name: Lint
         run: bun run lint
       - name: Product hardening audit
-        run: node scripts/check-product-hardening.mjs
+        run: bun run audit:product
+      - name: Security boundary audit
+        run: bun run audit:security
       - name: TypeScript
         run: bun run typecheck
-      - name: Tests
+      - name: Unit and integration tests
         run: bun run test
       - name: Production build
         run: bun run build
+      - name: Production asset budget
+        run: bun run audit:performance
+      - name: Install Playwright Chromium
+        run: npx --yes @playwright/test@1.62.1 install --with-deps chromium
+      - name: Browser E2E
+        run: bun run test:e2e
