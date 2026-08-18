@@ -12,7 +12,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 30
     env:
       SUPABASE_URL: https://ci-placeholder.supabase.co
       SUPABASE_PUBLISHABLE_KEY: ci-placeholder-key
@@ -45,7 +45,15 @@ jobs:
         run: bun run audit:performance
       - name: Install pinned Playwright test runner
         run: npm install --no-save --package-lock=false @playwright/test@1.62.1
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Resolve runner Chromium executable
+        shell: bash
+        run: |
+          browser="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$browser" ]; then
+            echo "No runner-provisioned Chromium browser was found." >&2
+            exit 1
+          fi
+          echo "PLAYWRIGHT_CHROMIUM_EXECUTABLE=$browser" >> "$GITHUB_ENV"
+          "$browser" --version
       - name: Browser E2E
         run: bun run test:e2e
