@@ -16,6 +16,8 @@ import { useAuth } from "@/hooks/use-auth";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
+const PENDING_WORKSPACE_INVITE_KEY = "officekonnect.pending-workspace-invite";
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -87,12 +89,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:description", content: "Professional Office Productivity Platform" },
       { property: "og:type", content: "website" },
     ],
-    links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
-    ],
+    links: [{ rel: "stylesheet", href: appCss }],
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -103,13 +100,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        {children}
-        <Scripts />
-      </body>
+      <head><HeadContent /></head>
+      <body>{children}<Scripts /></body>
     </html>
   );
 }
@@ -126,15 +118,27 @@ function RootComponent() {
     const isAuthPage = location.pathname.startsWith("/auth");
     const isDashboardPage = location.pathname.startsWith("/dashboard");
     const isExternalSigningPage = location.pathname.startsWith("/sign/");
-    const isPublicPage = ["/", "/pricing", "/privacy", "/terms", "/contact"].includes(
-      location.pathname,
-    );
+    const isWorkspaceInvitePage = location.pathname.startsWith("/invite/");
+    const isPublicPage = ["/", "/pricing", "/privacy", "/terms", "/contact"].includes(location.pathname);
 
-    // Dashboard routes own their authentication boundary. This allows the
-    // dashboard layout to establish the optional server-backed development
-    // session before falling back to secure sign-in. Production remains safe:
-    // the dashboard bootstrap is disabled there and renders its login fallback.
-    if (!user && !isAuthPage && !isPublicPage && !isDashboardPage && !isExternalSigningPage) {
+    if (user && !isWorkspaceInvitePage) {
+      const pendingInvite = localStorage.getItem(PENDING_WORKSPACE_INVITE_KEY);
+      if (pendingInvite) {
+        navigate({ to: "/invite/$token", params: { token: pendingInvite }, replace: true });
+        return;
+      }
+    }
+
+    // Dashboard routes own their authentication boundary so the optional
+    // server-backed development session can resolve without weakening RLS.
+    if (
+      !user &&
+      !isAuthPage &&
+      !isPublicPage &&
+      !isDashboardPage &&
+      !isExternalSigningPage &&
+      !isWorkspaceInvitePage
+    ) {
       navigate({ to: "/auth/login" });
     } else if (user && isAuthPage) {
       navigate({ to: "/dashboard" });
