@@ -18,13 +18,13 @@ function WorkspaceInvitationPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!user && token) localStorage.setItem(PENDING_INVITE_KEY, token);
+    if (!user && token) sessionStorage.setItem(PENDING_INVITE_KEY, token);
   }, [user, token]);
 
   const accept = useMutation({
     mutationFn: () => acceptWorkspaceInvitationToken(token),
-    onSuccess: async (result) => {
-      localStorage.removeItem(PENDING_INVITE_KEY);
+    onSuccess: async () => {
+      sessionStorage.removeItem(PENDING_INVITE_KEY);
       await navigate({ to: "/dashboard/team", replace: true });
     },
     onError: (error) => toastError(error, "Could not accept workspace invitation"),
@@ -60,7 +60,8 @@ function WorkspaceInvitationPage() {
               <Link to="/auth/register">Create account</Link>
             </Button>
             <p className="text-center text-xs text-muted-foreground">
-              The invitation token is retained only in this browser until authentication completes.
+              The invitation token is retained only for this browser session until authentication
+              completes.
             </p>
           </CardContent>
         </Card>
