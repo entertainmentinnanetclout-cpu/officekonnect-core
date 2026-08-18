@@ -75,9 +75,11 @@ function DashboardLayout() {
   const signOut = async () => {
     if (typeof window !== "undefined") {
       window.sessionStorage.removeItem("officekonnect:development-session");
+      window.sessionStorage.removeItem("officekonnect:guest-session");
     }
     await supabase.auth.signOut();
   };
+
 
   if (isLoading || isBootstrapping) {
     return <WorkspaceBootScreen />;
