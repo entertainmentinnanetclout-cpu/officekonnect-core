@@ -38,7 +38,9 @@ export function useAuth() {
         if (!active) return;
         setSession(null);
         setUser(null);
-        setError(cause instanceof Error ? cause : new Error("Authentication initialization failed"));
+        setError(
+          cause instanceof Error ? cause : new Error("Authentication initialization failed"),
+        );
         setIsLoading(false);
       }
     };
