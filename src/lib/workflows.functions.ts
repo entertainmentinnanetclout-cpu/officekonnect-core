@@ -226,7 +226,8 @@ export const startDocumentWorkflow = createServerFn({ method: "POST" })
       .eq("id", data.documentId)
       .single();
     if (documentError) throw new Error(documentError.message);
-    if (document.workspace_id !== workspaceId) throw new Error("Document is outside the active workspace");
+    if (document.workspace_id !== workspaceId)
+      throw new Error("Document is outside the active workspace");
     const { data: run, error } = await supabase.rpc("start_document_workflow", {
       p_document_id: data.documentId,
       p_template_id: data.templateId,
@@ -272,14 +273,11 @@ export const reassignWorkflowAssignment = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const reason = data.reason.trim();
     if (!reason) throw new Error("A reassignment reason is required");
-    const { data: assignment, error } = await context.supabase.rpc(
-      "reassign_workflow_assignment",
-      {
-        p_assignment_id: data.assignmentId,
-        p_new_user_id: data.newUserId,
-        p_reason: reason,
-      },
-    );
+    const { data: assignment, error } = await context.supabase.rpc("reassign_workflow_assignment", {
+      p_assignment_id: data.assignmentId,
+      p_new_user_id: data.newUserId,
+      p_reason: reason,
+    });
     if (error) throw new Error(error.message);
     return assignment;
   });
@@ -301,7 +299,8 @@ export const cancelDocumentWorkflow = createServerFn({ method: "POST" })
 export const createWorkflowComment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (data: { runId: string; stepId?: string | null; parentId?: string | null; body: string }) => data,
+    (data: { runId: string; stepId?: string | null; parentId?: string | null; body: string }) =>
+      data,
   )
   .handler(async ({ data, context }) => {
     const body = data.body.trim();

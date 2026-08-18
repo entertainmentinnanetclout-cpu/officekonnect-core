@@ -86,9 +86,12 @@ function blankStep(index: number): BuilderStep {
 }
 
 function statusClasses(status: string) {
-  if (status === "approved") return "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300";
-  if (status === "changes_requested") return "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300";
-  if (status === "rejected" || status === "cancelled") return "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300";
+  if (status === "approved")
+    return "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300";
+  if (status === "changes_requested")
+    return "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300";
+  if (status === "rejected" || status === "cancelled")
+    return "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300";
   return "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300";
 }
 
@@ -334,7 +337,8 @@ function WorkflowsIndex() {
 
   const startMutation = useMutation({
     mutationFn: () => {
-      if (!startDocumentId || !startTemplateId) throw new Error("Choose a document and workflow template");
+      if (!startDocumentId || !startTemplateId)
+        throw new Error("Choose a document and workflow template");
       return startWorkflowServerFn({
         data: {
           documentId: startDocumentId,
@@ -365,7 +369,8 @@ function WorkflowsIndex() {
           next.allowReject = false;
         }
         if (patch.assignmentMode && patch.assignmentMode !== "user") next.assignedUserId = null;
-        if (patch.assignmentMode && patch.assignmentMode !== "workspace_role") next.assignedWorkspaceRole = null;
+        if (patch.assignmentMode && patch.assignmentMode !== "workspace_role")
+          next.assignedWorkspaceRole = null;
         return next;
       }),
     );
@@ -394,7 +399,8 @@ function WorkflowsIndex() {
           </div>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight">Workflows</h1>
           <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-            Route immutable document submissions through review, approval and acknowledgement steps without bypassing the server-authoritative workflow state machine.
+            Route immutable document submissions through review, approval and acknowledgement steps
+            without bypassing the server-authoritative workflow state machine.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -412,17 +418,27 @@ function WorkflowsIndex() {
       </div>
 
       <div className="flex w-fit rounded-lg bg-muted p-1">
-        <Button variant={section === "runs" ? "secondary" : "ghost"} size="sm" onClick={() => setSection("runs")}>
+        <Button
+          variant={section === "runs" ? "secondary" : "ghost"}
+          size="sm"
+          onClick={() => setSection("runs")}
+        >
           Workflow runs
         </Button>
-        <Button variant={section === "templates" ? "secondary" : "ghost"} size="sm" onClick={() => setSection("templates")}>
+        <Button
+          variant={section === "templates" ? "secondary" : "ghost"}
+          size="sm"
+          onClick={() => setSection("templates")}
+        >
           Templates
         </Button>
       </div>
 
       {loading ? (
         <div className="grid gap-4 lg:grid-cols-2">
-          {[1, 2, 3, 4].map((item) => <div key={item} className="h-36 animate-pulse rounded-xl bg-muted" />)}
+          {[1, 2, 3, 4].map((item) => (
+            <div key={item} className="h-36 animate-pulse rounded-xl bg-muted" />
+          ))}
         </div>
       ) : section === "runs" ? (
         (runs ?? []).length === 0 ? (
@@ -430,7 +446,8 @@ function WorkflowsIndex() {
             <FileCheck2 className="h-10 w-10 text-muted-foreground" />
             <h2 className="mt-4 font-semibold">No workflow runs yet</h2>
             <p className="mt-1 max-w-md text-sm text-muted-foreground">
-              Start a workflow to create an immutable submission version and assign the first review or approval step.
+              Start a workflow to create an immutable submission version and assign the first review
+              or approval step.
             </p>
             <Button className="mt-5" onClick={() => setStartOpen(true)}>
               <Play className="mr-2 h-4 w-4" />
@@ -446,22 +463,42 @@ function WorkflowsIndex() {
                   key={run.id}
                   type="button"
                   className="rounded-xl border bg-background p-5 text-left shadow-sm transition hover:border-primary/40 hover:shadow-md"
-                  onClick={() => void navigate({ to: "/dashboard/workflows/$runId", params: { runId: run.id } })}
+                  onClick={() =>
+                    void navigate({ to: "/dashboard/workflows/$runId", params: { runId: run.id } })
+                  }
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">{run.title}</p>
-                      <h2 className="mt-1 truncate font-semibold">{document?.title ?? "Document"}</h2>
+                      <p className="truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        {run.title}
+                      </p>
+                      <h2 className="mt-1 truncate font-semibold">
+                        {document?.title ?? "Document"}
+                      </h2>
                     </div>
-                    <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ${statusClasses(run.status)}`}>
+                    <span
+                      className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ${statusClasses(run.status)}`}
+                    >
                       {workflowStatusLabel(run.status)}
                     </span>
                   </div>
                   <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-muted-foreground sm:grid-cols-4">
-                    <div><span className="block font-medium text-foreground">Revision</span>{run.workflow_revision}</div>
-                    <div><span className="block font-medium text-foreground">Current step</span>{run.current_step_order}</div>
-                    <div><span className="block font-medium text-foreground">Started</span>{formatDistanceToNow(new Date(run.started_at), { addSuffix: true })}</div>
-                    <div><span className="block font-medium text-foreground">Due</span>{run.due_at ? format(new Date(run.due_at), "d MMM yyyy") : "No deadline"}</div>
+                    <div>
+                      <span className="block font-medium text-foreground">Revision</span>
+                      {run.workflow_revision}
+                    </div>
+                    <div>
+                      <span className="block font-medium text-foreground">Current step</span>
+                      {run.current_step_order}
+                    </div>
+                    <div>
+                      <span className="block font-medium text-foreground">Started</span>
+                      {formatDistanceToNow(new Date(run.started_at), { addSuffix: true })}
+                    </div>
+                    <div>
+                      <span className="block font-medium text-foreground">Due</span>
+                      {run.due_at ? format(new Date(run.due_at), "d MMM yyyy") : "No deadline"}
+                    </div>
                   </div>
                 </button>
               );
@@ -472,16 +509,41 @@ function WorkflowsIndex() {
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex rounded-lg bg-muted p-1">
-              <Button variant={templateScope === "active" ? "secondary" : "ghost"} size="sm" onClick={() => setTemplateScope("active")}>Active</Button>
-              <Button variant={templateScope === "inactive" ? "secondary" : "ghost"} size="sm" onClick={() => setTemplateScope("inactive")}>Inactive</Button>
+              <Button
+                variant={templateScope === "active" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setTemplateScope("active")}
+              >
+                Active
+              </Button>
+              <Button
+                variant={templateScope === "inactive" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setTemplateScope("inactive")}
+              >
+                Inactive
+              </Button>
             </div>
-            {!isAdmin && <p className="text-xs text-muted-foreground">Template editing is restricted to workspace administrators.</p>}
+            {!isAdmin && (
+              <p className="text-xs text-muted-foreground">
+                Template editing is restricted to workspace administrators.
+              </p>
+            )}
           </div>
           {(templates ?? []).length === 0 ? (
             <div className="rounded-2xl border border-dashed p-10 text-center">
               <Workflow className="mx-auto h-9 w-9 text-muted-foreground" />
-              <p className="mt-3 font-medium">{templateScope === "active" ? "No active workflow templates" : "No inactive workflow templates"}</p>
-              {isAdmin && templateScope === "active" && <Button className="mt-4" onClick={openNewBuilder}><Plus className="mr-2 h-4 w-4" />Create template</Button>}
+              <p className="mt-3 font-medium">
+                {templateScope === "active"
+                  ? "No active workflow templates"
+                  : "No inactive workflow templates"}
+              </p>
+              {isAdmin && templateScope === "active" && (
+                <Button className="mt-4" onClick={openNewBuilder}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create template
+                </Button>
+              )}
             </div>
           ) : (
             <div className="grid gap-4 lg:grid-cols-2">
@@ -493,43 +555,90 @@ function WorkflowsIndex() {
                       <div className="flex items-start gap-3">
                         <div className="min-w-0 flex-1">
                           <p className="truncate font-semibold">{template.name}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">Version {template.version} · {steps.length} {steps.length === 1 ? "step" : "steps"}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Version {template.version} · {steps.length}{" "}
+                            {steps.length === 1 ? "step" : "steps"}
+                          </p>
                         </div>
                         {isAdmin && (
                           <DropdownMenu>
-                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              {template.is_active && <DropdownMenuItem onClick={() => openRevisionBuilder(template)}><Pencil className="mr-2 h-4 w-4" />Create revision</DropdownMenuItem>}
-                              <DropdownMenuItem onClick={async () => {
-                                try {
-                                  await duplicateTemplateServerFn({ data: { templateId: template.id } });
-                                  await refreshTemplates();
-                                  toast.success("Workflow template duplicated");
-                                } catch (error) { toastError(error, "Duplicate failed"); }
-                              }}><Copy className="mr-2 h-4 w-4" />Duplicate</DropdownMenuItem>
+                              {template.is_active && (
+                                <DropdownMenuItem onClick={() => openRevisionBuilder(template)}>
+                                  <Pencil className="mr-2 h-4 w-4" />
+                                  Create revision
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem
+                                onClick={async () => {
+                                  try {
+                                    await duplicateTemplateServerFn({
+                                      data: { templateId: template.id },
+                                    });
+                                    await refreshTemplates();
+                                    toast.success("Workflow template duplicated");
+                                  } catch (error) {
+                                    toastError(error, "Duplicate failed");
+                                  }
+                                }}
+                              >
+                                <Copy className="mr-2 h-4 w-4" />
+                                Duplicate
+                              </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={async () => {
-                                try {
-                                  await setTemplateActiveServerFn({ data: { templateId: template.id, active: !template.is_active } });
-                                  await refreshTemplates();
-                                  toast.success(template.is_active ? "Template retired" : "Template restored");
-                                } catch (error) { toastError(error, "Template status update failed"); }
-                              }}>
-                                {template.is_active ? <Archive className="mr-2 h-4 w-4" /> : <RotateCcw className="mr-2 h-4 w-4" />}
+                              <DropdownMenuItem
+                                onClick={async () => {
+                                  try {
+                                    await setTemplateActiveServerFn({
+                                      data: {
+                                        templateId: template.id,
+                                        active: !template.is_active,
+                                      },
+                                    });
+                                    await refreshTemplates();
+                                    toast.success(
+                                      template.is_active ? "Template retired" : "Template restored",
+                                    );
+                                  } catch (error) {
+                                    toastError(error, "Template status update failed");
+                                  }
+                                }}
+                              >
+                                {template.is_active ? (
+                                  <Archive className="mr-2 h-4 w-4" />
+                                ) : (
+                                  <RotateCcw className="mr-2 h-4 w-4" />
+                                )}
                                 {template.is_active ? "Retire" : "Restore"}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         )}
                       </div>
-                      {template.description && <p className="mt-3 text-sm text-muted-foreground">{template.description}</p>}
+                      {template.description && (
+                        <p className="mt-3 text-sm text-muted-foreground">{template.description}</p>
+                      )}
                       <div className="mt-4 space-y-2">
                         {steps.map((step) => (
-                          <div key={step.id} className="flex items-center gap-3 rounded-lg border bg-muted/20 px-3 py-2 text-xs">
-                            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-foreground text-[10px] font-semibold text-background">{step.step_order}</span>
+                          <div
+                            key={step.id}
+                            className="flex items-center gap-3 rounded-lg border bg-muted/20 px-3 py-2 text-xs"
+                          >
+                            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-foreground text-[10px] font-semibold text-background">
+                              {step.step_order}
+                            </span>
                             <div className="min-w-0 flex-1">
                               <p className="truncate font-medium">{step.name}</p>
-                              <p className="truncate text-muted-foreground">{stepTypeLabel(step.step_type)} · {assignmentModeLabel(step.assignment_mode)} · {step.required_decisions} required</p>
+                              <p className="truncate text-muted-foreground">
+                                {stepTypeLabel(step.step_type)} ·{" "}
+                                {assignmentModeLabel(step.assignment_mode)} ·{" "}
+                                {step.required_decisions} required
+                              </p>
                             </div>
                           </div>
                         ))}
@@ -543,17 +652,44 @@ function WorkflowsIndex() {
         </div>
       )}
 
-      <Dialog open={builderOpen} onOpenChange={(open) => { setBuilderOpen(open); if (!open) resetBuilder(); }}>
+      <Dialog
+        open={builderOpen}
+        onOpenChange={(open) => {
+          setBuilderOpen(open);
+          if (!open) resetBuilder();
+        }}
+      >
         <DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{builderSource ? `Create revision ${builderSource.version + 1}` : "New workflow template"}</DialogTitle>
+            <DialogTitle>
+              {builderSource
+                ? `Create revision ${builderSource.version + 1}`
+                : "New workflow template"}
+            </DialogTitle>
             <DialogDescription>
-              Ordered steps are copied into every workflow run. Revising a template never mutates workflows already in progress.
+              Ordered steps are copied into every workflow run. Revising a template never mutates
+              workflows already in progress.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2"><Label htmlFor="workflow-name">Template name</Label><Input id="workflow-name" value={builderName} onChange={(event) => setBuilderName(event.target.value)} placeholder="Contract review and approval" /></div>
-            <div className="space-y-2"><Label htmlFor="workflow-description">Description</Label><Input id="workflow-description" value={builderDescription} onChange={(event) => setBuilderDescription(event.target.value)} placeholder="Optional purpose or policy note" /></div>
+            <div className="space-y-2">
+              <Label htmlFor="workflow-name">Template name</Label>
+              <Input
+                id="workflow-name"
+                value={builderName}
+                onChange={(event) => setBuilderName(event.target.value)}
+                placeholder="Contract review and approval"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="workflow-description">Description</Label>
+              <Input
+                id="workflow-description"
+                value={builderDescription}
+                onChange={(event) => setBuilderDescription(event.target.value)}
+                placeholder="Optional purpose or policy note"
+              />
+            </div>
           </div>
           <div className="space-y-4">
             {builderSteps.map((step, index) => (
@@ -561,39 +697,273 @@ function WorkflowsIndex() {
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold">Step {index + 1}</span>
                   <div className="ml-auto flex gap-1">
-                    <Button type="button" variant="ghost" size="icon" disabled={index === 0} onClick={() => moveStep(index, -1)}><ArrowUp className="h-4 w-4" /></Button>
-                    <Button type="button" variant="ghost" size="icon" disabled={index === builderSteps.length - 1} onClick={() => moveStep(index, 1)}><ArrowDown className="h-4 w-4" /></Button>
-                    <Button type="button" variant="ghost" size="icon" disabled={builderSteps.length === 1} onClick={() => setBuilderSteps((current) => current.filter((item) => item.key !== step.key))}><X className="h-4 w-4" /></Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      disabled={index === 0}
+                      onClick={() => moveStep(index, -1)}
+                    >
+                      <ArrowUp className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      disabled={index === builderSteps.length - 1}
+                      onClick={() => moveStep(index, 1)}
+                    >
+                      <ArrowDown className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      disabled={builderSteps.length === 1}
+                      onClick={() =>
+                        setBuilderSteps((current) =>
+                          current.filter((item) => item.key !== step.key),
+                        )
+                      }
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
                 <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                  <div className="space-y-1.5 md:col-span-2"><Label>Name</Label><Input value={step.name} onChange={(event) => updateBuilderStep(step.key, { name: event.target.value })} /></div>
-                  <div className="space-y-1.5"><Label>Step type</Label><select className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={step.stepType} onChange={(event) => updateBuilderStep(step.key, { stepType: event.target.value as WorkflowStepType })}><option value="review">Review</option><option value="approval">Approval</option><option value="acknowledgement">Acknowledgement</option></select></div>
-                  <div className="space-y-1.5"><Label>Assignment</Label><select className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={step.assignmentMode} onChange={(event) => updateBuilderStep(step.key, { assignmentMode: event.target.value as WorkflowAssignmentMode })}><option value="user">Specific member</option><option value="workspace_role">Workspace role</option><option value="document_creator">Document creator</option><option value="workflow_starter">Workflow starter</option></select></div>
-                  <div className="space-y-1.5 md:col-span-2"><Label>Description</Label><Input value={step.description ?? ""} onChange={(event) => updateBuilderStep(step.key, { description: event.target.value })} placeholder="What should this participant check?" /></div>
-                  {step.assignmentMode === "user" && <div className="space-y-1.5"><Label>Workspace member</Label><select className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={step.assignedUserId ?? ""} onChange={(event) => updateBuilderStep(step.key, { assignedUserId: event.target.value || null })}><option value="">Choose member</option>{(memberDirectory ?? []).map((member) => <option key={member.user_id} value={member.user_id}>{member.full_name || member.email} ({member.role})</option>)}</select></div>}
-                  {step.assignmentMode === "workspace_role" && <div className="space-y-1.5"><Label>Workspace role</Label><select className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={step.assignedWorkspaceRole ?? ""} onChange={(event) => updateBuilderStep(step.key, { assignedWorkspaceRole: event.target.value as WorkspaceRole })}><option value="">Choose role</option><option value="owner">Owner</option><option value="admin">Admin</option><option value="member">Member</option><option value="viewer">Viewer</option></select></div>}
-                  <div className="space-y-1.5"><Label>Required decisions</Label><Input type="number" min={1} max={50} value={step.requiredDecisions} onChange={(event) => updateBuilderStep(step.key, { requiredDecisions: Number(event.target.value) || 1 })} /></div>
-                  <div className="space-y-1.5"><Label>Due after (hours)</Label><Input type="number" min={1} value={step.dueInHours ?? ""} onChange={(event) => updateBuilderStep(step.key, { dueInHours: event.target.value ? Number(event.target.value) : null })} placeholder="No step deadline" /></div>
+                  <div className="space-y-1.5 md:col-span-2">
+                    <Label>Name</Label>
+                    <Input
+                      value={step.name}
+                      onChange={(event) =>
+                        updateBuilderStep(step.key, { name: event.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Step type</Label>
+                    <select
+                      className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                      value={step.stepType}
+                      onChange={(event) =>
+                        updateBuilderStep(step.key, {
+                          stepType: event.target.value as WorkflowStepType,
+                        })
+                      }
+                    >
+                      <option value="review">Review</option>
+                      <option value="approval">Approval</option>
+                      <option value="acknowledgement">Acknowledgement</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Assignment</Label>
+                    <select
+                      className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                      value={step.assignmentMode}
+                      onChange={(event) =>
+                        updateBuilderStep(step.key, {
+                          assignmentMode: event.target.value as WorkflowAssignmentMode,
+                        })
+                      }
+                    >
+                      <option value="user">Specific member</option>
+                      <option value="workspace_role">Workspace role</option>
+                      <option value="document_creator">Document creator</option>
+                      <option value="workflow_starter">Workflow starter</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5 md:col-span-2">
+                    <Label>Description</Label>
+                    <Input
+                      value={step.description ?? ""}
+                      onChange={(event) =>
+                        updateBuilderStep(step.key, { description: event.target.value })
+                      }
+                      placeholder="What should this participant check?"
+                    />
+                  </div>
+                  {step.assignmentMode === "user" && (
+                    <div className="space-y-1.5">
+                      <Label>Workspace member</Label>
+                      <select
+                        className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                        value={step.assignedUserId ?? ""}
+                        onChange={(event) =>
+                          updateBuilderStep(step.key, {
+                            assignedUserId: event.target.value || null,
+                          })
+                        }
+                      >
+                        <option value="">Choose member</option>
+                        {(memberDirectory ?? []).map((member) => (
+                          <option key={member.user_id} value={member.user_id}>
+                            {member.full_name || member.email} ({member.role})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  {step.assignmentMode === "workspace_role" && (
+                    <div className="space-y-1.5">
+                      <Label>Workspace role</Label>
+                      <select
+                        className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                        value={step.assignedWorkspaceRole ?? ""}
+                        onChange={(event) =>
+                          updateBuilderStep(step.key, {
+                            assignedWorkspaceRole: event.target.value as WorkspaceRole,
+                          })
+                        }
+                      >
+                        <option value="">Choose role</option>
+                        <option value="owner">Owner</option>
+                        <option value="admin">Admin</option>
+                        <option value="member">Member</option>
+                        <option value="viewer">Viewer</option>
+                      </select>
+                    </div>
+                  )}
+                  <div className="space-y-1.5">
+                    <Label>Required decisions</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={50}
+                      value={step.requiredDecisions}
+                      onChange={(event) =>
+                        updateBuilderStep(step.key, {
+                          requiredDecisions: Number(event.target.value) || 1,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Due after (hours)</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={step.dueInHours ?? ""}
+                      onChange={(event) =>
+                        updateBuilderStep(step.key, {
+                          dueInHours: event.target.value ? Number(event.target.value) : null,
+                        })
+                      }
+                      placeholder="No step deadline"
+                    />
+                  </div>
                 </div>
-                {step.stepType !== "acknowledgement" && <div className="mt-4 flex flex-wrap gap-5 text-sm"><label className="flex items-center gap-2"><input type="checkbox" checked={step.allowChanges} onChange={(event) => updateBuilderStep(step.key, { allowChanges: event.target.checked })} />Allow request changes</label><label className="flex items-center gap-2"><input type="checkbox" checked={step.allowReject} onChange={(event) => updateBuilderStep(step.key, { allowReject: event.target.checked })} />Allow rejection</label></div>}
+                {step.stepType !== "acknowledgement" && (
+                  <div className="mt-4 flex flex-wrap gap-5 text-sm">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={step.allowChanges}
+                        onChange={(event) =>
+                          updateBuilderStep(step.key, { allowChanges: event.target.checked })
+                        }
+                      />
+                      Allow request changes
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={step.allowReject}
+                        onChange={(event) =>
+                          updateBuilderStep(step.key, { allowReject: event.target.checked })
+                        }
+                      />
+                      Allow rejection
+                    </label>
+                  </div>
+                )}
               </div>
             ))}
-            <Button type="button" variant="outline" onClick={() => setBuilderSteps((current) => [...current, blankStep(current.length)])}><Plus className="mr-2 h-4 w-4" />Add step</Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setBuilderSteps((current) => [...current, blankStep(current.length)])}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add step
+            </Button>
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setBuilderOpen(false)}>Cancel</Button><Button onClick={() => builderMutation.mutate()} disabled={builderMutation.isPending}>{builderMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{builderSource ? "Create revision" : "Create template"}</Button></DialogFooter>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBuilderOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => builderMutation.mutate()} disabled={builderMutation.isPending}>
+              {builderMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {builderSource ? "Create revision" : "Create template"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={startOpen} onOpenChange={setStartOpen}>
         <DialogContent className="max-w-xl">
-          <DialogHeader><DialogTitle>Start document workflow</DialogTitle><DialogDescription>OfficeKonnect will create an immutable version before assigning the first step. The working document remains separate.</DialogDescription></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Start document workflow</DialogTitle>
+            <DialogDescription>
+              OfficeKonnect will create an immutable version before assigning the first step. The
+              working document remains separate.
+            </DialogDescription>
+          </DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2"><Label>Document or spreadsheet</Label><select className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={startDocumentId} onChange={(event) => setStartDocumentId(event.target.value)}><option value="">Choose document</option>{(eligibleDocuments ?? []).map((document: DocumentRow) => <option key={document.id} value={document.id}>{document.title} · {document.document_kind}</option>)}</select></div>
-            <div className="space-y-2"><Label>Workflow template</Label><select className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={startTemplateId} onChange={(event) => setStartTemplateId(event.target.value)}><option value="">Choose active template</option>{(activeTemplatesForStart.data ?? []).map((template) => <option key={template.id} value={template.id}>{template.name} · v{template.version}</option>)}</select></div>
-            <div className="space-y-2"><Label>Overall due date</Label><Input type="datetime-local" value={startDueAt} onChange={(event) => setStartDueAt(event.target.value)} /><p className="text-xs text-muted-foreground">Optional. Individual step deadlines still come from the workflow template.</p></div>
+            <div className="space-y-2">
+              <Label>Document or spreadsheet</Label>
+              <select
+                className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                value={startDocumentId}
+                onChange={(event) => setStartDocumentId(event.target.value)}
+              >
+                <option value="">Choose document</option>
+                {(eligibleDocuments ?? []).map((document: DocumentRow) => (
+                  <option key={document.id} value={document.id}>
+                    {document.title} · {document.document_kind}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label>Workflow template</Label>
+              <select
+                className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                value={startTemplateId}
+                onChange={(event) => setStartTemplateId(event.target.value)}
+              >
+                <option value="">Choose active template</option>
+                {(activeTemplatesForStart.data ?? []).map((template) => (
+                  <option key={template.id} value={template.id}>
+                    {template.name} · v{template.version}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label>Overall due date</Label>
+              <Input
+                type="datetime-local"
+                value={startDueAt}
+                onChange={(event) => setStartDueAt(event.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Optional. Individual step deadlines still come from the workflow template.
+              </p>
+            </div>
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setStartOpen(false)}>Cancel</Button><Button onClick={() => startMutation.mutate()} disabled={startMutation.isPending || !startDocumentId || !startTemplateId}>{startMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Start workflow</Button></DialogFooter>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStartOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => startMutation.mutate()}
+              disabled={startMutation.isPending || !startDocumentId || !startTemplateId}
+            >
+              {startMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Start
+              workflow
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

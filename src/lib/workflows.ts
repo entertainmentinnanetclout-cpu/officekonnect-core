@@ -192,7 +192,8 @@ export function validateWorkflowTemplateInput(input: {
 }) {
   const name = input.name.trim();
   if (!name) throw new Error("Workflow template name is required");
-  if (name.length > 160) throw new Error("Workflow template names must be 160 characters or shorter");
+  if (name.length > 160)
+    throw new Error("Workflow template names must be 160 characters or shorter");
   if (input.steps.length < 1) throw new Error("Add at least one workflow step");
   if (input.steps.length > 30) throw new Error("Workflow templates support up to 30 steps");
   return {

@@ -17,6 +17,7 @@ import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-password'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
+import { Route as DashboardWorkflowsIndexRouteImport } from './routes/dashboard/workflows/index'
 import { Route as DashboardVoiceIndexRouteImport } from './routes/dashboard/voice/index'
 import { Route as DashboardTemplatesIndexRouteImport } from './routes/dashboard/templates/index'
 import { Route as DashboardSheetsIndexRouteImport } from './routes/dashboard/sheets/index'
@@ -25,6 +26,8 @@ import { Route as DashboardMailIndexRouteImport } from './routes/dashboard/mail/
 import { Route as DashboardFilesIndexRouteImport } from './routes/dashboard/files/index'
 import { Route as DashboardDocumentsIndexRouteImport } from './routes/dashboard/documents/index'
 import { Route as DashboardContactsIndexRouteImport } from './routes/dashboard/contacts/index'
+import { Route as DashboardApprovalsIndexRouteImport } from './routes/dashboard/approvals/index'
+import { Route as DashboardWorkflowsRunIdRouteImport } from './routes/dashboard/workflows/$runId'
 import { Route as DashboardSheetsDocumentIdRouteImport } from './routes/dashboard/sheets/$documentId'
 import { Route as DashboardDocumentsDocumentIdRouteImport } from './routes/dashboard/documents/$documentId'
 import { Route as ApiPublicJobsTickRouteImport } from './routes/api/public/jobs-tick'
@@ -70,6 +73,11 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/callback',
   getParentRoute: () => AuthRoute,
 } as any)
+const DashboardWorkflowsIndexRoute = DashboardWorkflowsIndexRouteImport.update({
+  id: '/workflows/',
+  path: '/workflows/',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardVoiceIndexRoute = DashboardVoiceIndexRouteImport.update({
   id: '/voice/',
   path: '/voice/',
@@ -110,6 +118,16 @@ const DashboardContactsIndexRoute = DashboardContactsIndexRouteImport.update({
   path: '/contacts/',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardApprovalsIndexRoute = DashboardApprovalsIndexRouteImport.update({
+  id: '/approvals/',
+  path: '/approvals/',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardWorkflowsRunIdRoute = DashboardWorkflowsRunIdRouteImport.update({
+  id: '/workflows/$runId',
+  path: '/workflows/$runId',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardSheetsDocumentIdRoute =
   DashboardSheetsDocumentIdRouteImport.update({
     id: '/sheets/$documentId',
@@ -146,6 +164,8 @@ export interface FileRoutesByFullPath {
   '/api/public/jobs-tick': typeof ApiPublicJobsTickRoute
   '/dashboard/documents/$documentId': typeof DashboardDocumentsDocumentIdRoute
   '/dashboard/sheets/$documentId': typeof DashboardSheetsDocumentIdRoute
+  '/dashboard/workflows/$runId': typeof DashboardWorkflowsRunIdRoute
+  '/dashboard/approvals/': typeof DashboardApprovalsIndexRoute
   '/dashboard/contacts/': typeof DashboardContactsIndexRoute
   '/dashboard/documents/': typeof DashboardDocumentsIndexRoute
   '/dashboard/files/': typeof DashboardFilesIndexRoute
@@ -154,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/sheets/': typeof DashboardSheetsIndexRoute
   '/dashboard/templates/': typeof DashboardTemplatesIndexRoute
   '/dashboard/voice/': typeof DashboardVoiceIndexRoute
+  '/dashboard/workflows/': typeof DashboardWorkflowsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -167,6 +188,8 @@ export interface FileRoutesByTo {
   '/api/public/jobs-tick': typeof ApiPublicJobsTickRoute
   '/dashboard/documents/$documentId': typeof DashboardDocumentsDocumentIdRoute
   '/dashboard/sheets/$documentId': typeof DashboardSheetsDocumentIdRoute
+  '/dashboard/workflows/$runId': typeof DashboardWorkflowsRunIdRoute
+  '/dashboard/approvals': typeof DashboardApprovalsIndexRoute
   '/dashboard/contacts': typeof DashboardContactsIndexRoute
   '/dashboard/documents': typeof DashboardDocumentsIndexRoute
   '/dashboard/files': typeof DashboardFilesIndexRoute
@@ -175,6 +198,7 @@ export interface FileRoutesByTo {
   '/dashboard/sheets': typeof DashboardSheetsIndexRoute
   '/dashboard/templates': typeof DashboardTemplatesIndexRoute
   '/dashboard/voice': typeof DashboardVoiceIndexRoute
+  '/dashboard/workflows': typeof DashboardWorkflowsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -190,6 +214,8 @@ export interface FileRoutesById {
   '/api/public/jobs-tick': typeof ApiPublicJobsTickRoute
   '/dashboard/documents/$documentId': typeof DashboardDocumentsDocumentIdRoute
   '/dashboard/sheets/$documentId': typeof DashboardSheetsDocumentIdRoute
+  '/dashboard/workflows/$runId': typeof DashboardWorkflowsRunIdRoute
+  '/dashboard/approvals/': typeof DashboardApprovalsIndexRoute
   '/dashboard/contacts/': typeof DashboardContactsIndexRoute
   '/dashboard/documents/': typeof DashboardDocumentsIndexRoute
   '/dashboard/files/': typeof DashboardFilesIndexRoute
@@ -198,6 +224,7 @@ export interface FileRoutesById {
   '/dashboard/sheets/': typeof DashboardSheetsIndexRoute
   '/dashboard/templates/': typeof DashboardTemplatesIndexRoute
   '/dashboard/voice/': typeof DashboardVoiceIndexRoute
+  '/dashboard/workflows/': typeof DashboardWorkflowsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -214,6 +241,8 @@ export interface FileRouteTypes {
     | '/api/public/jobs-tick'
     | '/dashboard/documents/$documentId'
     | '/dashboard/sheets/$documentId'
+    | '/dashboard/workflows/$runId'
+    | '/dashboard/approvals/'
     | '/dashboard/contacts/'
     | '/dashboard/documents/'
     | '/dashboard/files/'
@@ -222,6 +251,7 @@ export interface FileRouteTypes {
     | '/dashboard/sheets/'
     | '/dashboard/templates/'
     | '/dashboard/voice/'
+    | '/dashboard/workflows/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -235,6 +265,8 @@ export interface FileRouteTypes {
     | '/api/public/jobs-tick'
     | '/dashboard/documents/$documentId'
     | '/dashboard/sheets/$documentId'
+    | '/dashboard/workflows/$runId'
+    | '/dashboard/approvals'
     | '/dashboard/contacts'
     | '/dashboard/documents'
     | '/dashboard/files'
@@ -243,6 +275,7 @@ export interface FileRouteTypes {
     | '/dashboard/sheets'
     | '/dashboard/templates'
     | '/dashboard/voice'
+    | '/dashboard/workflows'
   id:
     | '__root__'
     | '/'
@@ -257,6 +290,8 @@ export interface FileRouteTypes {
     | '/api/public/jobs-tick'
     | '/dashboard/documents/$documentId'
     | '/dashboard/sheets/$documentId'
+    | '/dashboard/workflows/$runId'
+    | '/dashboard/approvals/'
     | '/dashboard/contacts/'
     | '/dashboard/documents/'
     | '/dashboard/files/'
@@ -265,6 +300,7 @@ export interface FileRouteTypes {
     | '/dashboard/sheets/'
     | '/dashboard/templates/'
     | '/dashboard/voice/'
+    | '/dashboard/workflows/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -333,6 +369,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/dashboard/workflows/': {
+      id: '/dashboard/workflows/'
+      path: '/workflows'
+      fullPath: '/dashboard/workflows/'
+      preLoaderRoute: typeof DashboardWorkflowsIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/voice/': {
       id: '/dashboard/voice/'
       path: '/voice'
@@ -389,6 +432,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardContactsIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/approvals/': {
+      id: '/dashboard/approvals/'
+      path: '/approvals'
+      fullPath: '/dashboard/approvals/'
+      preLoaderRoute: typeof DashboardApprovalsIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/workflows/$runId': {
+      id: '/dashboard/workflows/$runId'
+      path: '/workflows/$runId'
+      fullPath: '/dashboard/workflows/$runId'
+      preLoaderRoute: typeof DashboardWorkflowsRunIdRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/sheets/$documentId': {
       id: '/dashboard/sheets/$documentId'
       path: '/sheets/$documentId'
@@ -440,6 +497,8 @@ interface DashboardRouteChildren {
   DashboardIndexRoute: typeof DashboardIndexRoute
   DashboardDocumentsDocumentIdRoute: typeof DashboardDocumentsDocumentIdRoute
   DashboardSheetsDocumentIdRoute: typeof DashboardSheetsDocumentIdRoute
+  DashboardWorkflowsRunIdRoute: typeof DashboardWorkflowsRunIdRoute
+  DashboardApprovalsIndexRoute: typeof DashboardApprovalsIndexRoute
   DashboardContactsIndexRoute: typeof DashboardContactsIndexRoute
   DashboardDocumentsIndexRoute: typeof DashboardDocumentsIndexRoute
   DashboardFilesIndexRoute: typeof DashboardFilesIndexRoute
@@ -448,12 +507,15 @@ interface DashboardRouteChildren {
   DashboardSheetsIndexRoute: typeof DashboardSheetsIndexRoute
   DashboardTemplatesIndexRoute: typeof DashboardTemplatesIndexRoute
   DashboardVoiceIndexRoute: typeof DashboardVoiceIndexRoute
+  DashboardWorkflowsIndexRoute: typeof DashboardWorkflowsIndexRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardIndexRoute: DashboardIndexRoute,
   DashboardDocumentsDocumentIdRoute: DashboardDocumentsDocumentIdRoute,
   DashboardSheetsDocumentIdRoute: DashboardSheetsDocumentIdRoute,
+  DashboardWorkflowsRunIdRoute: DashboardWorkflowsRunIdRoute,
+  DashboardApprovalsIndexRoute: DashboardApprovalsIndexRoute,
   DashboardContactsIndexRoute: DashboardContactsIndexRoute,
   DashboardDocumentsIndexRoute: DashboardDocumentsIndexRoute,
   DashboardFilesIndexRoute: DashboardFilesIndexRoute,
@@ -462,6 +524,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardSheetsIndexRoute: DashboardSheetsIndexRoute,
   DashboardTemplatesIndexRoute: DashboardTemplatesIndexRoute,
   DashboardVoiceIndexRoute: DashboardVoiceIndexRoute,
+  DashboardWorkflowsIndexRoute: DashboardWorkflowsIndexRoute,
 }
 
 const DashboardRouteWithChildren = DashboardRoute._addFileChildren(

@@ -33,15 +33,9 @@ describe("OfficeKonnect workflow contract", () => {
 
   test("classifies the work queue deterministically", () => {
     const now = new Date("2026-08-18T08:00:00.000Z");
-    expect(classifyWorkflowQueueItem({ due_at: "2026-08-18T07:59:59.000Z" }, now)).toBe(
-      "overdue",
-    );
-    expect(classifyWorkflowQueueItem({ due_at: "2026-08-19T08:00:00.000Z" }, now)).toBe(
-      "due_soon",
-    );
-    expect(classifyWorkflowQueueItem({ due_at: "2026-08-23T08:00:00.000Z" }, now)).toBe(
-      "upcoming",
-    );
+    expect(classifyWorkflowQueueItem({ due_at: "2026-08-18T07:59:59.000Z" }, now)).toBe("overdue");
+    expect(classifyWorkflowQueueItem({ due_at: "2026-08-19T08:00:00.000Z" }, now)).toBe("due_soon");
+    expect(classifyWorkflowQueueItem({ due_at: "2026-08-23T08:00:00.000Z" }, now)).toBe("upcoming");
     expect(classifyWorkflowQueueItem({ due_at: null }, now)).toBe("no_deadline");
   });
 

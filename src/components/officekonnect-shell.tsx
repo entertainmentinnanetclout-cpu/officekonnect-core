@@ -49,6 +49,8 @@ export type OfficeKonnectRoute =
   | "/dashboard/sheets"
   | "/dashboard/files"
   | "/dashboard/templates"
+  | "/dashboard/workflows"
+  | "/dashboard/approvals"
   | "/dashboard/mail"
   | "/dashboard/voice"
   | "/dashboard/contacts"
@@ -80,7 +82,8 @@ const navGroups: NavGroup[] = [
   {
     label: "Operations",
     items: [
-      { label: "Workflows", href: null, icon: Workflow, phase: 5 },
+      { label: "Workflows", href: "/dashboard/workflows", icon: Workflow },
+      { label: "Approvals", href: "/dashboard/approvals", icon: ShieldCheck },
       { label: "E-signatures", href: null, icon: FileSignature, phase: 6 },
       { label: "Tasks", href: null, icon: CheckSquare2, phase: 7 },
       { label: "Calendar", href: null, icon: CalendarDays, phase: 7 },
@@ -105,6 +108,8 @@ const navGroups: NavGroup[] = [
 ];
 
 const pageTitles: Array<[string, string]> = [
+  ["/dashboard/workflows", "Workflows"],
+  ["/dashboard/approvals", "Approvals"],
   ["/dashboard/templates", "Templates"],
   ["/dashboard/files", "Files"],
   ["/dashboard/sheets", "Sheets"],
