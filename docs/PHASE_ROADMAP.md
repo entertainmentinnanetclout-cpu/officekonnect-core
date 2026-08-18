@@ -16,11 +16,11 @@ Complete the document library, native editing, autosave/version history, printin
 
 Expose the existing workbook backend through a production spreadsheet UI, deterministic formula engine, XLSX/CSV interoperability, print/PDF and static signing-copy conversion.
 
-## Phase 4 — Files and templates — **Next**
+## Phase 4 — Files and Templates — **Completed**
 
-Add folders, favourites, controlled sharing and complete document/spreadsheet templates.
+Add nested folders, personal favourites, workspace-internal controlled sharing, full file lifecycle actions and reusable native-document/spreadsheet templates while retaining the canonical `documents`, private Storage and `document_templates` architecture.
 
-## Phase 5 — Workflows and approvals
+## Phase 5 — Workflows and Approvals — **Next**
 
 Build template management, work queue, immutable review UI, decisions, comments, changes and resubmission over the existing workflow state machine.
 
