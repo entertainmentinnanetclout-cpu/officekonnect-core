@@ -40,7 +40,7 @@
 
 #### Added
 
-- Live migration `20260818062157_phase_7_tasks_calendar_search`.
+- Live migrations `20260818062157_phase_7_tasks_calendar_search` and `20260818080155_phase_7_rpc_execute_acl_hardening`.
 - RLS-protected `tasks` persistence with assignment, status, priority, start/due/completion dates and operational object links.
 - Production `/dashboard/tasks` board/list views, filters, search, CRUD, assignment and lifecycle controls.
 - RLS-protected `calendar_events` persistence for manual office events.
@@ -48,18 +48,20 @@
 - Membership-checked `search_workspace_objects` RPC.
 - Production `/dashboard/search` route.
 - Ctrl/Cmd+K global workspace command-search dialog.
-- Four Phase 7 migration/security/search contract regression tests.
+- Phase 7 migration/security/search contract regression coverage.
 
 #### Security / architecture
 
 - `tasks` and `calendar_events` each retain four live RLS policies.
 - Operational task/workflow/signing dates are derived in Calendar rather than copied into `calendar_events`.
 - Global Search uses live workspace data and membership checking; no duplicate search-copy index/table was introduced.
+- Anonymous `EXECUTE` is revoked from `search_workspace_objects` and `list_workspace_member_directory`; authenticated application execution remains membership checked.
+- Supabase's anonymous SECURITY DEFINER advisor warnings for those RPCs are cleared.
 - No fake tasks or calendar events were inserted into production.
 
 ### Validation
 
-Clean read-only combined Phase 6/7 source checkpoint `35c9c948c727b206feab21f994bba5ecc085786a` passed Upgrade Validation run `32108717386`:
+Final Phase 6/7 documentation/security head `5637663003808ae6f86aecf253cbecf9fa519d9f` passed Upgrade Validation run `32114708453`:
 
 - Repository parity ✅
 - Frozen `bun ci` ✅
