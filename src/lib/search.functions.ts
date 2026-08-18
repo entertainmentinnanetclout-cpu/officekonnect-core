@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Json } from "@/integrations/supabase/types";
 import { getActiveWorkspaceId } from "@/lib/workspace.server";
 
 export interface WorkspaceSearchResult {
@@ -9,7 +10,7 @@ export interface WorkspaceSearchResult {
   subtitle: string;
   route: string;
   occurred_at: string;
-  metadata: Record<string, unknown>;
+  metadata: Json;
 }
 
 export const searchWorkspace = createServerFn({ method: "POST" })
