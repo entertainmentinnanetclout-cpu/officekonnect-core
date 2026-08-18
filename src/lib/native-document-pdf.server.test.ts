@@ -75,7 +75,10 @@ describe("OfficeKonnect native document PDF renderer", () => {
     });
 
     const pdf = await PDFDocument.load(rendered.bytes);
-    const { width, height } = pdf.getPage(0).getSize();
+    const page = pdf.getPage(0);
+    expect(page).toBeDefined();
+    if (!page) throw new Error("Expected the rendered PDF to contain one page");
+    const { width, height } = page.getSize();
     expect(width).toBe(792);
     expect(height).toBe(612);
   });
