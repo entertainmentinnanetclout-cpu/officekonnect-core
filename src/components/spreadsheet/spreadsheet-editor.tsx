@@ -556,8 +556,10 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
       const result = await signingCopyFn({
         data: { documentId: document.id, sheetIds: pdfSheetIds },
       });
-      window.open(`/dashboard/documents/${result.document.id}`, "_blank", "noopener,noreferrer");
-      toast.success("Immutable spreadsheet signing copy created");
+      window.location.assign(
+        `/dashboard/signing?create=1&document=${encodeURIComponent(result.document.id)}&title=${encodeURIComponent(result.document.title)}`,
+      );
+      toast.success("Signing copy created — continue with participants and fields");
     } catch (error) {
       toastError(error, "Signing copy creation failed");
     } finally {
@@ -743,7 +745,7 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
                 disabled={signingCopyBusy || saveState === "conflict"}
                 onClick={() => void createSigningCopy()}
               >
-                <FileSignature className="mr-2 h-4 w-4" /> Create signing copy
+                <FileSignature className="mr-2 h-4 w-4" /> Send for signature
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

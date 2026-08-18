@@ -588,8 +588,10 @@ export function NativeDocumentEditor({ document, onDocumentUpdated }: NativeDocu
       const saved = Boolean(await persist());
       if (!saved) return;
       const result = await signingCopyFn({ data: { documentId: document.id } });
-      window.open(`/dashboard/documents/${result.document.id}`, "_blank", "noopener,noreferrer");
-      toast.success("Immutable PDF signing copy created");
+      window.location.assign(
+        `/dashboard/signing?create=1&document=${encodeURIComponent(result.document.id)}&title=${encodeURIComponent(result.document.title)}`,
+      );
+      toast.success("Signing copy created — continue with participants and fields");
     } catch (error) {
       toastError(error, "Signing copy creation failed");
     } finally {
@@ -787,7 +789,7 @@ export function NativeDocumentEditor({ document, onDocumentUpdated }: NativeDocu
                 }
                 onClick={() => void handleCreateSigningCopy()}
               >
-                <FileSignature className="mr-2 h-4 w-4" /> Create signing copy
+                <FileSignature className="mr-2 h-4 w-4" /> Send for signature
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

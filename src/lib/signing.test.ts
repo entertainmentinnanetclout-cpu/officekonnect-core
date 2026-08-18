@@ -123,7 +123,9 @@ describe("OfficeKonnect Phase 6 signing contract", () => {
 
   test("requires every signer to own a required signature or initial field", () => {
     const signer = participant();
-    expect(validateSigningDraftConfiguration([signer], [])).toContain("needs at least one required");
+    expect(validateSigningDraftConfiguration([signer], [])).toContain(
+      "needs at least one required",
+    );
     expect(validateSigningDraftConfiguration([signer], [field()])).toBeNull();
   });
 

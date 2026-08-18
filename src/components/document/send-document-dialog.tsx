@@ -69,7 +69,9 @@ export function SendDocumentDialog({
       });
     },
     onSuccess: (result) => {
-      toast.success("Signing draft created. Continue in the preparation workspace to place required fields.");
+      toast.success(
+        "Signing draft created. Continue in the preparation workspace to place required fields.",
+      );
       onSent?.();
       onOpenChange(false);
       setRecipients([{ email: "", fullName: "" }]);
@@ -129,7 +131,9 @@ export function SendDocumentDialog({
                   variant="ghost"
                   size="icon"
                   onClick={() =>
-                    setRecipients((current) => current.filter((_, itemIndex) => itemIndex !== index))
+                    setRecipients((current) =>
+                      current.filter((_, itemIndex) => itemIndex !== index),
+                    )
                   }
                   disabled={recipients.length === 1}
                   aria-label={`Remove signer ${index + 1}`}
@@ -142,9 +146,7 @@ export function SendDocumentDialog({
               type="button"
               variant="outline"
               size="sm"
-              onClick={() =>
-                setRecipients((current) => [...current, { email: "", fullName: "" }])
-              }
+              onClick={() => setRecipients((current) => [...current, { email: "", fullName: "" }])}
             >
               <Plus className="mr-2 h-4 w-4" /> Add signer
             </Button>

@@ -59,7 +59,9 @@ function FieldOverlay({
     >
       <span className="font-semibold">{field.label || fieldTypeLabel(field.type)}</span>
       {participantLabel && (
-        <span className="max-w-full truncate opacity-70">{participantLabel(field.participant_id)}</span>
+        <span className="max-w-full truncate opacity-70">
+          {participantLabel(field.participant_id)}
+        </span>
       )}
       {field.required && <span className="absolute right-1 top-0.5 font-bold text-red-500">*</span>}
     </button>
@@ -159,5 +161,7 @@ export function SigningPdfFields({
     </div>
   );
 
-  return <PdfViewer url={url} zoom={zoom} page={page} overlay={overlay} onLoadPages={onLoadPages} />;
+  return (
+    <PdfViewer url={url} zoom={zoom} page={page} overlay={overlay} onLoadPages={onLoadPages} />
+  );
 }

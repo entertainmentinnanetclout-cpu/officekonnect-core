@@ -34,7 +34,8 @@ export const createTask = createServerFn({ method: "POST" })
     const status = data.status ?? "todo";
     const startAt = normalizeDate(data.startAt);
     const dueAt = normalizeDate(data.dueAt);
-    if (startAt && dueAt && new Date(startAt) > new Date(dueAt)) throw new Error("Task start cannot be after its due date");
+    if (startAt && dueAt && new Date(startAt) > new Date(dueAt))
+      throw new Error("Task start cannot be after its due date");
     const { data: task, error } = await context.supabase
       .from("tasks")
       .insert({
@@ -79,15 +80,18 @@ export const updateTask = createServerFn({ method: "POST" })
     if (!title) throw new Error("Task title is required");
     const startAt = normalizeDate(data.startAt);
     const dueAt = normalizeDate(data.dueAt);
-    if (startAt && dueAt && new Date(startAt) > new Date(dueAt)) throw new Error("Task start cannot be after its due date");
+    if (startAt && dueAt && new Date(startAt) > new Date(dueAt))
+      throw new Error("Task start cannot be after its due date");
     const { data: existing, error: existingError } = await context.supabase
       .from("tasks")
       .select("id,status,completed_at,workspace_id")
       .eq("id", data.taskId)
       .single();
     if (existingError) throw new Error(existingError.message);
-    if (existing.workspace_id !== workspaceId) throw new Error("Task does not belong to the active workspace");
-    const completedAt = data.status === "done" ? existing.completed_at ?? new Date().toISOString() : null;
+    if (existing.workspace_id !== workspaceId)
+      throw new Error("Task does not belong to the active workspace");
+    const completedAt =
+      data.status === "done" ? (existing.completed_at ?? new Date().toISOString()) : null;
     const { data: task, error } = await context.supabase
       .from("tasks")
       .update({
@@ -116,7 +120,10 @@ export const updateTaskStatus = createServerFn({ method: "POST" })
     const workspaceId = await getActiveWorkspaceId(context.supabase, context.userId);
     const { data: task, error } = await context.supabase
       .from("tasks")
-      .update({ status: data.status, completed_at: data.status === "done" ? new Date().toISOString() : null })
+      .update({
+        status: data.status,
+        completed_at: data.status === "done" ? new Date().toISOString() : null,
+      })
       .eq("id", data.taskId)
       .eq("workspace_id", workspaceId)
       .select("*")
@@ -130,7 +137,11 @@ export const deleteTask = createServerFn({ method: "POST" })
   .inputValidator((data: { taskId: string }) => data)
   .handler(async ({ data, context }) => {
     const workspaceId = await getActiveWorkspaceId(context.supabase, context.userId);
-    const { error } = await context.supabase.from("tasks").delete().eq("id", data.taskId).eq("workspace_id", workspaceId);
+    const { error } = await context.supabase
+      .from("tasks")
+      .delete()
+      .eq("id", data.taskId)
+      .eq("workspace_id", workspaceId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });

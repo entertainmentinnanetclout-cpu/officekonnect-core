@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -107,9 +107,12 @@ function sourceLabel(source: CalendarSource) {
 }
 
 function sourceClass(source: CalendarSource) {
-  if (source === "task") return "border-amber-300 bg-amber-50 text-amber-800 dark:bg-amber-950/30 dark:text-amber-200";
-  if (source === "workflow" || source === "workflow_step") return "border-blue-300 bg-blue-50 text-blue-800 dark:bg-blue-950/30 dark:text-blue-200";
-  if (source === "signing") return "border-violet-300 bg-violet-50 text-violet-800 dark:bg-violet-950/30 dark:text-violet-200";
+  if (source === "task")
+    return "border-amber-300 bg-amber-50 text-amber-800 dark:bg-amber-950/30 dark:text-amber-200";
+  if (source === "workflow" || source === "workflow_step")
+    return "border-blue-300 bg-blue-50 text-blue-800 dark:bg-blue-950/30 dark:text-blue-200";
+  if (source === "signing")
+    return "border-violet-300 bg-violet-50 text-violet-800 dark:bg-violet-950/30 dark:text-violet-200";
   return "border-emerald-300 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200";
 }
 
@@ -208,7 +211,9 @@ function CalendarPage() {
         .order("due_at");
       if (runsError) throw runsError;
       const runIds = (runs ?? []).map((run) => run.id);
-      let steps: Array<Pick<Tables<"workflow_steps">, "id" | "run_id" | "name" | "status" | "due_at">> = [];
+      let steps: Array<
+        Pick<Tables<"workflow_steps">, "id" | "run_id" | "name" | "status" | "due_at">
+      > = [];
       if (runIds.length) {
         const { data, error } = await supabase
           .from("workflow_steps")
@@ -258,7 +263,11 @@ function CalendarPage() {
       });
     }
     for (const task of tasks ?? []) {
-      if (task.start_at && new Date(task.start_at) >= gridStart && new Date(task.start_at) <= gridEnd) {
+      if (
+        task.start_at &&
+        new Date(task.start_at) >= gridStart &&
+        new Date(task.start_at) <= gridEnd
+      ) {
         result.push({
           id: `${task.id}-start`,
           source: "task",
@@ -270,7 +279,11 @@ function CalendarPage() {
           description: task.description,
         });
       }
-      if (task.due_at && new Date(task.due_at) >= gridStart && new Date(task.due_at) <= new Date(rangeEnd)) {
+      if (
+        task.due_at &&
+        new Date(task.due_at) >= gridStart &&
+        new Date(task.due_at) <= new Date(rangeEnd)
+      ) {
         result.push({
           id: `${task.id}-due`,
           source: "task",
@@ -310,7 +323,8 @@ function CalendarPage() {
       });
     }
     for (const request of signingRequests ?? []) {
-      if (!request.expires_at || ["completed", "declined", "cancelled"].includes(request.status)) continue;
+      if (!request.expires_at || ["completed", "declined", "cancelled"].includes(request.status))
+        continue;
       result.push({
         id: `${request.id}-expires`,
         source: "signing",
@@ -323,7 +337,16 @@ function CalendarPage() {
       });
     }
     return result.filter((item) => enabledSources[item.source]);
-  }, [manualEvents, tasks, workflows, signingRequests, enabledSources, gridStart, gridEnd, rangeEnd]);
+  }, [
+    manualEvents,
+    tasks,
+    workflows,
+    signingRequests,
+    enabledSources,
+    gridStart,
+    gridEnd,
+    rangeEnd,
+  ]);
 
   const monthDays = eachDayOfInterval({ start: gridStart, end: gridEnd });
   const selectedItems = items
@@ -387,10 +410,14 @@ function CalendarPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Calendar</h1>
           <p className="text-sm text-muted-foreground">
-            One operational timeline for manual events, tasks, workflow deadlines and signature expiries.
+            One operational timeline for manual events, tasks, workflow deadlines and signature
+            expiries.
           </p>
         </div>
-        <Button onClick={() => openEditor()}><Plus className="mr-2 h-4 w-4" />New event</Button>
+        <Button onClick={() => openEditor()}>
+          <Plus className="mr-2 h-4 w-4" />
+          New event
+        </Button>
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -398,27 +425,66 @@ function CalendarPage() {
           <CardContent className="p-0">
             <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon" onClick={() => setMonth((value) => subMonths(value, 1))}><ChevronLeft className="h-4 w-4" /></Button>
-                <Button variant="outline" size="sm" onClick={() => { setMonth(startOfMonth(new Date())); setSelectedDay(new Date()); }}>Today</Button>
-                <Button variant="outline" size="icon" onClick={() => setMonth((value) => addMonths(value, 1))}><ChevronRight className="h-4 w-4" /></Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setMonth((value) => subMonths(value, 1))}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setMonth(startOfMonth(new Date()));
+                    setSelectedDay(new Date());
+                  }}
+                >
+                  Today
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setMonth((value) => addMonths(value, 1))}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
                 <h2 className="ml-2 font-semibold">{format(month, "MMMM yyyy")}</h2>
               </div>
               <div className="flex flex-wrap gap-2 text-[11px]">
                 {(Object.keys(enabledSources) as CalendarSource[]).map((source) => (
-                  <label key={source} className="flex items-center gap-1.5 rounded-md border px-2 py-1">
-                    <Checkbox checked={enabledSources[source]} onCheckedChange={(value) => setEnabledSources((current) => ({ ...current, [source]: Boolean(value) }))} />
+                  <label
+                    key={source}
+                    className="flex items-center gap-1.5 rounded-md border px-2 py-1"
+                  >
+                    <Checkbox
+                      checked={enabledSources[source]}
+                      onCheckedChange={(value) =>
+                        setEnabledSources((current) => ({ ...current, [source]: Boolean(value) }))
+                      }
+                    />
                     {sourceLabel(source)}
                   </label>
                 ))}
               </div>
             </div>
             <div className="grid grid-cols-7 border-b bg-muted/30 text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => <div key={day} className="p-2">{day}</div>)}
+              {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
+                <div key={day} className="p-2">
+                  {day}
+                </div>
+              ))}
             </div>
-            {isLoading ? <div className="flex h-96 items-center justify-center"><Loader2 className="h-5 w-5 animate-spin" /></div> : (
+            {isLoading ? (
+              <div className="flex h-96 items-center justify-center">
+                <Loader2 className="h-5 w-5 animate-spin" />
+              </div>
+            ) : (
               <div className="grid grid-cols-7">
                 {monthDays.map((day) => {
-                  const dayItems = items.filter((item) => isSameDay(new Date(item.startsAt), day)).slice(0, 4);
+                  const dayItems = items
+                    .filter((item) => isSameDay(new Date(item.startsAt), day))
+                    .slice(0, 4);
                   const selected = isSameDay(day, selectedDay);
                   return (
                     <button
@@ -428,8 +494,24 @@ function CalendarPage() {
                       onDoubleClick={() => openEditor(undefined, day)}
                       className={`min-h-28 border-b border-r p-1.5 text-left transition hover:bg-muted/30 ${!isSameMonth(day, month) ? "bg-muted/20 text-muted-foreground" : ""} ${selected ? "ring-2 ring-inset ring-primary" : ""}`}
                     >
-                      <span className={`inline-grid h-7 w-7 place-items-center rounded-full text-xs ${isSameDay(day, new Date()) ? "bg-primary font-semibold text-primary-foreground" : ""}`}>{format(day, "d")}</span>
-                      <div className="mt-1 space-y-1">{dayItems.map((item) => <div key={item.id} className={`truncate rounded border px-1.5 py-1 text-[9px] ${sourceClass(item.source)}`}>{item.allDay ? "" : `${format(new Date(item.startsAt), "HH:mm")} `}{item.title}</div>)}{items.filter((item) => isSameDay(new Date(item.startsAt), day)).length > 4 && <p className="pl-1 text-[9px] text-muted-foreground">+ more</p>}</div>
+                      <span
+                        className={`inline-grid h-7 w-7 place-items-center rounded-full text-xs ${isSameDay(day, new Date()) ? "bg-primary font-semibold text-primary-foreground" : ""}`}
+                      >
+                        {format(day, "d")}
+                      </span>
+                      <div className="mt-1 space-y-1">
+                        {dayItems.map((item) => (
+                          <div
+                            key={item.id}
+                            className={`truncate rounded border px-1.5 py-1 text-[9px] ${sourceClass(item.source)}`}
+                          >
+                            {item.allDay ? "" : `${format(new Date(item.startsAt), "HH:mm")} `}
+                            {item.title}
+                          </div>
+                        ))}
+                        {items.filter((item) => isSameDay(new Date(item.startsAt), day)).length >
+                          4 && <p className="pl-1 text-[9px] text-muted-foreground">+ more</p>}
+                      </div>
                     </button>
                   );
                 })}
@@ -439,12 +521,192 @@ function CalendarPage() {
         </Card>
 
         <aside className="space-y-4">
-          <Card><CardContent className="p-4"><div className="flex items-center justify-between"><div><p className="text-xs text-muted-foreground">Agenda</p><h2 className="mt-1 font-semibold">{format(selectedDay, "EEEE, MMMM d")}</h2></div><Button size="icon" variant="outline" onClick={() => openEditor(undefined, selectedDay)}><Plus className="h-4 w-4" /></Button></div><div className="mt-4 space-y-2">{selectedItems.length === 0 ? <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">No events on this day.</div> : selectedItems.map((item) => <div key={item.id} className={`rounded-lg border p-3 ${sourceClass(item.source)}`}><div className="flex items-start gap-2"><div className="min-w-0 flex-1"><p className="text-sm font-medium">{item.title}</p><div className="mt-1 flex flex-wrap gap-2 text-[10px] opacity-75"><span>{sourceLabel(item.source)}</span>{!item.allDay && <span className="flex items-center gap-1"><Clock3 className="h-3 w-3" />{format(new Date(item.startsAt), "HH:mm")}</span>}{item.location && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{item.location}</span>}</div>{item.description && <p className="mt-2 line-clamp-2 text-xs opacity-80">{item.description}</p>}</div>{item.manual && canEdit(item.manual) && <div className="flex"><Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditor(item.manual)}><Pencil className="h-3 w-3" /></Button><Button size="icon" variant="ghost" className="h-7 w-7 text-red-600" onClick={() => void removeEvent(item.manual!)}><Trash2 className="h-3 w-3" /></Button></div>}</div>{item.route && <Button asChild size="sm" variant="ghost" className="mt-2 h-7 px-2"><Link to={item.route as never}>Open source</Link></Button>}</div>)}</div></CardContent></Card>
-          <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Calendar sources</p><div className="mt-3 grid gap-2 text-xs">{[[CalendarDays, "Manual", "Editable workspace events"], [Clock3, "Tasks", "Task start and due dates"], [Workflow, "Workflows", "Run and step deadlines"], [FileSignature, "Signatures", "Active request expiry dates"]].map(([Icon, label, description]) => <div key={String(label)} className="flex gap-2"><Icon className="mt-0.5 h-4 w-4 text-muted-foreground" /><div><p className="font-medium">{String(label)}</p><p className="text-muted-foreground">{String(description)}</p></div></div>)}</div></CardContent></Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">Agenda</p>
+                  <h2 className="mt-1 font-semibold">{format(selectedDay, "EEEE, MMMM d")}</h2>
+                </div>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  onClick={() => openEditor(undefined, selectedDay)}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="mt-4 space-y-2">
+                {selectedItems.length === 0 ? (
+                  <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">
+                    No events on this day.
+                  </div>
+                ) : (
+                  selectedItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className={`rounded-lg border p-3 ${sourceClass(item.source)}`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium">{item.title}</p>
+                          <div className="mt-1 flex flex-wrap gap-2 text-[10px] opacity-75">
+                            <span>{sourceLabel(item.source)}</span>
+                            {!item.allDay && (
+                              <span className="flex items-center gap-1">
+                                <Clock3 className="h-3 w-3" />
+                                {format(new Date(item.startsAt), "HH:mm")}
+                              </span>
+                            )}
+                            {item.location && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                {item.location}
+                              </span>
+                            )}
+                          </div>
+                          {item.description && (
+                            <p className="mt-2 line-clamp-2 text-xs opacity-80">
+                              {item.description}
+                            </p>
+                          )}
+                        </div>
+                        {item.manual && canEdit(item.manual) && (
+                          <div className="flex">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-7 w-7"
+                              onClick={() => openEditor(item.manual)}
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-7 w-7 text-red-600"
+                              onClick={() => void removeEvent(item.manual!)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                      {item.route && (
+                        <Button asChild size="sm" variant="ghost" className="mt-2 h-7 px-2">
+                          <a href={item.route}>Open source</a>
+                        </Button>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">Calendar sources</p>
+              <div className="mt-3 grid gap-2 text-xs">
+                {[
+                  [CalendarDays, "Manual", "Editable workspace events"],
+                  [Clock3, "Tasks", "Task start and due dates"],
+                  [Workflow, "Workflows", "Run and step deadlines"],
+                  [FileSignature, "Signatures", "Active request expiry dates"],
+                ].map(([Icon, label, description]) => (
+                  <div key={String(label)} className="flex gap-2">
+                    <Icon className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">{String(label)}</p>
+                      <p className="text-muted-foreground">{String(description)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </aside>
       </div>
 
-      <Dialog open={editorOpen} onOpenChange={setEditorOpen}><DialogContent className="max-w-xl"><DialogHeader><DialogTitle>{editor.id ? "Edit event" : "New event"}</DialogTitle><DialogDescription>Manual events are workspace records. Operational deadlines are derived from their source modules and are not duplicated here.</DialogDescription></DialogHeader><div className="space-y-4"><div className="space-y-2"><Label>Title</Label><Input value={editor.title} onChange={(event) => setEditor((current) => ({ ...current, title: event.target.value }))} /></div><div className="space-y-2"><Label>Description</Label><Textarea value={editor.description} onChange={(event) => setEditor((current) => ({ ...current, description: event.target.value }))} /></div><label className="flex items-center gap-2 text-sm"><Checkbox checked={editor.allDay} onCheckedChange={(value) => setEditor((current) => ({ ...current, allDay: Boolean(value) }))} />All day</label><div className="grid gap-3 sm:grid-cols-2"><div className="space-y-2"><Label>Starts</Label><Input type="datetime-local" value={editor.startsAt} onChange={(event) => setEditor((current) => ({ ...current, startsAt: event.target.value }))} /></div><div className="space-y-2"><Label>Ends</Label><Input type="datetime-local" value={editor.endsAt} onChange={(event) => setEditor((current) => ({ ...current, endsAt: event.target.value }))} /></div></div><div className="space-y-2"><Label>Location</Label><Input value={editor.location} onChange={(event) => setEditor((current) => ({ ...current, location: event.target.value }))} /></div></div><DialogFooter><Button variant="outline" onClick={() => setEditorOpen(false)}>Cancel</Button><Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>{saveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Save event</Button></DialogFooter></DialogContent></Dialog>
+      <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>{editor.id ? "Edit event" : "New event"}</DialogTitle>
+            <DialogDescription>
+              Manual events are workspace records. Operational deadlines are derived from their
+              source modules and are not duplicated here.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Title</Label>
+              <Input
+                value={editor.title}
+                onChange={(event) =>
+                  setEditor((current) => ({ ...current, title: event.target.value }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea
+                value={editor.description}
+                onChange={(event) =>
+                  setEditor((current) => ({ ...current, description: event.target.value }))
+                }
+              />
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={editor.allDay}
+                onCheckedChange={(value) =>
+                  setEditor((current) => ({ ...current, allDay: Boolean(value) }))
+                }
+              />
+              All day
+            </label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Starts</Label>
+                <Input
+                  type="datetime-local"
+                  value={editor.startsAt}
+                  onChange={(event) =>
+                    setEditor((current) => ({ ...current, startsAt: event.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Ends</Label>
+                <Input
+                  type="datetime-local"
+                  value={editor.endsAt}
+                  onChange={(event) =>
+                    setEditor((current) => ({ ...current, endsAt: event.target.value }))
+                  }
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Location</Label>
+              <Input
+                value={editor.location}
+                onChange={(event) =>
+                  setEditor((current) => ({ ...current, location: event.target.value }))
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditorOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+              {saveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Save
+              event
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

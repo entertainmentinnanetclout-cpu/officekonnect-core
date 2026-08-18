@@ -96,7 +96,11 @@ export const deleteCalendarEvent = createServerFn({ method: "POST" })
   .inputValidator((data: { eventId: string }) => data)
   .handler(async ({ data, context }) => {
     const workspaceId = await getActiveWorkspaceId(context.supabase, context.userId);
-    const { error } = await context.supabase.from("calendar_events").delete().eq("id", data.eventId).eq("workspace_id", workspaceId);
+    const { error } = await context.supabase
+      .from("calendar_events")
+      .delete()
+      .eq("id", data.eventId)
+      .eq("workspace_id", workspaceId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });

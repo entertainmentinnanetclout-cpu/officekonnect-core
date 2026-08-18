@@ -41,7 +41,11 @@ function SearchPage() {
     return () => window.clearTimeout(timer);
   }, [query]);
 
-  const { data: results, isFetching, error } = useQuery({
+  const {
+    data: results,
+    isFetching,
+    error,
+  } = useQuery({
     queryKey: ["workspace-search-page", debounced],
     queryFn: () => searchFn({ data: { query: debounced, limit: 100 } }),
     staleTime: 15_000,
@@ -54,7 +58,8 @@ function SearchPage() {
 
   const counts = useMemo(() => {
     const map = new Map<string, number>();
-    for (const result of results ?? []) map.set(result.object_type, (map.get(result.object_type) ?? 0) + 1);
+    for (const result of results ?? [])
+      map.set(result.object_type, (map.get(result.object_type) ?? 0) + 1);
     return map;
   }, [results]);
 
@@ -87,7 +92,11 @@ function SearchPage() {
                 variant={filter === item ? "default" : "outline"}
                 onClick={() => setFilter(item)}
               >
-                {item === "all" ? "All" : item === "signature" ? "E-signatures" : `${item[0].toUpperCase()}${item.slice(1)}s`}
+                {item === "all"
+                  ? "All"
+                  : item === "signature"
+                    ? "E-signatures"
+                    : `${item[0].toUpperCase()}${item.slice(1)}s`}
                 {item !== "all" && <span className="ml-1 opacity-70">{counts.get(item) ?? 0}</span>}
               </Button>
             ))}
@@ -119,15 +128,23 @@ function SearchPage() {
                 href={result.route}
                 className="flex items-center gap-4 rounded-xl border bg-card p-4 transition hover:border-primary/40 hover:shadow-sm"
               >
-                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-muted"><Icon className="h-5 w-5" /></div>
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-muted">
+                  <Icon className="h-5 w-5" />
+                </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="truncate font-medium">{result.title}</p>
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">{result.object_type}</span>
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
+                      {result.object_type}
+                    </span>
                   </div>
                   <p className="mt-1 truncate text-sm text-muted-foreground">{result.subtitle}</p>
                 </div>
-                {result.occurred_at && <span className="hidden text-xs text-muted-foreground sm:block">{new Date(result.occurred_at).toLocaleString()}</span>}
+                {result.occurred_at && (
+                  <span className="hidden text-xs text-muted-foreground sm:block">
+                    {new Date(result.occurred_at).toLocaleString()}
+                  </span>
+                )}
               </a>
             );
           })}

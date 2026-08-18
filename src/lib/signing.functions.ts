@@ -22,7 +22,8 @@ async function requireDraftRequest(
     .eq("id", requestId)
     .single();
   if (error) throw new Error(error.message);
-  if (request.status !== "draft" || request.locked_at) throw new Error("This signing request is locked and can no longer be edited");
+  if (request.status !== "draft" || request.locked_at)
+    throw new Error("This signing request is locked and can no longer be edited");
   if (request.sender_id !== userId) {
     const { data: membership } = await supabase
       .from("workspace_members")
@@ -75,14 +76,18 @@ export const createSigningDraft = createServerFn({ method: "POST" })
       .eq("id", data.documentId)
       .single();
     if (documentError) throw new Error(documentError.message);
-    if (document.workspace_id !== workspaceId) throw new Error("Document does not belong to the active workspace");
+    if (document.workspace_id !== workspaceId)
+      throw new Error("Document does not belong to the active workspace");
     const isPdf =
       document.document_kind === "file" &&
       (document.file_type?.toLowerCase() === "application/pdf" ||
         document.file_type?.toLowerCase() === "pdf" ||
         document.storage_path?.toLowerCase().endsWith(".pdf") ||
         document.current_file_url?.toLowerCase().includes(".pdf"));
-    if (!isPdf) throw new Error("E-signature requests require a PDF. Create a signing copy from Documents or Sheets first.");
+    if (!isPdf)
+      throw new Error(
+        "E-signature requests require a PDF. Create a signing copy from Documents or Sheets first.",
+      );
 
     const normalizedParticipants = data.participants.map((participant, index) => ({
       userId: participant.userId ?? null,
@@ -138,7 +143,14 @@ export const createSigningRequest = createSigningDraft;
 
 export const updateSigningDraft = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { requestId: string; title: string; message?: string | null; signingOrder: SigningOrder }) => data)
+  .inputValidator(
+    (data: {
+      requestId: string;
+      title: string;
+      message?: string | null;
+      signingOrder: SigningOrder;
+    }) => data,
+  )
   .handler(async ({ data, context }) => {
     await requireDraftRequest(context.supabase, data.requestId, context.userId);
     const { data: request, error } = await context.supabase
@@ -162,7 +174,8 @@ export const addSigningParticipant = createServerFn({ method: "POST" })
     await requireDraftRequest(context.supabase, data.requestId, context.userId);
     const participant = data.participant;
     const email = participant.email?.trim().toLowerCase() || null;
-    if (!participant.userId && !email) throw new Error("A participant account or email is required");
+    if (!participant.userId && !email)
+      throw new Error("A participant account or email is required");
     const { data: row, error } = await context.supabase
       .from("signing_participants")
       .insert({
@@ -204,7 +217,8 @@ export const updateSigningParticipant = createServerFn({ method: "POST" })
         .from("signing_fields")
         .select("id", { count: "exact", head: true })
         .eq("participant_id", data.participantId);
-      if ((count ?? 0) > 0) throw new Error("Remove this participant's fields before changing the role to CC");
+      if ((count ?? 0) > 0)
+        throw new Error("Remove this participant's fields before changing the role to CC");
     }
     const { data: row, error } = await context.supabase
       .from("signing_participants")
@@ -232,7 +246,10 @@ export const removeSigningParticipant = createServerFn({ method: "POST" })
       .single();
     if (existingError) throw new Error(existingError.message);
     await requireDraftRequest(context.supabase, existing.request_id, context.userId);
-    const { error } = await context.supabase.from("signing_participants").delete().eq("id", data.participantId);
+    const { error } = await context.supabase
+      .from("signing_participants")
+      .delete()
+      .eq("id", data.participantId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -344,37 +361,67 @@ async function invokeSigningAction(
 export const sendSigningRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { requestId: string; expiresAt?: string | null }) => data)
-  .handler(async ({ data, context }) => invokeSigningAction(context.supabase, { action: "send", requestId: data.requestId, expiresAt: data.expiresAt ?? null }));
+  .handler(async ({ data, context }) =>
+    invokeSigningAction(context.supabase, {
+      action: "send",
+      requestId: data.requestId,
+      expiresAt: data.expiresAt ?? null,
+    }),
+  );
 
 export const rotateSigningInvitation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { participantId: string; expiresAt?: string | null }) => data)
-  .handler(async ({ data, context }) => invokeSigningAction(context.supabase, { action: "rotate", participantId: data.participantId, expiresAt: data.expiresAt ?? null }));
+  .handler(async ({ data, context }) =>
+    invokeSigningAction(context.supabase, {
+      action: "rotate",
+      participantId: data.participantId,
+      expiresAt: data.expiresAt ?? null,
+    }),
+  );
 
 export const markSigningParticipantViewed = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { participantId: string }) => data)
-  .handler(async ({ data, context }) => invokeSigningAction(context.supabase, { action: "viewed", participantId: data.participantId }));
+  .handler(async ({ data, context }) =>
+    invokeSigningAction(context.supabase, { action: "viewed", participantId: data.participantId }),
+  );
 
 export const completeSigningParticipant = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { participantId: string; fieldValues: SigningFieldValue[]; consentTextVersion: string }) => data)
-  .handler(async ({ data, context }) => invokeSigningAction(context.supabase, {
-    action: "complete",
-    participantId: data.participantId,
-    fieldValues: data.fieldValues,
-    consentTextVersion: data.consentTextVersion,
-  }));
+  .inputValidator(
+    (data: {
+      participantId: string;
+      fieldValues: SigningFieldValue[];
+      consentTextVersion: string;
+    }) => data,
+  )
+  .handler(async ({ data, context }) =>
+    invokeSigningAction(context.supabase, {
+      action: "complete",
+      participantId: data.participantId,
+      fieldValues: data.fieldValues,
+      consentTextVersion: data.consentTextVersion,
+    }),
+  );
 
 export const declineSigningParticipant = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { participantId: string; reason: string }) => data)
-  .handler(async ({ data, context }) => invokeSigningAction(context.supabase, { action: "decline", participantId: data.participantId, reason: data.reason.trim() }));
+  .handler(async ({ data, context }) =>
+    invokeSigningAction(context.supabase, {
+      action: "decline",
+      participantId: data.participantId,
+      reason: data.reason.trim(),
+    }),
+  );
 
 export const finalizeSigningRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { requestId: string }) => data)
-  .handler(async ({ data, context }) => invokeSigningAction(context.supabase, { action: "finalize", requestId: data.requestId }));
+  .handler(async ({ data, context }) =>
+    invokeSigningAction(context.supabase, { action: "finalize", requestId: data.requestId }),
+  );
 
 export const cancelSigningRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -394,14 +441,22 @@ export const cancelSigningRequest = createServerFn({ method: "POST" })
         .eq("workspace_id", request.workspace_id)
         .eq("user_id", userId)
         .maybeSingle();
-      if (!membership || !["owner", "admin"].includes(membership.role)) throw new Error("You cannot cancel this request");
+      if (!membership || !["owner", "admin"].includes(membership.role))
+        throw new Error("You cannot cancel this request");
     }
     if (request.status === "draft" && !request.locked_at) {
-      const { error: deleteError } = await supabase.from("signing_requests").delete().eq("id", request.id);
+      const { error: deleteError } = await supabase
+        .from("signing_requests")
+        .delete()
+        .eq("id", request.id);
       if (deleteError) throw new Error(deleteError.message);
       return { deletedDraft: true };
     }
-    return invokeSigningAction(supabase, { action: "cancel", requestId: request.id, reason: data.reason?.trim() || "Cancelled by sender" });
+    return invokeSigningAction(supabase, {
+      action: "cancel",
+      requestId: request.id,
+      reason: data.reason?.trim() || "Cancelled by sender",
+    });
   });
 
 export const getSigningRequestAssetLinks = createServerFn({ method: "POST" })
@@ -434,8 +489,16 @@ export const getSigningRequestAssetLinks = createServerFn({ method: "POST" })
       .maybeSingle();
 
     return {
-      sourceUrl: await signedAssetUrl(supabase, sourcePath, ["document-versions", "documents", "exports"]),
-      finalUrl: await signedAssetUrl(supabase, request.final_export_path, ["exports", "document-versions", "documents"]),
+      sourceUrl: await signedAssetUrl(supabase, sourcePath, [
+        "document-versions",
+        "documents",
+        "exports",
+      ]),
+      finalUrl: await signedAssetUrl(supabase, request.final_export_path, [
+        "exports",
+        "document-versions",
+        "documents",
+      ]),
       certificateUrl: await signedAssetUrl(
         supabase,
         certificate?.certificate_path ?? request.audit_certificate_path,

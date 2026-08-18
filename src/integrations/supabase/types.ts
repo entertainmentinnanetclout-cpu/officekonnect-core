@@ -100,6 +100,62 @@ export type Database = {
           },
         ];
       };
+      calendar_events: {
+        Row: {
+          all_day: boolean;
+          created_at: string;
+          created_by: string;
+          description: string | null;
+          ends_at: string;
+          entity_id: string | null;
+          entity_type: string | null;
+          id: string;
+          location: string | null;
+          starts_at: string;
+          title: string;
+          updated_at: string;
+          workspace_id: string;
+        };
+        Insert: {
+          all_day?: boolean;
+          created_at?: string;
+          created_by: string;
+          description?: string | null;
+          ends_at: string;
+          entity_id?: string | null;
+          entity_type?: string | null;
+          id?: string;
+          location?: string | null;
+          starts_at: string;
+          title: string;
+          updated_at?: string;
+          workspace_id: string;
+        };
+        Update: {
+          all_day?: boolean;
+          created_at?: string;
+          created_by?: string;
+          description?: string | null;
+          ends_at?: string;
+          entity_id?: string | null;
+          entity_type?: string | null;
+          id?: string;
+          location?: string | null;
+          starts_at?: string;
+          title?: string;
+          updated_at?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       campaign_recipients: {
         Row: {
           campaign_id: string;
@@ -1812,6 +1868,68 @@ export type Database = {
           },
         ];
       };
+      tasks: {
+        Row: {
+          assignee_id: string | null;
+          completed_at: string | null;
+          created_at: string;
+          created_by: string;
+          description: string | null;
+          due_at: string | null;
+          entity_id: string | null;
+          entity_type: string | null;
+          id: string;
+          priority: string;
+          start_at: string | null;
+          status: string;
+          title: string;
+          updated_at: string;
+          workspace_id: string;
+        };
+        Insert: {
+          assignee_id?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          created_by: string;
+          description?: string | null;
+          due_at?: string | null;
+          entity_id?: string | null;
+          entity_type?: string | null;
+          id?: string;
+          priority?: string;
+          start_at?: string | null;
+          status?: string;
+          title: string;
+          updated_at?: string;
+          workspace_id: string;
+        };
+        Update: {
+          assignee_id?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          created_by?: string;
+          description?: string | null;
+          due_at?: string | null;
+          entity_id?: string | null;
+          entity_type?: string | null;
+          id?: string;
+          priority?: string;
+          start_at?: string | null;
+          status?: string;
+          title?: string;
+          updated_at?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "tasks_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       transcription_jobs: {
         Row: {
           created_at: string;
@@ -3372,6 +3490,18 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      search_workspace_objects: {
+        Args: { p_limit?: number; p_query: string; p_workspace_id: string };
+        Returns: {
+          metadata: Json;
+          object_id: string;
+          object_type: string;
+          occurred_at: string;
+          route: string;
+          subtitle: string;
+          title: string;
+        }[];
       };
       send_signing_request: {
         Args: { p_expires_at?: string; p_request_id: string };

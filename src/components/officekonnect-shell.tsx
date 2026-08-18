@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import {
   Bell,
@@ -41,6 +41,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { GlobalSearchDialog } from "@/components/search/global-search-dialog";
 import { useWorkspaceShell } from "@/hooks/use-workspace-shell";
 
 export type OfficeKonnectRoute =
@@ -51,6 +52,10 @@ export type OfficeKonnectRoute =
   | "/dashboard/templates"
   | "/dashboard/workflows"
   | "/dashboard/approvals"
+  | "/dashboard/signing"
+  | "/dashboard/tasks"
+  | "/dashboard/calendar"
+  | "/dashboard/search"
   | "/dashboard/mail"
   | "/dashboard/voice"
   | "/dashboard/contacts"
@@ -84,9 +89,9 @@ const navGroups: NavGroup[] = [
     items: [
       { label: "Workflows", href: "/dashboard/workflows", icon: Workflow },
       { label: "Approvals", href: "/dashboard/approvals", icon: ShieldCheck },
-      { label: "E-signatures", href: null, icon: FileSignature, phase: 6 },
-      { label: "Tasks", href: null, icon: CheckSquare2, phase: 7 },
-      { label: "Calendar", href: null, icon: CalendarDays, phase: 7 },
+      { label: "E-signatures", href: "/dashboard/signing", icon: FileSignature },
+      { label: "Tasks", href: "/dashboard/tasks", icon: CheckSquare2 },
+      { label: "Calendar", href: "/dashboard/calendar", icon: CalendarDays },
     ],
   },
   {
@@ -108,6 +113,10 @@ const navGroups: NavGroup[] = [
 ];
 
 const pageTitles: Array<[string, string]> = [
+  ["/dashboard/signing", "E-signatures"],
+  ["/dashboard/tasks", "Tasks"],
+  ["/dashboard/calendar", "Calendar"],
+  ["/dashboard/search", "Search"],
   ["/dashboard/workflows", "Workflows"],
   ["/dashboard/approvals", "Approvals"],
   ["/dashboard/templates", "Templates"],
@@ -138,6 +147,18 @@ export function OfficeKonnectShell({
 }: OfficeKonnectShellProps) {
   const location = useLocation();
   const workspace = useWorkspaceShell(user);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
   const pageTitle =
     pageTitles.find(([prefix]) =>
       prefix === "/dashboard"
@@ -313,12 +334,12 @@ export function OfficeKonnectShell({
             <Button
               variant="outline"
               className="hidden h-9 w-64 justify-start gap-2 text-slate-500 md:flex"
-              disabled
-              title="Global command search is implemented in Phase 7"
+              onClick={() => setSearchOpen(true)}
+              title="Search workspace (Ctrl/Cmd+K)"
             >
               <Search className="h-4 w-4" />
               <span className="text-xs">Search workspace</span>
-              <span className="ml-auto text-[10px]">Phase 7</span>
+              <span className="ml-auto text-[10px]">⌘K</span>
             </Button>
             <Button variant="ghost" size="icon" disabled title="Notifications arrive in Phase 8">
               <Bell className="h-5 w-5" />
@@ -406,6 +427,7 @@ export function OfficeKonnectShell({
           </button>
         </nav>
       </section>
+      <GlobalSearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
     </div>
   );
 }

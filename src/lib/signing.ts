@@ -99,12 +99,21 @@ export function fieldTypeLabel(type: SigningFieldType) {
   return type[0].toUpperCase() + type.slice(1);
 }
 
-export function participantDisplayName(participant: Pick<SigningParticipant, "full_name" | "email" | "user_id">) {
-  return participant.full_name?.trim() || participant.email?.trim() || (participant.user_id ? "Workspace member" : "External participant");
+export function participantDisplayName(
+  participant: Pick<SigningParticipant, "full_name" | "email" | "user_id">,
+) {
+  return (
+    participant.full_name?.trim() ||
+    participant.email?.trim() ||
+    (participant.user_id ? "Workspace member" : "External participant")
+  );
 }
 
 export function isSigningParticipantEligible(
-  request: Pick<SigningRequest, "status" | "signing_order" | "current_order_index" | "expires_at" | "voided_at">,
+  request: Pick<
+    SigningRequest,
+    "status" | "signing_order" | "current_order_index" | "expires_at" | "voided_at"
+  >,
   participant: Pick<SigningParticipant, "role" | "status" | "order_index" | "access_revoked_at">,
 ) {
   if (!["sent", "in_progress"].includes(request.status)) return false;
@@ -112,12 +121,17 @@ export function isSigningParticipantEligible(
   if (request.expires_at && new Date(request.expires_at).getTime() <= Date.now()) return false;
   if (participant.role === "cc") return false;
   if (!["pending", "viewed"].includes(participant.status)) return false;
-  if (request.signing_order === "sequential" && participant.order_index !== request.current_order_index) return false;
+  if (
+    request.signing_order === "sequential" &&
+    participant.order_index !== request.current_order_index
+  )
+    return false;
   return true;
 }
 
 export function normalizeSigningField(input: SigningFieldInput): SigningFieldInput {
-  const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, Number.isFinite(value) ? value : min));
+  const clamp = (value: number, min: number, max: number) =>
+    Math.min(max, Math.max(min, Number.isFinite(value) ? value : min));
   return {
     ...input,
     page: Math.max(1, Math.round(input.page || 1)),
@@ -131,12 +145,19 @@ export function normalizeSigningField(input: SigningFieldInput): SigningFieldInp
   };
 }
 
-export function validateSigningDraftConfiguration(participants: SigningParticipant[], fields: SigningField[]) {
+export function validateSigningDraftConfiguration(
+  participants: SigningParticipant[],
+  fields: SigningField[],
+) {
   const actionParticipants = participants.filter((participant) => participant.role !== "cc");
   if (actionParticipants.length === 0) return "At least one signer or approver is required.";
   for (const participant of participants) {
-    if (!participant.user_id && !participant.email?.trim()) return "Every participant needs an account or email address.";
-    if (participant.role === "cc" && fields.some((field) => field.participant_id === participant.id)) {
+    if (!participant.user_id && !participant.email?.trim())
+      return "Every participant needs an account or email address.";
+    if (
+      participant.role === "cc" &&
+      fields.some((field) => field.participant_id === participant.id)
+    ) {
       return "CC recipients cannot own signing fields.";
     }
     if (

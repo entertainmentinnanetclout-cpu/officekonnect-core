@@ -125,6 +125,7 @@ function RootComponent() {
 
     const isAuthPage = location.pathname.startsWith("/auth");
     const isDashboardPage = location.pathname.startsWith("/dashboard");
+    const isExternalSigningPage = location.pathname.startsWith("/sign/");
     const isPublicPage = ["/", "/pricing", "/privacy", "/terms", "/contact"].includes(
       location.pathname,
     );
@@ -133,7 +134,7 @@ function RootComponent() {
     // dashboard layout to establish the optional server-backed development
     // session before falling back to secure sign-in. Production remains safe:
     // the dashboard bootstrap is disabled there and renders its login fallback.
-    if (!user && !isAuthPage && !isPublicPage && !isDashboardPage) {
+    if (!user && !isAuthPage && !isPublicPage && !isDashboardPage && !isExternalSigningPage) {
       navigate({ to: "/auth/login" });
     } else if (user && isAuthPage) {
       navigate({ to: "/dashboard" });
