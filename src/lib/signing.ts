@@ -105,7 +105,7 @@ export function participantDisplayName(
   return (
     participant.full_name?.trim() ||
     participant.email?.trim() ||
-    (participant.user_id ? "Workspace member" : "External participant")
+    (participant.user_id ? "OfficeKonnect member" : "Unregistered participant")
   );
 }
 
@@ -132,13 +132,22 @@ export function isSigningParticipantEligible(
 export function normalizeSigningField(input: SigningFieldInput): SigningFieldInput {
   const clamp = (value: number, min: number, max: number) =>
     Math.min(max, Math.max(min, Number.isFinite(value) ? value : min));
+
+  // The database requires the entire normalized rectangle to remain on-page:
+  // x + w <= 1 and y + h <= 1. Clamp the origin first, then size against
+  // the remaining space so edge placements cannot violate that invariant.
+  const x = clamp(input.x, 0, 0.97);
+  const y = clamp(input.y, 0, 0.98);
+  const w = clamp(input.w, 0.03, 1 - x);
+  const h = clamp(input.h, 0.02, 1 - y);
+
   return {
     ...input,
     page: Math.max(1, Math.round(input.page || 1)),
-    x: clamp(input.x, 0, 0.98),
-    y: clamp(input.y, 0, 0.98),
-    w: clamp(input.w, 0.03, 1),
-    h: clamp(input.h, 0.02, 1),
+    x,
+    y,
+    w,
+    h,
     rotation: clamp(input.rotation ?? 0, -360, 360),
     required: input.required ?? true,
     label: input.label?.trim() || null,
@@ -152,8 +161,8 @@ export function validateSigningDraftConfiguration(
   const actionParticipants = participants.filter((participant) => participant.role !== "cc");
   if (actionParticipants.length === 0) return "At least one signer or approver is required.";
   for (const participant of participants) {
-    if (!participant.user_id && !participant.email?.trim())
-      return "Every participant needs an account or email address.";
+    if (!participant.user_id)
+      return "Every signing participant must have an active OfficeKonnect account.";
     if (
       participant.role === "cc" &&
       fields.some((field) => field.participant_id === participant.id)
