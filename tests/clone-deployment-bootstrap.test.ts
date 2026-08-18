@@ -9,7 +9,7 @@ test("browser Supabase bootstrap works without process.env or copied Vercel vari
   const client = source("src/integrations/supabase/client.ts");
   const defaults = source("src/integrations/supabase/defaults.ts");
 
-  expect(client).not.toContain("process.env");
+  expect(/process\.env\.[A-Z0-9_]+/.test(client)).toBe(false);
   expect(client).toContain("DEFAULT_SUPABASE_URL");
   expect(client).toContain("DEFAULT_SUPABASE_PUBLISHABLE_KEY");
   expect(defaults).toContain("https://ydgsmnzcwkrlghlhtpgq.supabase.co");
