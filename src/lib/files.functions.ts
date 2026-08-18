@@ -110,15 +110,17 @@ export const moveWorkspaceFolder = createServerFn({ method: "POST" })
           throw new Error("A folder cannot be moved inside one of its descendants");
         if (seen.has(cursor)) throw new Error("The folder hierarchy is invalid");
         seen.add(cursor);
-        const { data: parent, error: parentError } = await supabase
+        const parentResult = await supabase
           .from("workspace_folders")
           .select("id,parent_id,workspace_id")
           .eq("id", cursor)
           .single();
-        if (parentError) throw new Error(parentError.message);
-        if (parent.workspace_id !== workspaceId)
+        if (parentResult.error) throw new Error(parentResult.error.message);
+        const parentRow: { id: string; parent_id: string | null; workspace_id: string } =
+          parentResult.data;
+        if (parentRow.workspace_id !== workspaceId)
           throw new Error("Destination folder is outside the active workspace");
-        cursor = parent.parent_id;
+        cursor = parentRow.parent_id;
       }
     }
     const { data: folder, error } = await supabase
