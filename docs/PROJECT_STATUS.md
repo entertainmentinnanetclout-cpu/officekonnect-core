@@ -4,153 +4,145 @@ Last audited: 2026-08-18
 
 ## Current phase
 
-Phases 6 and 7 are **fully implemented, live-backend reconciled and source validated**.
+Phases 0–8 are **fully implemented and source/back-end reconciled**.
 
-Next implementation phase: **Phase 8 — Notifications, Activity, Team, Workspace and Settings**.
+Next implementation phase: **Phase 9 — Product-wide UX and Route Hardening**.
 
 ## Upgrade branch policy
 
-Draft PR #2 is the single long-running upgrade PR for Phases 0–11. All phase work is committed to `phase-0-canonical-reconciliation`. The PR remains Draft and must not merge to `main` until the Phase 11 release-candidate gate is complete.
+Draft PR #2 is the single long-running upgrade PR for Phases 0–11. All phase work remains on `phase-0-canonical-reconciliation`. The PR must remain Draft and must not merge to `main` until the complete Phase 11 release-candidate gate passes.
 
-Vercel/deployment-platform validation is intentionally deferred until Phase 11. Phases 6–10 are accepted on repository parity, live Supabase verification, lint, TypeScript, regression tests and production build.
+Vercel/deployment-platform validation is intentionally deferred until Phase 11. Phases 8–10 are accepted on repository parity, live Supabase verification, lint, TypeScript, regression tests and production build.
 
 ## Source-of-truth policy
 
-The live Supabase project is authoritative for deployed database behavior. GitHub carries applied migration history, deployed Edge Function source, generated database types and application integrations. Existing document, spreadsheet, workflow and signing engines are extended rather than replaced.
+The live Supabase project is authoritative for deployed database behavior. GitHub carries applied migration history, deployed Edge Function source, generated database types and application integrations. Existing engines are extended rather than replaced.
 
-## Confirmed architecture
+## Completed product layers
 
-- Frontend: React 19, TanStack Start/Router/Query, TypeScript, Tailwind, Radix UI.
-- Backend: Supabase Auth, Postgres, RLS, Storage, RPCs and Edge Functions.
-- Private storage buckets include documents, document-versions, exports, letterheads, signatures and voice-notes.
-- Canonical package manager: Bun 1.3.14 with committed `bun.lock` and frozen `bun ci` validation.
-- Spreadsheet interoperability uses the locked `xlsx` dependency.
-- Document/workbook exports and signing copies use deterministic server-side PDF renderers.
+- Phase 0 — canonical repository/live-backend reconciliation.
+- Phase 1 — real development identity and canonical responsive application shell.
+- Phase 2 — native Documents, autosave/versioning and deterministic PDF.
+- Phase 3 — OfficeKonnect Sheets, formula/workbook engine and XLSX/CSV/PDF interoperability.
+- Phase 4 — Files organization and native document/spreadsheet Templates.
+- Phase 5 — server-authoritative Workflows and Approvals over immutable submitted versions.
+- Phase 6 — production internal/external E-Signatures, secure sessions, final PDF and audit certificate.
+- Phase 7 — Tasks, operational Calendar and permission-scoped Global Search.
+- Phase 8 — Notifications, Activity, Team, Workspace administration and comprehensive Settings.
 
-## Completed phases
+## Phase 8 completed
 
-### Phase 0 — Canonical reconciliation
+### Notifications
 
-- Restored 31/31 missing live migrations.
-- Checked in deployed signing Edge Function source.
-- Regenerated Supabase TypeScript types.
-- Reconciled workspace-first Storage and signing contracts.
-- Added environment hygiene, repository parity and Upgrade Validation.
+- `notifications` remains canonical.
+- Added `notification_receipts` solely for per-user read state on workspace-broadcast notifications.
+- Activated live header bell and `/dashboard/notifications`.
+- Added unread counts, mark-one/mark-all read and entity navigation.
+- Added real task-assignment notification production.
 
-### Phase 1 — Development identity and application shell
+### Activity
 
-- Added server-only development-session bootstrap with a real Supabase identity.
-- Preserved `auth.uid()`, workspace membership and RLS.
-- Replaced V1 chrome with the responsive canonical OfficeKonnect shell and real workspace switching.
+- Activated `/dashboard/activity` over `activity_logs`, `workflow_events` and `signing_events`.
+- Added audit triggers for tasks, calendar events, templates, memberships, workspaces and invitations.
+- Hardened `log_activity()` so workspace-row changes retain the correct workspace/tenant identity.
+- No duplicate workspace-activity ledger was created.
 
-### Phase 2 — Documents, native editor and PDF
+### Team
 
-- Preserved `documents`, `document_versions` and private Storage as canonical.
-- Completed native editing, autosave/version restore and deterministic PDF output.
-- Added immutable PDF signing-copy generation.
+- `workspace_members` and `workspace_role` remain canonical.
+- Added secure expiring `workspace_invitations` with SHA-256 token hashes only.
+- Raw invitation bearer tokens are returned once, never stored in Postgres and are retained only in browser `sessionStorage` across authentication.
+- Added authenticated invite creation/list/accept/revoke and member role/removal RPCs.
+- Preserved owner/admin hierarchy constraints.
+- Activated `/dashboard/team` and `/invite/$token`.
 
-### Phase 3 — OfficeKonnect Sheets
+### Workspace
 
-- Activated production Sheets library/editor.
-- Preserved the canonical `kind: "workbook"`, `schemaVersion: 1` content model and one deterministic formula engine.
-- Added XLSX/XLS/CSV interoperability, spreadsheet PDF/Print and signing-copy generation.
+- Activated `/dashboard/workspace` for workspace identity, plan, switching and Team handoff.
+- Added atomic authenticated `create_workspace` RPC creating workspace + owner membership + free subscription + default workspace.
+- Existing `workspaces`, `workspace_members`, `profiles.default_workspace_id` and `subscriptions` remain canonical.
 
-### Phase 4 — Files and Templates
+### Settings
 
-- Activated Files with nested folders, Favourites, Shared with me, Archive/Trash, upload, move, duplicate and lifecycle actions.
-- Added additive organization relations while keeping `documents` canonical.
-- Activated reusable document/spreadsheet Templates over `document_templates`.
-- Applied live Phase 4 organization and hierarchy-cycle migrations.
+Replaced placeholder/dead settings with actual behavior:
 
-### Phase 5 — Workflows and Approvals
+- profile/avatar;
+- workspace summary/routes;
+- document and PDF behavior grounded in canonical modules;
+- notification state;
+- reusable signatures;
+- templates;
+- password/session security;
+- persisted light/dark/system theme;
+- actual connected integrations with disconnect;
+- actual subscription/billing record without fake checkout;
+- non-secret developer identifiers;
+- authenticated personal-data export.
 
-- Activated Workflows, immutable submitted-version review and Approvals work queue.
-- Reused the existing server-authoritative workflow state machine/RPCs.
-- Added versioned template revisions, decisions, comments, reassignment, cancellation, Request Changes and optimistic-concurrency resubmission.
-- No replacement workflow engine or fake production workflow data.
+The disabled account-delete control was removed rather than advertising a destructive workflow without ownership, retention and audit semantics.
 
-### Phase 6 — Production E-Signatures
+## Phase 8 live migrations
 
-- Activated `/dashboard/signing`, `/dashboard/signing/$requestId/prepare` and `/dashboard/signing/$requestId`.
-- Added full request dashboard/status buckets, PDF-only draft creation, internal/external participants, signer/approver/CC roles and parallel/sequential order.
-- Added normalized drag/resize signature, initial, text and date fields with participant assignment and strict send-time validation.
-- Sending locks participant/field hashes and the immutable source PDF through the existing hardened signing backend.
-- Added authenticated internal signing with saved/drawn/typed signatures, explicit electronic-signing consent, sequential eligibility, decline, cancellation, invitation rotation, audit timeline, finalization retry, signed PDF and certificate access.
-- Added public `/sign/$token` one-time raw-token exchange and `/sign/active` short-lived session workflow. Only the short-lived session token is retained in `sessionStorage` after exchange.
-- Removed the obsolete admin-backed `signing-public.functions.ts` bypass.
-- Native Documents and Sheets now use **Send for signature**: flush-save → deterministic immutable PDF signing copy → prefilled signing request → preparation workspace.
-- Synchronized live `signing-finalize` to version 2 with `OfficeKonnect Signing Certificate`; JWT requirement and finalization state machine remain unchanged.
-- Live RLS remains enabled across signing requests, participants, fields, events and certificates.
-- No fake signing request/participant/field/certificate rows were inserted.
+- `20260818082337_phase_8_notifications_team_workspace_activity`
+- `20260818082454_phase_8_workspace_invitation_directory`
+- `20260818084738_phase_8_activity_workspace_identity_hardening`
 
-See `docs/PHASE6.md` for the full Phase 6 contract.
+## Phase 8 live security state
 
-### Phase 7 — Tasks, Calendar and Global Search
+RLS remains enabled on the Phase 8 operational tables, including:
 
-- Applied live migrations `20260818062157_phase_7_tasks_calendar_search` and `20260818080155_phase_7_rpc_execute_acl_hardening`, and checked in their exact migration source.
-- Added real workspace-scoped `tasks` persistence with status, priority, assignee, start/due/completion, object links, constraints/indexes and RLS.
-- Activated `/dashboard/tasks` with board/list views, filters, search, assignment, priorities, dates, lifecycle actions and document/workflow/signing links.
-- Added real `calendar_events` persistence for manual events with range constraints and RLS.
-- Activated `/dashboard/calendar` as an aggregate operational calendar. Manual events are persisted; task dates, workflow run/step deadlines and signature expiries are derived read-only from their canonical source tables.
-- Added membership-checked `search_workspace_objects` RPC; no duplicate search index/table was introduced.
-- Revoked anonymous `EXECUTE` from `search_workspace_objects` and `list_workspace_member_directory`; authenticated application execution remains available and membership checked.
-- Activated `/dashboard/search` and the Ctrl/Cmd+K global command search dialog over live workspace data.
-- Search covers documents/Sheets, templates, workflows, e-signatures, tasks and workspace members.
-- `tasks` and `calendar_events` both retain four RLS policies and contain zero fabricated production rows after completion.
+- `notification_receipts`;
+- `workspace_invitations`;
+- existing `notifications`;
+- `activity_logs`;
+- `workspace_members`;
+- `workspaces`;
+- `user_integrations`;
+- `subscriptions`.
 
-See `docs/PHASE7.md` for the full Phase 7 contract.
+All new public application RPCs have anonymous `EXECUTE` revoked and authenticated execution explicitly granted. The authenticated `SECURITY DEFINER` advisor warnings for these RPCs are intentional because these functions are the controlled application boundary; each performs the required authentication, workspace membership, role or invited-email checks internally.
 
-## Phase 6/7 live backend state
+The existing `signing_tokens` no-direct-policy notice remains intentional because direct browser token access is prohibited. Leaked-password protection and inherited planner/performance advisor warnings remain Phase 10 hardening candidates.
 
-### Signing Edge Functions
+No low-traffic `unused_index` notice is being used to remove integrity/relationship indexes prematurely.
 
-- `signing-actions` — ACTIVE, JWT required.
-- `signing-external` — ACTIVE, JWT disabled intentionally because custom invitation/session authentication is enforced in-function.
-- `signing-finalize` — ACTIVE version 2, JWT required.
+## Production-data integrity
 
-### Phase 7 migrations
+Phase 8 inserted no fake production content. At verification:
 
-- `20260818062157_phase_7_tasks_calendar_search`
-- `20260818080155_phase_7_rpc_execute_acl_hardening`
+- `notification_receipts`: 0 rows;
+- `workspace_invitations`: 0 rows;
+- `notifications`: 0 rows.
 
-### RLS verification
+## Generated types and repository parity
 
-- `tasks`: RLS enabled, 4 policies.
-- `calendar_events`: RLS enabled, 4 policies.
-- `signing_requests`: RLS enabled, 4 policies.
-- `signing_participants`: RLS enabled, 2 policies.
-- `signing_fields`: RLS enabled, 2 policies.
-- `signing_events`: RLS enabled, 1 policy.
-- `signing_certificates`: RLS enabled, 1 policy.
+Supabase TypeScript generation was re-run against the live project after the Phase 8 migrations and the repository generated types now include:
 
-### RPC execution boundary
+- `notification_receipts`;
+- `workspace_invitations`;
+- all Phase 8 application RPC signatures.
 
-- `search_workspace_objects`: authenticated execution only; workspace membership checked in-function.
-- `list_workspace_member_directory`: authenticated execution only; workspace membership checked in-function.
-- Anonymous SECURITY DEFINER execution warnings for these RPCs are cleared.
+Temporary one-shot route-tree, formatter and type-reconciliation workflows were removed after use.
 
-## Phase 6/7 validation record
+## Validation
 
-The combined Phase 6/7 implementation has passed the canonical read-only validation gate with:
+The substantive Phase 8 implementation checkpoint passed:
 
 - Repository parity: **PASS**.
 - Frozen dependency install (`bun ci`): **PASS**.
 - ESLint: **PASS — 0 errors**.
 - TypeScript (`tsc --noEmit`): **PASS**.
-- Bun regression tests: **33 passed / 0 failed**.
-- Production build: **PASS**.
+- Bun regression tests: **39 passed / 0 failed**.
+- Production client/SSR/Nitro build: **PASS**.
 
-The final ACL-hardening/documentation head receives the same read-only gate and becomes the authoritative Phase 6/7 completion SHA.
+The final documentation/hardening head receives the same read-only gate and becomes the authoritative Phase 8 completion checkpoint.
 
-## Known limitations carried forward
+## Known items carried forward
 
-- Email/SMS delivery infrastructure for external invitation tokens remains dependent on the existing notification/job infrastructure; secure links can be rotated/copied from the sender workspace.
-- Phase 10 will add deeper real-PDF automated end-to-end signing/security/performance coverage; it does not replace the Phase 6 signing system.
-- Calendar does not duplicate workflow/signing/task source dates into `calendar_events` by design.
-- Global search is live SQL/RPC search rather than a separate full-text/search-service index; performance optimization belongs to Phase 10 if scale requires it.
-- Notifications, Activity, Team, Workspace and comprehensive Settings remain Phase 8.
-- Product-wide dead-action/responsive/accessibility cleanup remains Phase 9.
+- Phase 9 owns product-wide dead-action, route, responsive, accessibility and cross-module UX hardening.
+- Phase 10 owns deeper security/performance/E2E/CI hardening, including inherited RLS planner warnings and leaked-password protection review.
+- Vercel is intentionally not an acceptance gate until Phase 11.
 
 ## Non-negotiable release rule
 
-Do not merge Draft PR #2 after an individual phase. Continue Phases 8–11 on the same branch/PR. Merge to `main` only when the complete Phase 11 upgrade passes release-candidate validation.
+Do not merge Draft PR #2 after Phase 8. Continue Phases 9–11 on the same branch/PR. Merge to `main` only when the complete Phase 11 upgrade passes release-candidate validation.
