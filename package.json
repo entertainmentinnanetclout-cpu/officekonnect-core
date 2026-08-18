@@ -11,8 +11,9 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "test": "bun test",
     "phase0:parity": "node scripts/check-phase0-parity.mjs",
-    "check": "bun run phase0:parity && bun run lint && bun run typecheck && bun run build",
+    "check": "bun run phase0:parity && bun run lint && bun run typecheck && bun run test && bun run build",
     "format": "prettier --write ."
   },
   "dependencies": {
