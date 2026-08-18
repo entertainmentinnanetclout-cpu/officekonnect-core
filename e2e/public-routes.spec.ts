@@ -15,7 +15,7 @@ test("landing page exposes the current OfficeKonnect product without runtime err
   const failures = captureRuntimeErrors(page);
   await page.goto("/");
 
-  await expect(page).toHaveTitle("OfficeKonnect");
+  await expect(page).toHaveTitle(/OfficeKonnect — The connected workspace for modern offices/);
   await expect(
     page.getByRole("heading", { name: /One workspace for every office task/i }),
   ).toBeVisible();
@@ -48,16 +48,23 @@ test("authentication layout remains usable on a mobile viewport", async ({ page 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/auth/login");
 
-  await expect(page.getByText("OfficeKonnect").first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Sign In" })).toBeVisible();
   await expect(page.getByLabel("Email")).toBeInViewport();
+  await expect(page.getByLabel("Password")).toBeInViewport();
   await expect(page.getByRole("button", { name: "Sign In" })).toBeInViewport();
   expect(failures).toEqual([]);
 });
 
 test("public legal routes remain directly reachable", async ({ page }) => {
-  for (const path of ["/privacy", "/terms"]) {
-    await page.goto(path);
-    await expect(page.locator("body")).toContainText("OfficeKonnect");
-  }
+  const failures = captureRuntimeErrors(page);
+
+  await page.goto("/privacy");
+  await expect(page).toHaveTitle("Privacy — OfficeKonnect");
+  await expect(page.getByRole("heading", { name: "Privacy" })).toBeVisible();
+
+  await page.goto("/terms");
+  await expect(page).toHaveTitle("Terms — OfficeKonnect");
+  await expect(page.getByRole("heading", { name: "Terms" })).toBeVisible();
+
+  expect(failures).toEqual([]);
 });
