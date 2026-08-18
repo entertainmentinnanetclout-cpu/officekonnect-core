@@ -4,7 +4,7 @@ Last audited: 2026-08-18
 
 ## Current phase
 
-Phases 0–8 are **fully implemented and source/back-end reconciled**.
+Phases 0–8 are **fully implemented, live-backend reconciled and validated**.
 
 Next implementation phase: **Phase 9 — Product-wide UX and Route Hardening**.
 
@@ -51,7 +51,7 @@ The live Supabase project is authoritative for deployed database behavior. GitHu
 
 - `workspace_members` and `workspace_role` remain canonical.
 - Added secure expiring `workspace_invitations` with SHA-256 token hashes only.
-- Raw invitation bearer tokens are returned once, never stored in Postgres and are retained only in browser `sessionStorage` across authentication.
+- Raw invitation bearer tokens are returned once, never stored in Postgres and retained only in browser `sessionStorage` across authentication.
 - Added authenticated invite creation/list/accept/revoke and member role/removal RPCs.
 - Preserved owner/admin hierarchy constraints.
 - Activated `/dashboard/team` and `/invite/$token`.
@@ -116,7 +116,7 @@ Phase 8 inserted no fake production content. At verification:
 
 ## Generated types and repository parity
 
-Supabase TypeScript generation was re-run against the live project after the Phase 8 migrations and the repository generated types now include:
+Supabase TypeScript generation was re-run against the live project after the Phase 8 migrations and the repository generated types include:
 
 - `notification_receipts`;
 - `workspace_invitations`;
@@ -124,18 +124,28 @@ Supabase TypeScript generation was re-run against the live project after the Pha
 
 Temporary one-shot route-tree, formatter and type-reconciliation workflows were removed after use.
 
-## Validation
+## Final Phase 8 validation record
 
-The substantive Phase 8 implementation checkpoint passed:
+Authoritative Phase 8 head:
+
+`8117828c04a8574f375efc72d4998bfe63fbd162`
+
+Upgrade Validation run:
+
+`32118619539`
+
+Results:
 
 - Repository parity: **PASS**.
 - Frozen dependency install (`bun ci`): **PASS**.
-- ESLint: **PASS — 0 errors**.
+- ESLint: **PASS — 0 errors, 7 inherited Fast Refresh warnings**.
 - TypeScript (`tsc --noEmit`): **PASS**.
-- Bun regression tests: **39 passed / 0 failed**.
-- Production client/SSR/Nitro build: **PASS**.
+- Bun regression tests: **39 passed / 0 failed**, 194 expectations across 9 files.
+- Production client build: **PASS**.
+- Production SSR build: **PASS**.
+- Production Nitro build: **PASS**.
 
-The final documentation/hardening head receives the same read-only gate and becomes the authoritative Phase 8 completion checkpoint.
+Non-blocking build warnings remain the existing Vite tsconfig-paths migration notice and >500 kB chunk warning; performance/code-splitting review belongs to Phase 9/10.
 
 ## Known items carried forward
 
