@@ -93,22 +93,14 @@ describe("OfficeKonnect three-page signing PDF finalization", () => {
   test("rejects out-of-page normalized signing geometry before rendering", async () => {
     const source = await createThreePageSource();
     await expect(
-      applySigningFieldsToPdf(
-        source,
-        [{ ...fields[0]!, x: 0.9, w: 0.2 }],
-        async () => pixelPng,
-      ),
+      applySigningFieldsToPdf(source, [{ ...fields[0]!, x: 0.9, w: 0.2 }], async () => pixelPng),
     ).rejects.toThrow("invalid normalized geometry");
   });
 
   test("rejects fields that reference pages outside the immutable source", async () => {
     const source = await createThreePageSource();
     await expect(
-      applySigningFieldsToPdf(
-        source,
-        [{ ...fields[1]!, page: 4 }],
-        async () => pixelPng,
-      ),
+      applySigningFieldsToPdf(source, [{ ...fields[1]!, page: 4 }], async () => pixelPng),
     ).rejects.toThrow("references an invalid page");
   });
 });
