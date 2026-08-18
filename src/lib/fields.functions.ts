@@ -2,14 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getActiveWorkspaceId } from "@/lib/workspace.server";
 
-export type FieldType =
-  | "text"
-  | "date"
-  | "checkbox"
-  | "signature"
-  | "initials"
-  | "name"
-  | "email";
+export type FieldType = "text" | "date" | "checkbox" | "signature" | "initials" | "name" | "email";
 
 export interface DocumentFieldRow {
   id: string;

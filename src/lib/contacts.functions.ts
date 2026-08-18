@@ -53,7 +53,9 @@ export const createContactGroup = createServerFn({ method: "POST" })
 
 export const enqueueImportContacts = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { storagePath: string; format: "csv" | "xlsx" | "vcf"; groupId?: string }) => d)
+  .inputValidator(
+    (d: { storagePath: string; format: "csv" | "xlsx" | "vcf"; groupId?: string }) => d,
+  )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const workspaceId = await getActiveWorkspaceId(supabase, userId);

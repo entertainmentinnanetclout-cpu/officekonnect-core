@@ -1,0 +1,14 @@
+create index if not exists workflow_templates_created_by_idx on public.workflow_templates(created_by);
+create index if not exists workflow_template_steps_assigned_user_idx on public.workflow_template_steps(assigned_user_id) where assigned_user_id is not null;
+create index if not exists workflow_runs_document_version_idx on public.workflow_runs(document_version_id);
+create index if not exists workflow_runs_template_idx on public.workflow_runs(template_id) where template_id is not null;
+create index if not exists workflow_runs_started_by_idx on public.workflow_runs(started_by);
+create index if not exists workflow_runs_cancelled_by_idx on public.workflow_runs(cancelled_by) where cancelled_by is not null;
+create index if not exists workflow_step_assignees_assigned_by_idx on public.workflow_step_assignees(assigned_by);
+create index if not exists workflow_decisions_step_idx on public.workflow_decisions(step_id);
+create index if not exists workflow_decisions_actor_idx on public.workflow_decisions(actor_id);
+create index if not exists workflow_comments_author_idx on public.workflow_comments(author_id);
+create index if not exists workflow_comments_parent_idx on public.workflow_comments(parent_id) where parent_id is not null;
+create index if not exists workflow_comments_resolved_by_idx on public.workflow_comments(resolved_by) where resolved_by is not null;
+create index if not exists workflow_events_step_idx on public.workflow_events(step_id) where step_id is not null;
+create index if not exists workflow_events_actor_idx on public.workflow_events(actor_id) where actor_id is not null;

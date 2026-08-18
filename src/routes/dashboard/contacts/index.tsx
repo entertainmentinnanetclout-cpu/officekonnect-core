@@ -62,7 +62,13 @@ type ContactRow = {
 function ContactsIndex() {
   const [searchQuery, setSearchQuery] = useState("");
   const [addOpen, setAddOpen] = useState(false);
-  const [form, setForm] = useState({ first_name: "", last_name: "", email: "", phone: "", company: "" });
+  const [form, setForm] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
+    company: "",
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
@@ -249,31 +255,56 @@ function ContactsIndex() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label htmlFor="fn">First name</Label>
-                <Input id="fn" value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} />
+                <Input
+                  id="fn"
+                  value={form.first_name}
+                  onChange={(e) => setForm({ ...form, first_name: e.target.value })}
+                />
               </div>
               <div className="space-y-1">
                 <Label htmlFor="ln">Last name</Label>
-                <Input id="ln" value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} />
+                <Input
+                  id="ln"
+                  value={form.last_name}
+                  onChange={(e) => setForm({ ...form, last_name: e.target.value })}
+                />
               </div>
             </div>
             <div className="space-y-1">
               <Label htmlFor="em">Email</Label>
-              <Input id="em" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              <Input
+                id="em"
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+              />
             </div>
             <div className="space-y-1">
               <Label htmlFor="ph">Phone</Label>
-              <Input id="ph" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+              <Input
+                id="ph"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              />
             </div>
             <div className="space-y-1">
               <Label htmlFor="co">Company</Label>
-              <Input id="co" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} />
+              <Input
+                id="co"
+                value={form.company}
+                onChange={(e) => setForm({ ...form, company: e.target.value })}
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setAddOpen(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setAddOpen(false)}>
+              Cancel
+            </Button>
             <Button
               onClick={() => addMutation.mutate()}
-              disabled={addMutation.isPending || (!form.first_name && !form.last_name && !form.email)}
+              disabled={
+                addMutation.isPending || (!form.first_name && !form.last_name && !form.email)
+              }
             >
               {addMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Contact

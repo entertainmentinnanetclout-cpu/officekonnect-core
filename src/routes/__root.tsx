@@ -16,6 +16,8 @@ import { useAuth } from "@/hooks/use-auth";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
+const PENDING_WORKSPACE_INVITE_KEY = "officekonnect.pending-workspace-invite";
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -39,7 +41,6 @@ function NotFoundComponent() {
 }
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
-  console.error(error);
   const router = useRouter();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
@@ -82,17 +83,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "OfficeKonnect" },
-      { name: "description", content: "Professional Office Productivity Platform" },
+      { name: "description", content: "The connected workspace for modern offices." },
       { property: "og:title", content: "OfficeKonnect" },
-      { property: "og:description", content: "Professional Office Productivity Platform" },
+      { property: "og:description", content: "The connected workspace for modern offices." },
       { property: "og:type", content: "website" },
     ],
-    links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
-    ],
+    links: [{ rel: "stylesheet", href: appCss }],
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -124,9 +120,31 @@ function RootComponent() {
     if (isLoading) return;
 
     const isAuthPage = location.pathname.startsWith("/auth");
-    const isPublicPage = ["/", "/pricing", "/privacy", "/terms", "/contact"].includes(location.pathname);
+    const isDashboardPage = location.pathname.startsWith("/dashboard");
+    const isExternalSigningPage = location.pathname.startsWith("/sign/");
+    const isWorkspaceInvitePage = location.pathname.startsWith("/invite/");
+    const isPublicPage = ["/", "/pricing", "/privacy", "/terms", "/contact"].includes(
+      location.pathname,
+    );
 
-    if (!user && !isAuthPage && !isPublicPage) {
+    if (user && !isWorkspaceInvitePage) {
+      const pendingInvite = sessionStorage.getItem(PENDING_WORKSPACE_INVITE_KEY);
+      if (pendingInvite) {
+        navigate({ to: "/invite/$token", params: { token: pendingInvite }, replace: true });
+        return;
+      }
+    }
+
+    // Dashboard routes own their authentication boundary so the optional
+    // server-backed development session can resolve without weakening RLS.
+    if (
+      !user &&
+      !isAuthPage &&
+      !isPublicPage &&
+      !isDashboardPage &&
+      !isExternalSigningPage &&
+      !isWorkspaceInvitePage
+    ) {
       navigate({ to: "/auth/login" });
     } else if (user && isAuthPage) {
       navigate({ to: "/dashboard" });

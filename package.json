@@ -1,6 +1,7 @@
 {
   "name": "tanstack_start_ts",
   "private": true,
+  "packageManager": "bun@1.3.14",
   "sideEffects": false,
   "type": "module",
   "scripts": {
@@ -9,6 +10,15 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test src tests",
+    "phase0:parity": "node scripts/check-phase0-parity.mjs",
+    "audit:product": "node scripts/check-product-hardening.mjs",
+    "audit:security": "node scripts/check-security-boundaries.mjs",
+    "audit:release": "node scripts/check-release-candidate.mjs",
+    "audit:performance": "node scripts/check-build-budget.mjs",
+    "test:e2e": "playwright test",
+    "check": "bun run phase0:parity && bun run lint && bun run audit:product && bun run audit:security && bun run audit:release && bun run typecheck && bun run test && bun run build && bun run audit:performance",
     "format": "prettier --write ."
   },
   "dependencies": {
@@ -64,7 +74,7 @@
     "react-pdf": "^10.4.1",
     "react-resizable-panels": "^4.6.5",
     "react-rnd": "^10.5.3",
-    "react-signature-canvas": "^1.1.0-alpha.2",
+    "react-signature-canvas": "^1.0.0-alpha.2",
     "recharts": "^2.15.4",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
@@ -72,11 +82,13 @@
     "tw-animate-css": "^1.3.4",
     "vaul": "^1.1.2",
     "vite-tsconfig-paths": "^6.0.2",
+    "xlsx": "^0.18.5",
     "zod": "^3.24.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
     "@lovable.dev/vite-tanstack-config": "2.6.4",
+    "@types/bun": "^1.3.14",
     "@types/node": "^22.16.5",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",

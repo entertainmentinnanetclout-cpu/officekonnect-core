@@ -13,7 +13,13 @@ type Job = {
   entity_id: string | null;
 };
 
-async function notify(workspaceId: string, userId: string | null, title: string, body: string, kind: string) {
+async function notify(
+  workspaceId: string,
+  userId: string | null,
+  title: string,
+  body: string,
+  kind: string,
+) {
   await supabaseAdmin.from("notifications").insert({
     workspace_id: workspaceId,
     user_id: userId,
@@ -88,12 +94,15 @@ async function handleAudioTranscribe(job: Job) {
   if (!wRes.ok) throw new Error(`whisper ${wRes.status}: ${await wRes.text()}`);
   const result = (await wRes.json()) as { text: string };
 
-  await supabaseAdmin
-    .from("voice_notes")
-    .update({ transcript: result.text })
-    .eq("id", voiceNoteId);
+  await supabaseAdmin.from("voice_notes").update({ transcript: result.text }).eq("id", voiceNoteId);
 
-  await notify(job.workspace_id, job.created_by, "Transcript ready", "Your voice note has been transcribed.", "transcription_ready");
+  await notify(
+    job.workspace_id,
+    job.created_by,
+    "Transcript ready",
+    "Your voice note has been transcribed.",
+    "transcription_ready",
+  );
   return { text: result.text };
 }
 
@@ -122,9 +131,20 @@ async function handleEmailCampaignSend(job: Job) {
   let sent = 0;
   let failed = 0;
   for (const rec of recipients ?? []) {
-    const contact = (rec as unknown as { contacts: { email: string | null; first_name: string | null; last_name: string | null } | null }).contacts;
+    const contact = (
+      rec as unknown as {
+        contacts: {
+          email: string | null;
+          first_name: string | null;
+          last_name: string | null;
+        } | null;
+      }
+    ).contacts;
     if (!contact?.email) {
-      await supabaseAdmin.from("campaign_recipients").update({ delivery_status: "failed" }).eq("id", rec.id);
+      await supabaseAdmin
+        .from("campaign_recipients")
+        .update({ delivery_status: "failed" })
+        .eq("id", rec.id);
       failed++;
       continue;
     }
@@ -159,7 +179,10 @@ async function handleEmailCampaignSend(job: Job) {
         .eq("id", rec.id);
       sent++;
     } else {
-      await supabaseAdmin.from("campaign_recipients").update({ delivery_status: "failed" }).eq("id", rec.id);
+      await supabaseAdmin
+        .from("campaign_recipients")
+        .update({ delivery_status: "failed" })
+        .eq("id", rec.id);
       failed++;
     }
   }
@@ -227,9 +250,10 @@ async function handleSignatureApply(job: Job) {
     sigBytes = new Uint8Array(await r.arrayBuffer());
     sigMime = r.headers.get("content-type") ?? sigMime;
   }
-  const img = sigMime.includes("jpeg") || sigMime.includes("jpg")
-    ? await pdf.embedJpg(sigBytes)
-    : await pdf.embedPng(sigBytes);
+  const img =
+    sigMime.includes("jpeg") || sigMime.includes("jpg")
+      ? await pdf.embedJpg(sigBytes)
+      : await pdf.embedPng(sigBytes);
 
   const pages = pdf.getPages();
   const pageIdx = Math.min(Math.max(page - 1, 0), pages.length - 1);
@@ -319,8 +343,7 @@ async function handleSigningNotify(job: Job) {
     if (p.status !== "pending" || !p.email) continue;
 
     // Mint token
-    const rawToken =
-      crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
+    const rawToken = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
     const enc = new TextEncoder().encode(rawToken);
     const hashBuf = await crypto.subtle.digest("SHA-256", enc);
     const tokenHash = Array.from(new Uint8Array(hashBuf))
@@ -405,7 +428,9 @@ async function handleSigningFinalize(job: Job) {
     .single();
   if (!doc?.storage_path) throw new Error("Document missing");
 
-  const { data: pdfBlob } = await supabaseAdmin.storage.from("documents").download(doc.storage_path);
+  const { data: pdfBlob } = await supabaseAdmin.storage
+    .from("documents")
+    .download(doc.storage_path);
   if (!pdfBlob) throw new Error("PDF download failed");
   const pdf = await PDFDocument.load(new Uint8Array(await pdfBlob.arrayBuffer()));
   const helv = await pdf.embedFont(StandardFonts.Helvetica);
@@ -436,7 +461,10 @@ async function handleSigningFinalize(job: Job) {
     const dh = raw.h * ph;
     const val = raw.value ?? raw.default_value ?? "";
 
-    if ((raw.field_type === "signature" || raw.field_type === "initials") && val.startsWith("data:image")) {
+    if (
+      (raw.field_type === "signature" || raw.field_type === "initials") &&
+      val.startsWith("data:image")
+    ) {
       const b64 = val.split(",")[1];
       const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
       const img = val.includes("jpeg") ? await pdf.embedJpg(bytes) : await pdf.embedPng(bytes);
@@ -489,7 +517,11 @@ async function handleSigningFinalize(job: Job) {
 
   await supabaseAdmin
     .from("documents")
-    .update({ storage_path: outPath, current_file_url: outPath, document_status: "signed" as never } as never)
+    .update({
+      storage_path: outPath,
+      current_file_url: outPath,
+      document_status: "signed" as never,
+    } as never)
     .eq("id", req.document_id);
 
   await supabaseAdmin
@@ -550,4 +582,3 @@ export async function dispatchJob(job: Job): Promise<void> {
     await markFailed(job, (err as Error).message);
   }
 }
-

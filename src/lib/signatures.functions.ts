@@ -6,7 +6,8 @@ import { enqueueJob } from "@/lib/jobs/enqueue.server";
 export const saveSignature = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (d: { name: string; signatureImageUrl: string; storagePath?: string; isDefault?: boolean }) => d,
+    (d: { name: string; signatureImageUrl: string; storagePath?: string; isDefault?: boolean }) =>
+      d,
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -38,10 +39,7 @@ export const deleteSignature = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
-      .from("user_signatures")
-      .delete()
-      .eq("id", data.id);
+    const { error } = await context.supabase.from("user_signatures").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });

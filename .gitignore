@@ -16,6 +16,15 @@ dist-ssr
 .nitro
 *.local
 
+# Automated test artifacts
+playwright-report/
+test-results/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars

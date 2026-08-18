@@ -6,12 +6,7 @@ import { enqueueJob } from "@/lib/jobs/enqueue.server";
 export const createCampaign = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (d: {
-      name: string;
-      templateId: string;
-      contactIds: string[];
-      scheduledFor?: string;
-    }) => d,
+    (d: { name: string; templateId: string; contactIds: string[]; scheduledFor?: string }) => d,
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
