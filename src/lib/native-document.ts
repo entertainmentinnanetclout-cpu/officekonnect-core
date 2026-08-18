@@ -20,31 +20,35 @@ export interface NativeDocumentPageSettings {
   showPageNumbers: boolean;
 }
 
+interface IndentableBlock {
+  indent?: number;
+}
+
 export type NativeDocumentBlock =
-  | {
+  | ({
       id: string;
       type: "paragraph";
       html: string;
       align?: NativeDocumentAlignment;
-    }
-  | {
+    } & IndentableBlock)
+  | ({
       id: string;
       type: "heading";
       level: 1 | 2 | 3;
       html: string;
       align?: NativeDocumentAlignment;
-    }
-  | {
+    } & IndentableBlock)
+  | ({
       id: string;
       type: "quote";
       html: string;
       align?: NativeDocumentAlignment;
-    }
-  | {
+    } & IndentableBlock)
+  | ({
       id: string;
       type: "bulletList" | "orderedList";
       items: string[];
-    }
+    } & IndentableBlock)
   | {
       id: string;
       type: "table";
@@ -65,7 +69,7 @@ export interface NativeDocumentContent {
   blocks: NativeDocumentBlock[];
 }
 
-const DEFAULT_PAGE: NativeDocumentPageSettings = {
+export const DEFAULT_NATIVE_DOCUMENT_PAGE: NativeDocumentPageSettings = {
   size: "A4",
   orientation: "portrait",
   margins: { top: 20, right: 20, bottom: 20, left: 20 },
@@ -83,7 +87,10 @@ function blockId() {
 export function createEmptyNativeDocument(): NativeDocumentContent {
   return {
     schemaVersion: 1,
-    page: { ...DEFAULT_PAGE, margins: { ...DEFAULT_PAGE.margins } },
+    page: {
+      ...DEFAULT_NATIVE_DOCUMENT_PAGE,
+      margins: { ...DEFAULT_NATIVE_DOCUMENT_PAGE.margins },
+    },
     blocks: [{ id: blockId(), type: "paragraph", html: "" }],
   };
 }
@@ -102,11 +109,18 @@ function normalizeAlign(value: unknown): NativeDocumentAlignment | undefined {
     : undefined;
 }
 
+function normalizeIndent(value: unknown): number | undefined {
+  if (typeof value !== "number" || !Number.isFinite(value)) return undefined;
+  const indent = Math.max(0, Math.min(8, Math.round(value)));
+  return indent > 0 ? indent : undefined;
+}
+
 function normalizeBlock(raw: unknown): NativeDocumentBlock | null {
   if (!raw || typeof raw !== "object") return null;
   const block = raw as Record<string, unknown>;
   const id = stringOr(block.id) || blockId();
   const type = block.type;
+  const indent = normalizeIndent(block.indent);
 
   if (type === "paragraph") {
     return {
@@ -114,6 +128,7 @@ function normalizeBlock(raw: unknown): NativeDocumentBlock | null {
       type,
       html: stringOr(block.html, stringOr(block.text)),
       align: normalizeAlign(block.align),
+      indent,
     };
   }
 
@@ -125,6 +140,7 @@ function normalizeBlock(raw: unknown): NativeDocumentBlock | null {
       level,
       html: stringOr(block.html, stringOr(block.text)),
       align: normalizeAlign(block.align),
+      indent,
     };
   }
 
@@ -134,6 +150,7 @@ function normalizeBlock(raw: unknown): NativeDocumentBlock | null {
       type,
       html: stringOr(block.html, stringOr(block.text)),
       align: normalizeAlign(block.align),
+      indent,
     };
   }
 
@@ -141,7 +158,7 @@ function normalizeBlock(raw: unknown): NativeDocumentBlock | null {
     const items = Array.isArray(block.items)
       ? block.items.map((item) => stringOr(item)).filter((item) => item.length > 0)
       : [];
-    return { id, type, items };
+    return { id, type, items, indent };
   }
 
   if (type === "table") {
@@ -156,7 +173,7 @@ function normalizeBlock(raw: unknown): NativeDocumentBlock | null {
   }
 
   const legacyText = stringOr(block.html, stringOr(block.text, stringOr(block.content)));
-  return legacyText ? { id, type: "paragraph", html: legacyText } : null;
+  return legacyText ? { id, type: "paragraph", html: legacyText, indent } : null;
 }
 
 export function normalizeNativeDocumentContent(value: Json | unknown): NativeDocumentContent {
@@ -178,10 +195,22 @@ export function normalizeNativeDocumentContent(value: Json | unknown): NativeDoc
     size: rawPage.size === "LETTER" ? "LETTER" : "A4",
     orientation: rawPage.orientation === "landscape" ? "landscape" : "portrait",
     margins: {
-      top: Math.max(5, Math.min(60, numberOr(rawMargins.top, DEFAULT_PAGE.margins.top))),
-      right: Math.max(5, Math.min(60, numberOr(rawMargins.right, DEFAULT_PAGE.margins.right))),
-      bottom: Math.max(5, Math.min(60, numberOr(rawMargins.bottom, DEFAULT_PAGE.margins.bottom))),
-      left: Math.max(5, Math.min(60, numberOr(rawMargins.left, DEFAULT_PAGE.margins.left))),
+      top: Math.max(
+        5,
+        Math.min(60, numberOr(rawMargins.top, DEFAULT_NATIVE_DOCUMENT_PAGE.margins.top)),
+      ),
+      right: Math.max(
+        5,
+        Math.min(60, numberOr(rawMargins.right, DEFAULT_NATIVE_DOCUMENT_PAGE.margins.right)),
+      ),
+      bottom: Math.max(
+        5,
+        Math.min(60, numberOr(rawMargins.bottom, DEFAULT_NATIVE_DOCUMENT_PAGE.margins.bottom)),
+      ),
+      left: Math.max(
+        5,
+        Math.min(60, numberOr(rawMargins.left, DEFAULT_NATIVE_DOCUMENT_PAGE.margins.left)),
+      ),
     },
     header: stringOr(rawPage.header),
     footer: stringOr(rawPage.footer),
@@ -226,6 +255,8 @@ export function htmlToPlainText(html: string) {
     .replace(/&gt;/gi, ">")
     .replace(/&quot;/gi, '"')
     .replace(/&#39;/gi, "'")
+    .replace(/&#x27;/gi, "'")
+    .replace(/&#x2F;/gi, "/")
     .replace(/\u00a0/g, " ")
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
