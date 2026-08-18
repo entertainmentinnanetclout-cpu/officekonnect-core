@@ -12,11 +12,11 @@ Implement the authless development UX while preserving real Supabase identity/RL
 
 Complete the document library, native editing, autosave/version history, printing and canonical PDF export.
 
-## Phase 3 — OfficeKonnect Sheets — **Next**
+## Phase 3 — OfficeKonnect Sheets — **Completed**
 
-Expose the existing workbook backend through a production spreadsheet UI, import/export and PDF workflow/signing conversion.
+Expose the existing workbook backend through a production spreadsheet UI, deterministic formula engine, XLSX/CSV interoperability, print/PDF and static signing-copy conversion.
 
-## Phase 4 — Files and templates
+## Phase 4 — Files and templates — **Next**
 
 Add folders, favourites, controlled sharing and complete document/spreadsheet templates.
 
