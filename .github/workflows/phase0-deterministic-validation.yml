@@ -3,11 +3,9 @@ name: Upgrade Validation
 on:
   pull_request:
     branches: [main]
-  push:
-    branches: [phase-0-canonical-reconciliation]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  group: ${{ github.workflow }}-pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 permissions:
