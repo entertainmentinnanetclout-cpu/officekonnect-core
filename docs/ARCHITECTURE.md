@@ -18,7 +18,7 @@ Preserve and extend the existing Supabase data model and state machines. Do not 
 
 ### Server application layer
 
-TanStack Start server functions provide authenticated application operations. They must use the active workspace resolved from the authenticated Supabase identity and must not bypass live RLS/state-machine contracts.
+TanStack Start server functions provide authenticated application operations. They use the active workspace resolved from the authenticated Supabase identity and must not bypass live RLS/state-machine contracts.
 
 ### Supabase
 
@@ -38,11 +38,11 @@ Canonical storage path convention:
 {workspace_id}/{user_id}/{resource...}
 ```
 
-The first path segment must remain the workspace id because live Storage RLS resolves workspace membership from that segment.
+The first path segment remains the workspace id because live Storage RLS resolves workspace membership from that segment.
 
 ## Documents
 
-`documents` is the canonical document record for uploaded files, native documents and spreadsheets. Structured content is stored in JSONB and guarded by `editor_version` optimistic concurrency. `document_versions` stores immutable snapshots.
+`documents` is the canonical current-state record for uploaded files, native documents and spreadsheets. Structured content is stored in JSONB and guarded by `editor_version` optimistic concurrency. `document_versions` stores immutable snapshots.
 
 Do not create a second native-document or spreadsheet table.
 
@@ -50,13 +50,11 @@ Do not create a second native-document or spreadsheet table.
 
 Spreadsheet documents remain normal rows in `documents` with `document_kind = 'spreadsheet'`. The authoritative workbook is `documents.content` using `kind: "workbook"` and `schemaVersion: 1`.
 
-`src/lib/spreadsheet.ts` is the canonical application workbook model and calculation engine. It owns normalization, sparse A1-addressed cells, worksheet layout/print state, workbook metrics, clipboard/fill helpers and formula evaluation. Imported XLSX/CSV structures are converted into this model; the application does not keep a second XLSX-native persistence format.
+`src/lib/spreadsheet.ts` is the canonical application workbook model and calculation engine. Imported XLSX/CSV structures are normalized into this model; the application does not keep a second XLSX-native persistence format.
 
-Spreadsheet saves use the existing `save_structured_document` RPC and restores use `restore_structured_document_version`. Server functions recompute sheet/cell/formula metrics before save rather than trusting browser-provided metadata. The existing Phase 3 database constraints, ACLs, RLS and calculation metadata remain authoritative.
+Spreadsheet saves use `save_structured_document` and restores use `restore_structured_document_version`. Server functions recompute workbook metrics before save rather than trusting browser-provided metadata.
 
-`src/lib/spreadsheet-pdf.server.ts` is the canonical spreadsheet PDF renderer. It consumes the same persisted workbook and formula evaluator as the editor, then writes private export/signing-copy artifacts through the existing Storage/document-version architecture.
-
-The static spreadsheet signing bridge creates a PDF `documents` row plus version 1. It does not create or bypass the signing request state machine; full signing preparation/finalization remains owned by the Phase 6 signing architecture.
+`src/lib/spreadsheet-pdf.server.ts` is the spreadsheet PDF renderer. Static spreadsheet signing copies create a private PDF `documents` row plus version 1 without bypassing the signing request state machine.
 
 ## Files organization
 
@@ -67,44 +65,99 @@ Phase 4 adds an organizational layer over `documents`; it does not create a seco
 - `document_favorites` stores user-specific favourites.
 - `document_shares` stores explicit workspace-internal, view-only share markers.
 
-Moving a document between folders updates only relational organization metadata. Uploaded binaries remain at their stable workspace-first private Storage paths, which avoids copying or invalidating objects during routine organization.
+Moving a document between folders updates relational organization metadata only. Existing private Storage paths remain stable. Uploaded-file duplication is the one Files operation that creates a new binary: it copies the actual private object to a fresh document-owned path and creates a fresh document plus version 1.
 
-Folder hierarchy integrity is enforced in PostgreSQL as well as in the application. The Phase 4 cycle-guard trigger rejects self-parenting and descendant cycles. Folder deletion cascades the folder hierarchy/assignments but never deletes the underlying `documents` rows.
-
-Uploaded-file duplication is the one Files operation that creates a new binary: it copies the actual private Storage object to a fresh document-owned path, creates a fresh `documents` row and creates version 1. Native documents and spreadsheets continue to use their existing canonical duplicate flows.
+Folder hierarchy integrity is enforced in PostgreSQL as well as in the application. Self-parenting and descendant cycles are rejected.
 
 ### Controlled sharing
 
-`document_shares.permission` is restricted to `view`, and share recipients must already be members of the same workspace. `list_workspace_member_directory` is a security-definer RPC with membership enforcement and a restricted search path; it exposes only the directory data required by the share picker.
+`document_shares.permission` is restricted to `view`, and recipients must already be members of the same workspace. `list_workspace_member_directory` is a membership-checked security-definer RPC used by controlled pickers.
 
-The pre-existing document SELECT policy already grants workspace members access to workspace documents. Explicit Phase 4 shares therefore power the **Shared with me** organizational surface and do not claim to replace the existing workspace visibility boundary. No public/external sharing model is introduced.
+The pre-existing document SELECT policy already grants workspace members access to workspace documents. Explicit shares power the **Shared with me** organizational surface and do not claim to replace the existing workspace visibility boundary.
 
 ## Document and spreadsheet templates
 
-`document_templates` remains the canonical reusable-template table. Phase 4 does not repurpose the separate Mail Center email-template feature.
+`document_templates` remains the canonical reusable-template table. Template content stores the same native-document or canonical workbook JSON used by the source editor. Creating from a template produces a normal new `documents` row and records `template_id`.
 
-Template content stores the same native-document or canonical workbook JSON used by the source editor. Creating from a template produces a normal new `documents` row and records `template_id`; no template-specific document model exists.
+Mail Center email templates remain separate.
 
-Canonical user-facing categories are General, Letters, Reports, Meeting Notes, Agreements, Forms, Policies, Proposals, Internal Memos and Spreadsheets. Normal members may create templates they own; owners/admins retain management authority according to RLS.
+## Workflows and approvals
 
-## Workflows
+Phase 5 exposes the existing server-authoritative workflow state machine rather than creating a new approval engine.
 
-Canonical tables:
+Canonical workflow relations:
 
-- workflow_templates
-- workflow_template_steps
-- workflow_runs
-- workflow_steps
-- workflow_step_assignees
-- workflow_decisions
-- workflow_comments
-- workflow_events
+- `workflow_templates`
+- `workflow_template_steps`
+- `workflow_runs`
+- `workflow_steps`
+- `workflow_step_assignees`
+- `workflow_decisions`
+- `workflow_comments`
+- `workflow_events`
+- `workflow_work_queue`
 
-Sensitive transitions use the existing workflow RPCs. A workflow operates against an immutable submitted document version rather than mutable working content.
+Canonical lifecycle/comment RPCs:
+
+- `start_document_workflow`
+- `submit_workflow_decision`
+- `resubmit_document_workflow`
+- `reassign_workflow_assignment`
+- `cancel_document_workflow`
+- `resolve_workflow_comment`
+- `update_workflow_comment`
+
+### Template definitions and revisions
+
+Workflow templates are managed by workspace owners/admins. Steps are ordered and may be review, approval or acknowledgement actions. Assignment resolution is delegated to the existing backend contract: specific user, workspace role, document creator or workflow starter.
+
+A design change creates a **new versioned template revision** rather than mutating the definition already referenced by historical/running workflows. The previous revision is retired only after the new template row and ordered step set are successfully created.
+
+### Immutable submission contract
+
+Starting a workflow is performed through `start_document_workflow`. The RPC creates an immutable `document_versions` snapshot and stores its id on `workflow_runs.document_version_id` together with the editor version at submission.
+
+The workflow review UI must always render this submitted version. The normal `documents` row remains the mutable working document and is opened separately only when changes are requested.
+
+For workflow review:
+
+- native documents render the submitted structured content;
+- Sheets render the submitted canonical workbook as read-only;
+- PDFs render the exact submitted private Storage binary via a short-lived signed URL;
+- other uploaded file types remain downloadable as the exact submitted binary.
+
+### Decisions and state transitions
+
+The browser must not directly update lifecycle columns on runs, steps or assignments.
+
+An authenticated user gets decision controls only for their pending assignment on the active step. The action set is derived from the step configuration and submitted through `submit_workflow_decision`:
+
+- approve;
+- changes requested;
+- reject; or
+- acknowledge.
+
+The RPC validates assignment ownership, active step status, action eligibility, required-decision counts and progression/termination.
+
+### Request changes and resubmission
+
+A `changes_requested` workflow keeps the current submitted version immutable. The authorised user edits the canonical working document or spreadsheet, then calls `resubmit_document_workflow` with the current expected `documents.editor_version`.
+
+The backend creates the next immutable document version, increments `workflow_revision` and reopens the workflow sequence. This preserves optimistic concurrency and a complete revision/decision audit trail.
+
+### Work queue
+
+`workflow_work_queue` is already scoped to `auth.uid()`, pending assignments and the active step. `/dashboard/approvals` consumes the view directly instead of rebuilding access filtering client-side.
+
+Pending work is grouped by due date as Overdue, Due soon, Upcoming or No deadline. Completed user history comes from immutable `workflow_decisions`, not from a fabricated queue state.
+
+### Comments, reassignment and cancellation
+
+Workflow comments remain RLS-protected rows. Update/resolve operations use the existing RPCs. Active assignment reassignment and workflow cancellation also use their existing auditable RPCs and require reasons in the OfficeKonnect UX.
 
 ## E-signatures
 
-Canonical tables include:
+Canonical signing tables include:
 
 - signing_requests
 - signing_participants
@@ -114,7 +167,7 @@ Canonical tables include:
 - signing_certificates
 - private signing sessions
 
-The signing state machine is server-authoritative. Frontend code must not directly force request/participant lifecycle states that are controlled by hardened RPCs.
+The signing state machine is server-authoritative. Frontend code must not directly force request/participant lifecycle states controlled by hardened RPCs.
 
 ### External signing
 
@@ -133,7 +186,9 @@ A raw invitation token is exchanged once for a short-lived session. The raw toke
 - No development-mode work may replace `auth.uid()` or workspace RLS with fake client identity.
 - Spreadsheet imports/exports do not weaken document ownership or create public workbook storage.
 - Files organization metadata remains workspace-scoped and does not move binaries outside private Storage.
-- Explicit Phase 4 shares are workspace-internal and view-only.
+- Explicit file shares are workspace-internal and view-only.
+- Workflow submissions are immutable versions; workflow status is never a browser-authored source of truth.
+- `workflow_work_queue` is consumed as an auth-scoped database view, not broadened in client code.
 
 ## Phase 0 repository parity
 
