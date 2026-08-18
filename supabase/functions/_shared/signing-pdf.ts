@@ -53,7 +53,10 @@ export async function applySigningFieldsToPdf(
     const boxWidth = box.w * width;
     const boxHeight = box.h * height;
     const y = height - box.y * height - boxHeight;
-    const rotationValue = normalizedNumber(field.rotation ?? 0, `Signing field ${field.id} rotation`);
+    const rotationValue = normalizedNumber(
+      field.rotation ?? 0,
+      `Signing field ${field.id} rotation`,
+    );
     const rotation = degrees(rotationValue);
 
     if (field.type === "signature" || field.type === "initial") {
