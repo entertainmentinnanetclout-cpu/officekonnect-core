@@ -1,5 +1,6 @@
 name: Phase 2 Apply Editor Hardening
 
+# Retried after the Bun test typing checkpoint to avoid a non-fast-forward bot push.
 on:
   push:
     branches: [phase-0-canonical-reconciliation]
