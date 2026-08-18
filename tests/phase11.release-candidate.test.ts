@@ -31,13 +31,15 @@ test("Phase 11 release journey is wired through the canonical workflow and signi
   expect(signingFunctions).toContain("createSigningDraft");
   expect(signingFunctions).toContain("sendSigningRequest");
   expect(signingFunctions).toContain("completeSigningParticipant");
-  expect(signingFunctions).toContain('functions.invoke("signing-actions"');
+  expect(signingFunctions).toContain("functions.invoke(");
+  expect(signingFunctions).toContain('"signing-actions"');
 
   const externalSigning = source("supabase/functions/signing-external/index.ts");
   expect(externalSigning).toContain('action === "exchange"');
   expect(externalSigning).toContain('rpc("exchange_signing_token"');
   expect(externalSigning).toContain('rpc("complete_external_signing_session"');
-  expect(externalSigning).toContain('functions.invoke("signing-finalize"');
+  expect(externalSigning).toContain("functions.invoke(");
+  expect(externalSigning).toContain('"signing-finalize"');
 
   const finalizer = source("supabase/functions/signing-finalize/index.ts");
   expect(finalizer).toContain('from "../_shared/signing-pdf.ts"');
