@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, LockKeyhole, ShieldCheck } from "lucide-react";
+import { Loader2, LockKeyhole, LogIn, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OfficeKonnectShell } from "@/components/officekonnect-shell";
 import { useAuth } from "@/hooks/use-auth";
@@ -27,7 +27,8 @@ function DashboardLayout() {
     setIsBootstrapping(true);
 
     const startGuestSession = async () => {
-      // Preferred path: no signup wall — Supabase anonymous (guest) session.
+      // A Supabase anonymous identity is used only to establish a temporary shell.
+      // Persistent artifact writes are rejected server-side for anonymous users.
       const { error: guestError } = await supabase.auth.signInAnonymously();
       if (!guestError) {
         if (typeof window !== "undefined") {
@@ -71,7 +72,6 @@ function DashboardLayout() {
       .finally(() => setIsBootstrapping(false));
   }, [bootstrapDevelopmentSession, isLoading, user]);
 
-
   const signOut = async () => {
     if (typeof window !== "undefined") {
       window.sessionStorage.removeItem("officekonnect:development-session");
@@ -79,7 +79,6 @@ function DashboardLayout() {
     }
     await supabase.auth.signOut();
   };
-
 
   if (isLoading || isBootstrapping) {
     return <WorkspaceBootScreen />;
@@ -89,6 +88,8 @@ function DashboardLayout() {
     return <UnauthenticatedWorkspace message={bootstrapMessage} />;
   }
 
+  const isGuest = user.is_anonymous === true || !user.email;
+
   return (
     <OfficeKonnectShell
       user={user}
@@ -96,6 +97,23 @@ function DashboardLayout() {
       onMobileOpenChange={setMobileOpen}
       onSignOut={signOut}
     >
+      {isGuest && (
+        <div className="mb-4 flex flex-col gap-3 rounded-xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-amber-950 sm:flex-row sm:items-center sm:justify-between dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
+          <div>
+            <p className="text-sm font-semibold">Guest — sign in to keep your work</p>
+            <p className="mt-0.5 text-xs opacity-80">
+              This is a temporary session. OfficeKonnect will not persist guest files or workspace
+              artifacts to the backend.
+            </p>
+          </div>
+          <Button size="sm" asChild>
+            <Link to="/auth/login">
+              <LogIn className="mr-2 h-4 w-4" />
+              Sign in
+            </Link>
+          </Button>
+        </div>
+      )}
       <Outlet />
     </OfficeKonnectShell>
   );

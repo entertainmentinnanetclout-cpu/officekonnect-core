@@ -1,12 +1,25 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Loader2, RefreshCw } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { ChevronLeft, Copy, FileDown, Loader2, Save, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { NativeDocumentEditor } from "@/components/document/native-document-editor";
 import { SpreadsheetEditor } from "@/components/spreadsheet/spreadsheet-editor";
 import { UploadedDocumentWorkspace } from "@/components/document/uploaded-document-workspace";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { saveNativeDocumentAsPdf } from "@/lib/document-save-as.functions";
+import { duplicateNativeDocument } from "@/lib/documents.functions";
+import { toastError } from "@/lib/errors";
 
 export const Route = createFileRoute("/dashboard/documents/$documentId")({
   component: DocumentDetail,
@@ -14,7 +27,10 @@ export const Route = createFileRoute("/dashboard/documents/$documentId")({
 
 function DocumentDetail() {
   const { documentId } = Route.useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const saveAsPdfFn = useServerFn(saveNativeDocumentAsPdf);
+  const duplicateFn = useServerFn(duplicateNativeDocument);
 
   const {
     data: document,
@@ -33,6 +49,26 @@ function DocumentDetail() {
       return data;
     },
     retry: 1,
+  });
+
+  const saveAsPdfMutation = useMutation({
+    mutationFn: () => saveAsPdfFn({ data: { documentId } }),
+    onSuccess: async (saved) => {
+      toast.success("PDF saved to Documents");
+      await queryClient.invalidateQueries({ queryKey: ["documents"] });
+      await navigate({ to: "/dashboard/documents/$documentId", params: { documentId: saved.id } });
+    },
+    onError: (saveError) => toastError(saveError, "Could not save PDF copy"),
+  });
+
+  const saveEditableCopyMutation = useMutation({
+    mutationFn: () => duplicateFn({ data: { documentId } }),
+    onSuccess: async (saved) => {
+      toast.success("Editable copy saved");
+      await queryClient.invalidateQueries({ queryKey: ["documents"] });
+      await navigate({ to: "/dashboard/documents/$documentId", params: { documentId: saved.id } });
+    },
+    onError: (saveError) => toastError(saveError, "Could not save editable copy"),
   });
 
   const updateCachedDocument = (next: Tables<"documents">) => {
@@ -77,14 +113,47 @@ function DocumentDetail() {
   }
 
   if (document.document_kind === "native") {
+    const saving = saveAsPdfMutation.isPending || saveEditableCopyMutation.isPending;
     return (
       <div className="flex h-[calc(100vh-5.5rem)] min-h-[620px] flex-col overflow-hidden rounded-xl border bg-background shadow-sm">
-        <div className="flex h-10 shrink-0 items-center border-b px-2">
+        <div className="flex h-10 shrink-0 items-center gap-2 border-b px-2">
           <Button variant="ghost" size="sm" asChild>
             <Link to="/dashboard/documents">
               <ChevronLeft className="mr-1 h-4 w-4" /> Documents
             </Link>
           </Button>
+          <div className="ml-auto">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" disabled={saving}>
+                  {saving ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="mr-2 h-4 w-4" />
+                  )}
+                  Save as
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuLabel>Choose saved format</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => saveEditableCopyMutation.mutate()}>
+                  <Copy className="mr-2 h-4 w-4" />
+                  <div>
+                    <p>OfficeKonnect editable copy</p>
+                    <p className="text-xs text-muted-foreground">Keeps native editing features</p>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => saveAsPdfMutation.mutate()}>
+                  <FileDown className="mr-2 h-4 w-4" />
+                  <div>
+                    <p>PDF document</p>
+                    <p className="text-xs text-muted-foreground">Saved permanently in Documents</p>
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
         <NativeDocumentEditor document={document} onDocumentUpdated={updateCachedDocument} />
       </div>
