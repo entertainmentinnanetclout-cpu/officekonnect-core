@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -69,15 +70,15 @@ export function Rnd({
   const frameRef = useRef<Frame>({ ...position, ...size });
   const [frame, setFrameState] = useState<Frame>({ ...position, ...size });
 
-  const setFrame = (next: Frame) => {
+  const updateFrame = useCallback((next: Frame) => {
     frameRef.current = next;
     setFrameState(next);
-  };
+  }, []);
 
   useEffect(() => {
     if (interactionRef.current) return;
-    setFrame({ ...position, ...size });
-  }, [position.x, position.y, size.width, size.height]);
+    updateFrame({ ...position, ...size });
+  }, [position.x, position.y, size.width, size.height, updateFrame]);
 
   useEffect(() => {
     const parentSize = () => {
@@ -102,7 +103,7 @@ export function Rnd({
         const maxY = parent
           ? Math.max(0, parent.height - interaction.startFrame.height)
           : Number.POSITIVE_INFINITY;
-        setFrame({
+        updateFrame({
           ...interaction.startFrame,
           x: clamp(interaction.startFrame.x + dx, 0, maxX),
           y: clamp(interaction.startFrame.y + dy, 0, maxY),
@@ -116,7 +117,7 @@ export function Rnd({
       const maxHeight = parent
         ? Math.max(minHeight, parent.height - interaction.startFrame.y)
         : Number.POSITIVE_INFINITY;
-      setFrame({
+      updateFrame({
         ...interaction.startFrame,
         width: clamp(interaction.startFrame.width + dx, minWidth, maxWidth),
         height: clamp(interaction.startFrame.height + dy, minHeight, maxHeight),
@@ -153,7 +154,7 @@ export function Rnd({
       window.removeEventListener("pointerup", handleUp);
       window.removeEventListener("pointercancel", handleUp);
     };
-  }, [bounds, minHeight, minWidth, onDragStop, onResizeStop]);
+  }, [bounds, minHeight, minWidth, onDragStop, onResizeStop, updateFrame]);
 
   const beginDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
     onPointerDown?.(event);
