@@ -119,7 +119,7 @@ Upgrade Validation run `32105437719` passed:
 - **24 Bun tests / 0 failures**, 83 expectations across 6 files;
 - production build.
 
-The final documentation head receives the same read-only gate before Phase 5 is formally closed.
+The final branch/documentation head receives the same read-only gate before Phase 5 is formally closed.
 
 ## Phase 6 focus
 
