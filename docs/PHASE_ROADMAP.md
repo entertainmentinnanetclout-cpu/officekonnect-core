@@ -1,18 +1,18 @@
 # OfficeKonnect Phase Roadmap
 
-## Phase 0 — Canonical reconciliation
+## Phase 0 — Canonical reconciliation — **Completed**
 
 Reconcile GitHub with live Supabase: migrations, Edge Functions, generated types, storage contracts, signing contracts and architecture documentation.
 
-## Phase 1 — Development identity and application shell
+## Phase 1 — Development identity and application shell — **Completed**
 
 Implement the authless development UX while preserving real Supabase identity/RLS. Replace the V1 shell with the canonical OfficeKonnect navigation and workspace shell.
 
-## Phase 2 — Documents, native editor and PDF engine
+## Phase 2 — Documents, native editor and PDF engine — **Completed**
 
 Complete the document library, native editing, autosave/version history, printing and canonical PDF export.
 
-## Phase 3 — OfficeKonnect Sheets
+## Phase 3 — OfficeKonnect Sheets — **Next**
 
 Expose the existing workbook backend through a production spreadsheet UI, import/export and PDF workflow/signing conversion.
 
