@@ -26,43 +26,60 @@ function DashboardLayout() {
     attemptedDevelopmentBootstrap.current = true;
     setIsBootstrapping(true);
 
-    void bootstrapDevelopmentSession()
-      .then(async (result) => {
-        if (result.status !== "ready") {
-          if (result.status === "misconfigured" || result.status === "error") {
-            setBootstrapMessage(result.message);
-          }
-          return;
-        }
-
-        const { error } = await supabase.auth.setSession({
-          access_token: result.accessToken,
-          refresh_token: result.refreshToken,
-        });
-
-        if (error) {
-          setBootstrapMessage(error.message);
-          return;
-        }
-
+    const startGuestSession = async () => {
+      // Preferred path: no signup wall — Supabase anonymous (guest) session.
+      const { error: guestError } = await supabase.auth.signInAnonymously();
+      if (!guestError) {
         if (typeof window !== "undefined") {
-          window.sessionStorage.setItem("officekonnect:development-session", "true");
+          window.sessionStorage.setItem("officekonnect:guest-session", "true");
         }
-      })
+        return;
+      }
+
+      // Fallback: server-minted development identity (used when guest sign-ins are disabled).
+      const result = await bootstrapDevelopmentSession();
+      if (result.status !== "ready") {
+        setBootstrapMessage(
+          result.status === "misconfigured" || result.status === "error"
+            ? `${guestError.message}. ${result.message}`
+            : guestError.message,
+        );
+        return;
+      }
+
+      const { error } = await supabase.auth.setSession({
+        access_token: result.accessToken,
+        refresh_token: result.refreshToken,
+      });
+
+      if (error) {
+        setBootstrapMessage(error.message);
+        return;
+      }
+
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem("officekonnect:development-session", "true");
+      }
+    };
+
+    void startGuestSession()
       .catch((error: unknown) => {
         setBootstrapMessage(
-          error instanceof Error ? error.message : "Unable to establish the development identity.",
+          error instanceof Error ? error.message : "Unable to start a guest workspace.",
         );
       })
       .finally(() => setIsBootstrapping(false));
   }, [bootstrapDevelopmentSession, isLoading, user]);
 
+
   const signOut = async () => {
     if (typeof window !== "undefined") {
       window.sessionStorage.removeItem("officekonnect:development-session");
+      window.sessionStorage.removeItem("officekonnect:guest-session");
     }
     await supabase.auth.signOut();
   };
+
 
   if (isLoading || isBootstrapping) {
     return <WorkspaceBootScreen />;
