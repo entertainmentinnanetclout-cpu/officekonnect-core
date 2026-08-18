@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "bun test",
+    "test": "bun test src tests",
     "phase0:parity": "node scripts/check-phase0-parity.mjs",
     "audit:product": "node scripts/check-product-hardening.mjs",
     "audit:security": "node scripts/check-security-boundaries.mjs",
