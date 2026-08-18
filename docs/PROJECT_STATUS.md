@@ -87,12 +87,13 @@ See `docs/PHASE6.md` for the full Phase 6 contract.
 
 ### Phase 7 — Tasks, Calendar and Global Search
 
-- Applied live migration `20260818062157_phase_7_tasks_calendar_search` and checked in the exact migration source.
+- Applied live migrations `20260818062157_phase_7_tasks_calendar_search` and `20260818080155_phase_7_rpc_execute_acl_hardening`, and checked in their exact migration source.
 - Added real workspace-scoped `tasks` persistence with status, priority, assignee, start/due/completion, object links, constraints/indexes and RLS.
 - Activated `/dashboard/tasks` with board/list views, filters, search, assignment, priorities, dates, lifecycle actions and document/workflow/signing links.
 - Added real `calendar_events` persistence for manual events with range constraints and RLS.
 - Activated `/dashboard/calendar` as an aggregate operational calendar. Manual events are persisted; task dates, workflow run/step deadlines and signature expiries are derived read-only from their canonical source tables.
 - Added membership-checked `search_workspace_objects` RPC; no duplicate search index/table was introduced.
+- Revoked anonymous `EXECUTE` from `search_workspace_objects` and `list_workspace_member_directory`; authenticated application execution remains available and membership checked.
 - Activated `/dashboard/search` and the Ctrl/Cmd+K global command search dialog over live workspace data.
 - Search covers documents/Sheets, templates, workflows, e-signatures, tasks and workspace members.
 - `tasks` and `calendar_events` both retain four RLS policies and contain zero fabricated production rows after completion.
@@ -107,9 +108,10 @@ See `docs/PHASE7.md` for the full Phase 7 contract.
 - `signing-external` — ACTIVE, JWT disabled intentionally because custom invitation/session authentication is enforced in-function.
 - `signing-finalize` — ACTIVE version 2, JWT required.
 
-### Phase 7 migration
+### Phase 7 migrations
 
 - `20260818062157_phase_7_tasks_calendar_search`
+- `20260818080155_phase_7_rpc_execute_acl_hardening`
 
 ### RLS verification
 
@@ -121,11 +123,15 @@ See `docs/PHASE7.md` for the full Phase 7 contract.
 - `signing_events`: RLS enabled, 1 policy.
 - `signing_certificates`: RLS enabled, 1 policy.
 
+### RPC execution boundary
+
+- `search_workspace_objects`: authenticated execution only; workspace membership checked in-function.
+- `list_workspace_member_directory`: authenticated execution only; workspace membership checked in-function.
+- Anonymous SECURITY DEFINER execution warnings for these RPCs are cleared.
+
 ## Phase 6/7 validation record
 
-Clean read-only source checkpoint before documentation: `35c9c948c727b206feab21f994bba5ecc085786a`.
-
-Upgrade Validation run `32108717386` passed:
+The combined Phase 6/7 implementation has passed the canonical read-only validation gate with:
 
 - Repository parity: **PASS**.
 - Frozen dependency install (`bun ci`): **PASS**.
@@ -134,7 +140,7 @@ Upgrade Validation run `32108717386` passed:
 - Bun regression tests: **33 passed / 0 failed**.
 - Production build: **PASS**.
 
-The final documentation head receives the same read-only gate before Phases 6 and 7 are formally closed.
+The final ACL-hardening/documentation head receives the same read-only gate and becomes the authoritative Phase 6/7 completion SHA.
 
 ## Known limitations carried forward
 
