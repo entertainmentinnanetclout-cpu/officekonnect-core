@@ -126,13 +126,13 @@ Temporary one-shot route-tree, formatter and type-reconciliation workflows were 
 
 ## Final Phase 8 validation record
 
-Authoritative Phase 8 head:
+Latest fully validated Phase 8 repository head before this status-only ledger update:
 
-`8117828c04a8574f375efc72d4998bfe63fbd162`
+`ad7e4b83eaad0206590f46a2e7c7db75c3730f3e`
 
 Upgrade Validation run:
 
-`32118619539`
+`32118847402`
 
 Results:
 
@@ -140,7 +140,7 @@ Results:
 - Frozen dependency install (`bun ci`): **PASS**.
 - ESLint: **PASS — 0 errors, 7 inherited Fast Refresh warnings**.
 - TypeScript (`tsc --noEmit`): **PASS**.
-- Bun regression tests: **39 passed / 0 failed**, 194 expectations across 9 files.
+- Bun regression tests: **39 passed / 0 failed**.
 - Production client build: **PASS**.
 - Production SSR build: **PASS**.
 - Production Nitro build: **PASS**.
