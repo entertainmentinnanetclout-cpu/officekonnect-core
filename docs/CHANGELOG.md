@@ -1,5 +1,47 @@
 # OfficeKonnect Changelog
 
+## 2026-08-18 — Phase 5 completed
+
+### Added
+
+- Production `/dashboard/workflows` workflow-run and workflow-template management surface.
+- Production `/dashboard/workflows/$runId` immutable review workspace.
+- Production `/dashboard/approvals` authenticated work queue.
+- Owner/admin workflow-template builder for ordered Review, Approval and Acknowledgement steps.
+- Assignment modes for specific workspace member, workspace role, document creator and workflow starter.
+- Versioned workflow-template revision flow that preserves prior definitions used by historical/running workflows.
+- Immutable review rendering for submitted native documents, OfficeKonnect Sheets, PDFs and other uploaded binaries.
+- State-machine-valid Approve, Request Changes, Reject and Acknowledge actions through the existing decision RPC.
+- Workflow/step comments, comment editing, resolve/reopen, audited reassignment and cancellation.
+- Request-changes working-document path and optimistic-concurrency resubmission through `resubmit_document_workflow`.
+- Work-queue grouping: Overdue, Due soon, Upcoming and No deadline.
+- Recently completed decision history sourced from immutable `workflow_decisions` for the current actor.
+- Five workflow contract regression tests covering role mapping, decision eligibility, queue classification and template validation.
+- `docs/PHASE5.md` with the complete workflow architecture/security/validation record.
+
+### Changed
+
+- Workflows and Approvals are active canonical navigation destinations rather than future-phase placeholders.
+- Workflow template design changes create a new template revision instead of editing a live definition in place.
+- Submitted workflow content is reviewed from the exact immutable `document_versions` snapshot while the working document remains separate.
+- Request Changes now follows the real edit → resubmit → new immutable document version → incremented workflow revision path.
+- The Approvals queue consumes the existing auth-scoped `workflow_work_queue` database view directly instead of rebuilding access rules client-side.
+
+### Security / architecture
+
+- No replacement workflow engine was introduced.
+- No Phase 5 database migration was required; the recovered live workflow schema/RPCs were already sufficient.
+- Run, step and assignment lifecycle states remain server-authoritative and are not directly written by browser code.
+- RLS remains enabled on all eight workflow state tables.
+- Existing workflow transition/comment/reassignment/cancellation RPCs remain authoritative.
+- No fake workflow templates, runs, decisions or comments were seeded into production.
+- No service-role credential was exposed and no existing RLS policy was weakened.
+
+### Validation
+
+- Clean source Upgrade Validation run `32105437719` passed repository parity, frozen install, ESLint, TypeScript, **24 tests / 0 failures**, 83 expectations across 6 files, and production build.
+- Vercel deployment validation is intentionally deferred until Phase 11.
+
 ## 2026-08-18 — Phase 4 completed
 
 ### Added
