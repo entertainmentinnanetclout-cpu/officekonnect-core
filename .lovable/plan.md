@@ -1,101 +1,39 @@
+# Fix uploads + make sign-in optional
 
-# SignKonnect Document Engine — Phased Rebuild
+## What's confirmed so far
 
-We'll rebuild the document pipeline in **5 phases**, shipping a working, testable slice at the end of each. Original PDFs stay immutable; everything is done as an overlay that's flattened on export (industry-standard, matches DocuSign/Adobe Sign).
+- The HTML you pasted is this app's own generic 500 page (`src/lib/error-page.ts`). The server-side error middleware in `src/start.ts` converts *any* thrown error from a server function into that HTML page. The upload UI then shows the raw HTML as its error text. So the real cause of the upload failure is currently hidden — no code path reports what actually broke.
+- Uploads go: browser → `createSignedUploadUrl` server function → resolves your workspace → asks Supabase Storage for a signed upload URL → browser uploads → record insert. Any failure anywhere in that chain produces the same opaque HTML.
+- Storage rules and workspace data check out structurally: all 3 accounts have a workspace and a default workspace, buckets exist, and the storage policies (workspace-folder for documents/signatures, `{user_id}/` folder for avatars) reference helper functions that the signed-in role is still allowed to run. So the failure is not one of the obvious candidates — it needs the real error message before it can be named.
+- Profile photo path is `{user_id}/avatar-*.ext`, which matches the avatars policy, so the "violates row-level security" report also needs the real error surfaced (it may be coming from the profile row update rather than the file upload).
 
----
+Because of that, step 1 is making errors legible, not guessing a fix.
 
-## Phase 1 — Rock-solid PDF workspace (this sprint)
+## Plan
 
-Goal: opening any uploaded PDF Just Works, and signing works end-to-end.
+### 1. Stop swallowing server errors
+- Keep the friendly HTML page for full page loads only. For server-function (RPC) calls, return a JSON error with the real message and status instead of the HTML page.
+- Log the underlying Supabase/Storage error (code + message + path + bucket) server-side so failures are traceable.
+- Make the upload/avatar/signature UI show that message in a toast instead of dumping a page body.
 
-**Viewer rebuild** (`src/components/document/pdf-workspace.tsx`, replaces `pdf-viewer.tsx`)
-- Render ALL pages in a scrollable canvas (not one page at a time) — this is why signing feels broken today.
-- Left rail: page thumbnails (click to jump, active highlight).
-- Top toolbar: zoom in/out + % input, fit-width, fit-page, rotate page, fullscreen, page number jump, text search.
-- Mobile: thumbnails collapse into a drawer; toolbar wraps.
-- Proper error state with retry + download fallback when a PDF fails to render (bad MIME, corrupt file, expired signed URL).
-- Refresh signed URL automatically when it nears expiry.
+### 2. Reproduce and fix the actual upload failures
+With real messages available, drive the three flows (document upload, sheet upload, signature save, profile photo) against the running app and fix what the errors name. Expected fix areas, in order of likelihood:
+- Signed-upload-URL creation vs. the workspace-prefixed object path used by the storage policies.
+- The follow-up `documents` row insert (`workspace_id` / `created_by` must match the signed-in user).
+- Avatar: whether the failure is the storage write or the `profiles` update that follows it, and whether `user_id` is populated at the time the path is built.
+Each fix is verified by actually performing the upload, not by inspection.
 
-**Upload → preview reliability**
-- Fix upload to always set correct `contentType` (many current uploads store as `application/octet-stream`, which is why previews fail).
-- Backfill server fn to re-stamp `file_type` from actual file MIME on the row.
-- Verify storage RLS path convention (`{workspace_id}/{user_id}/...`) is used everywhere.
-
-**Signing UX rewrite** (Adobe Sign / DocuSign style, no popup)
-- "Sign" button opens the right-side Signature Toolbox (already scaffolded, cleaned up).
-- Pick saved signature OR draw/type a new one inline.
-- Cursor attaches to a ghost signature; click anywhere on any page to drop it.
-- Placed signature is a draggable + resizable + deletable overlay box (react-rnd), snap-to-page bounds.
-- "Confirm & Save" flattens the placements into a new PDF version via `signature_apply` job (pdf-lib on the worker), stores as a new `document_versions` row, and updates status. Download returns the flattened PDF.
-
-**Voice notes fix** (small, since it's blocking users today)
-- Refresh signed URL before each playback so audio actually plays after recording.
-- Retry transcription button wired to `enqueueTranscribe`.
-- Verify MediaRecorder MIME is one Whisper accepts (`audio/webm;codecs=opus` → uploaded as `.webm`).
-
-**Backend verification pass**
-- Confirm buckets: `documents`, `document-versions`, `voice-notes`, `signatures` exist with correct public/private flags and RLS.
-- Confirm `signature_apply` worker handler flattens and writes a new version.
-- Confirm `pg_cron` job is hitting the correct env URL.
-
-**Deliverable:** Upload a PDF → see every page → open toolbox → drop signature → confirm → download flattened signed PDF. Same for voice: record → playback → transcribe.
-
----
-
-## Phase 2 — Overlay editor (fields + formatting)
-
-Goal: sender can place fillable fields and visual elements on the PDF before sending.
-
-- Reuse the Phase 1 workspace; add a left "Fields" palette:
-  - Text, Multi-line text, Number, Email, Phone, Address, Date, Time, Currency
-  - Checkbox, Radio, Dropdown
-  - Signature, Initials, Signature date, Printed name
-  - Shapes (rect, circle, line), Highlight, Freehand
-- Selecting an element opens a **right-side Properties panel**:
-  - Font family / size / color / bold / italic / underline / alignment (text elements)
-  - Placeholder, default value, required flag, validation (email/phone/number)
-  - Recipient assignment (populated in Phase 3)
-- Canvas interactions: drag, resize, rotate, align guides, duplicate, lock, delete, undo/redo (Zustand history stack).
-- Persist all elements as JSON in `signing_fields` (schema already exists) tied to the document.
-- "Save as template" writes to a new `document_templates` table (fields JSON, name, thumbnail).
-
----
-
-## Phase 3 — Send to recipient (registered users + guest email links)
-
-- "Send" flow: pick recipients (existing users OR type an email → guest), assign each to specific fields, add message.
-- Creates `signing_request` + `signing_participants` rows.
-- Registered users: notification + dashboard "Waiting for you" list.
-- Guests: Brevo email with a signed tokenized URL (JWT, expiring) → opens a public `/sign/{token}` route with the same workspace but locked to their assigned fields only.
-- Recipient view: read-only for everything except their assigned fields; submit → server validates all required fields → status advances → notifies next participant or completes.
-- Audit trail rows in `signing_events` for every action (view/fill/sign/complete) with IP + UA.
-
-## Phase 4 — Final PDF generation + delivery
-
-- On completion, worker flattens all overlays + filled values into a signed PDF, uploads to `document-versions`, updates `documents.document_status = 'completed'`.
-- Emails both parties a copy + link.
-- Adds "Certificate of completion" page (audit trail) — foundation for future notarization/witness.
-
-## Phase 5 — Voice notes hardening + polish
-
-- Pause/resume in MediaRecorder, waveform visualiser, rename inline, delete with confirm, transcript inline edit, export as `.txt`/`.docx`.
-- Mobile mic permission prompts, background upload progress.
-
----
+### 3. Optional sign-in (guest mode)
+Goal: anyone can land on the app and start working with no signup, while people who want their data to follow them can still sign in.
+- Enable Supabase anonymous sign-ins for the project, then have the app create a guest session automatically on first visit when no session exists. The existing new-user trigger provisions a profile, workspace and free subscription for the guest exactly like a normal user.
+- The `/dashboard` area stops redirecting to `/auth`; it waits for the guest session instead. `/auth` stays reachable as an opt-in "save my work / sign in" route.
+- Header shows "Guest — Sign in to keep your work" for anonymous sessions, and the account menu for real ones.
+- Guests can later sign up and keep their data (Supabase links the anonymous user to the new email identity), so nothing is lost on conversion.
+- No RLS, policy or table changes: guests are real authenticated users, so every existing workspace/document/signature rule keeps working unchanged.
 
 ## Technical notes
 
-- **Rendering**: keep `react-pdf` (pdfjs), switch to virtualized multi-page scroll. Worker stays on CDN.
-- **Overlay canvas**: HTML overlay positioned over each rendered page using normalized (0..1) coords → survives zoom/rotate. Interactions via `react-rnd`. No Konva/Fabric — kept lean.
-- **State**: Zustand store per document for elements + history (undo/redo).
-- **Flatten**: `pdf-lib` inside the Cloudflare Worker job handler (Workers-compatible, no native deps). Signature images fetched via signed URL, drawn at the same normalized coords.
-- **Templates**: new `document_templates(workspace_id, name, source_document_id, fields jsonb, thumbnail_path)` table + RLS in Phase 2.
-- **Guest signing**: new `signing_tokens(token_hash, request_id, participant_id, expires_at)` + public route `/sign/$token` in Phase 3.
-- **No schema changes in Phase 1** — everything uses existing `documents`, `document_versions`, `signing_fields`, `user_signatures`.
-
----
-
-## What ships when you approve
-
-Just Phase 1. It's the unblocker: preview works, signing works end-to-end, voice playback+transcription works. After you've tested Phase 1 in the preview, say "go Phase 2" and I'll build the editor.
+- `src/start.ts` error middleware: branch on request path (`/_serverFn/*`) → JSON error; otherwise → HTML page.
+- Guest bootstrap lives in one place (root route), calling `supabase.auth.signInAnonymously()` only when `getSession()` is empty, guarded against double-invocation during hydration.
+- Anonymous sign-ins must be switched on in the Supabase dashboard (Authentication → Sign In / Providers → Anonymous). This is a manual dashboard toggle I can't flip from code; without it the guest bootstrap fails and the app falls back to the sign-in page.
+- Bot/abuse note: anonymous sign-ins create a real auth user per visitor. Acceptable for this stage; can be paired with Turnstile later if signup spam becomes a problem.
