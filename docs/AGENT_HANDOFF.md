@@ -20,7 +20,7 @@ Vercel/deployment-platform validation is intentionally deferred until Phase 11. 
 - Phase 5 — Workflows and Approvals: completed.
 - Phase 6 — Production E-Signatures: completed.
 - Phase 7 — Tasks, Calendar and Global Search: completed.
-- Phase 8 — Notifications, Activity, Team, Workspace and Settings: completed.
+- Phase 8 — Notifications, Activity, Team, Workspace and Settings: completed and validated.
 - **Next: Phase 9 — Product-wide UX and Route Hardening.**
 
 ## Do not do
@@ -180,18 +180,28 @@ No fake Phase 8 rows were seeded during completion:
 - workspace invitations: 0
 - notifications: 0
 
-## Validation checkpoint
+## Final Phase 8 validation checkpoint
 
-The substantive Phase 8 implementation passed:
+Validated source/documentation head:
+
+`3b0082f5c9a8f4a0d0b3039636a4d40c59a5e883`
+
+Upgrade Validation:
+
+`32118737416`
+
+Passed:
 
 - repository parity;
 - frozen `bun ci`;
-- ESLint with 0 errors;
+- ESLint with 0 errors and 7 inherited Fast Refresh warnings;
 - TypeScript;
 - **39 Bun tests / 0 failures**;
-- production client/SSR/Nitro build.
+- production client build;
+- production SSR build;
+- production Nitro build.
 
-The final documentation/hardening branch head receives the same read-only validation gate and is the authoritative Phase 8 completion checkpoint.
+Vercel remains intentionally deferred until Phase 11.
 
 ## Phase 9 focus
 
