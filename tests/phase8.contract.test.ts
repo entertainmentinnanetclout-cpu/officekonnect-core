@@ -14,8 +14,17 @@ const invitationDirectoryMigration = readFileSync(
   join(root, "supabase/migrations/20260818082454_phase_8_workspace_invitation_directory.sql"),
   "utf8",
 );
+const activityHardeningMigration = readFileSync(
+  join(
+    root,
+    "supabase/migrations/20260818084738_phase_8_activity_workspace_identity_hardening.sql",
+  ),
+  "utf8",
+);
 const shell = readFileSync(join(root, "src/components/officekonnect-shell.tsx"), "utf8");
 const settings = readFileSync(join(root, "src/routes/dashboard/settings/index.tsx"), "utf8");
+const rootRoute = readFileSync(join(root, "src/routes/__root.tsx"), "utf8");
+const inviteRoute = readFileSync(join(root, "src/routes/invite/$token.tsx"), "utf8");
 
 function normalized(value: string) {
   return value.replace(/\s+/g, " ").toLowerCase();
@@ -31,7 +40,7 @@ describe("Phase 8 operational contracts", () => {
     expect(sql).toContain("case when n.user_id is null then nr.read_at else n.read_at end");
   });
 
-  test("workspace invitation bearer tokens are hash-only and expire", () => {
+  test("workspace invitation bearer tokens are hash-only, expiring and session-scoped", () => {
     const sql = normalized(migration);
     expect(sql).toContain("token_hash text not null unique");
     expect(sql).toContain("extensions.gen_random_bytes(32)");
@@ -39,6 +48,10 @@ describe("Phase 8 operational contracts", () => {
     expect(sql).toContain("expires_at timestamptz not null");
     expect(sql).not.toContain("raw_token text not null");
     expect(sql).toContain("workspace_invitations_role_check check (role <> 'owner'");
+    expect(rootRoute).toContain("sessionStorage.getItem(PENDING_WORKSPACE_INVITE_KEY)");
+    expect(inviteRoute).toContain("sessionStorage.setItem(PENDING_INVITE_KEY, token)");
+    expect(inviteRoute).toContain("sessionStorage.removeItem(PENDING_INVITE_KEY)");
+    expect(inviteRoute).not.toContain("localStorage");
   });
 
   test("Phase 8 RPCs are authenticated-only at the SQL ACL boundary", () => {
@@ -80,8 +93,9 @@ describe("Phase 8 operational contracts", () => {
     );
   });
 
-  test("activity aggregates canonical audit ledgers instead of copying them", () => {
+  test("activity aggregates canonical ledgers and preserves workspace tenant scope", () => {
     const sql = normalized(migration);
+    const hardening = normalized(activityHardeningMigration);
     expect(sql).toContain("from public.activity_logs");
     expect(sql).toContain("from public.workflow_events");
     expect(sql).toContain("from public.signing_events");
@@ -89,6 +103,11 @@ describe("Phase 8 operational contracts", () => {
     expect(sql).toContain("create trigger aud_calendar_events");
     expect(sql).toContain("create trigger tasks_notify_assignment");
     expect(sql).not.toContain("create table public.workspace_activity");
+    expect(hardening).toContain("if tg_table_name = 'workspaces' then");
+    expect(hardening).toContain("v_workspace_id := v_entity_id");
+    expect(hardening).toContain(
+      "insert into public.activity_logs(workspace_id,user_id,action,entity_type,entity_id,metadata)",
+    );
   });
 
   test("Phase 8 surfaces are active and settings contain no coming-soon controls", () => {
