@@ -3,8 +3,13 @@ import { expect, test, type Page } from "@playwright/test";
 function captureRuntimeErrors(page: Page) {
   const failures: string[] = [];
   page.on("pageerror", (error) => failures.push(`pageerror: ${error.message}`));
+  page.on("response", (response) => {
+    if (response.status() === 404) failures.push(`404: ${response.url()}`);
+  });
   page.on("console", (message) => {
-    if (message.type() === "error") failures.push(`console: ${message.text()}`);
+    if (message.type() === "error" && !message.text().includes("status of 404")) {
+      failures.push(`console: ${message.text()}`);
+    }
   });
   return failures;
 }
