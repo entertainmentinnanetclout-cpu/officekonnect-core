@@ -17,9 +17,18 @@ for (const absolute of walk(srcRoot)) {
   const file = relative(root, absolute).replaceAll("\\", "/");
   const text = readFileSync(absolute, "utf8");
   const checks = [
-    [/(?:SUPABASE_SERVICE_ROLE_KEY|service_role\s*:|serviceRoleKey)/i, "service-role credential reference in application source"],
-    [/(?:VITE_|PUBLIC_)[A-Z0-9_]*(?:SECRET|SERVICE_ROLE|PRIVATE_KEY|PASSWORD)/, "secret-shaped public/browser environment variable"],
-    [/localStorage[^\n]*(?:token|secret|password)|(?:token|secret|password)[^\n]*localStorage/i, "credential-like value persisted in localStorage"],
+    [
+      /(?:SUPABASE_SERVICE_ROLE_KEY|service_role\s*:|serviceRoleKey)/i,
+      "service-role credential reference in application source",
+    ],
+    [
+      /(?:VITE_|PUBLIC_)[A-Z0-9_]*(?:SECRET|SERVICE_ROLE|PRIVATE_KEY|PASSWORD)/,
+      "secret-shaped public/browser environment variable",
+    ],
+    [
+      /localStorage[^\n]*(?:token|secret|password)|(?:token|secret|password)[^\n]*localStorage/i,
+      "credential-like value persisted in localStorage",
+    ],
   ];
   for (const [pattern, label] of checks) {
     if (pattern.test(text)) findings.push(`${file}: ${label}`);
@@ -32,7 +41,8 @@ if (!/^\.env$/m.test(gitignore) || !/^\.env\.\*$/m.test(gitignore)) {
 }
 for (const name of readdirSync(root)) {
   if (name === ".env.example") continue;
-  if (name === ".env" || name.startsWith(".env.")) findings.push(`${name}: environment file must not be tracked`);
+  if (name === ".env" || name.startsWith(".env."))
+    findings.push(`${name}: environment file must not be tracked`);
 }
 
 const devSessionPath = join(root, "src/lib/development-session.functions.ts");
@@ -53,7 +63,10 @@ if (!inviteRoute.includes("sessionStorage.setItem(PENDING_INVITE_KEY, token)")) 
   findings.push("workspace invite route must keep pending bearer tokens session-scoped");
 }
 
-const externalSigning = readFileSync(join(root, "supabase/functions/signing-external/index.ts"), "utf8");
+const externalSigning = readFileSync(
+  join(root, "supabase/functions/signing-external/index.ts"),
+  "utf8",
+);
 for (const required of ["session_hash", "invitation", "HMAC", "signing_sessions"]) {
   if (!externalSigning.toLowerCase().includes(required.toLowerCase())) {
     findings.push(`signing-external: expected custom authentication contract marker '${required}'`);
@@ -61,10 +74,14 @@ for (const required of ["session_hash", "invitation", "HMAC", "signing_sessions"
 }
 
 const obsoleteBypass = join(root, "src/lib/signing-public.functions.ts");
-if (existsSync(obsoleteBypass)) findings.push("obsolete privileged signing-public.functions.ts must not exist");
+if (existsSync(obsoleteBypass))
+  findings.push("obsolete privileged signing-public.functions.ts must not exist");
 
 if (findings.length) {
-  console.error("Phase 10 security boundary audit failed:\n" + findings.map((item) => `- ${item}`).join("\n"));
+  console.error(
+    "Phase 10 security boundary audit failed:\n" +
+      findings.map((item) => `- ${item}`).join("\n"),
+  );
   process.exit(1);
 }
 
