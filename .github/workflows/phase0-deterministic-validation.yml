@@ -37,6 +37,8 @@ jobs:
         run: bun run audit:product
       - name: Security boundary audit
         run: bun run audit:security
+      - name: Release candidate audit
+        run: bun run audit:release
       - name: TypeScript
         run: bun run typecheck
       - name: Unit and integration tests
