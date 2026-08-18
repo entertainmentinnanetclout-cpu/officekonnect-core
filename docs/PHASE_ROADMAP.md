@@ -18,32 +18,38 @@ Expose the workbook backend through a production spreadsheet UI, deterministic f
 
 ## Phase 4 — Files and Templates — **Completed**
 
-Add nested folders, personal favourites, workspace-internal controlled sharing, full file lifecycle actions and reusable native-document/spreadsheet templates while retaining the canonical `documents`, private Storage and `document_templates` architecture.
+Add nested folders, personal favourites, workspace-internal controlled sharing, full file lifecycle actions and reusable native-document/spreadsheet templates while retaining canonical `documents`, private Storage and `document_templates` architecture.
 
 ## Phase 5 — Workflows and Approvals — **Completed**
 
-Expose the existing workflow state machine through versioned workflow-template management, workflow launch, immutable submitted-version review, authenticated work queue, decisions, comments, reassignment, request-changes editing, optimistic-concurrency resubmission and audited cancellation.
+Expose the existing workflow state machine through versioned templates, workflow launch, immutable submitted-version review, authenticated work queue, decisions, comments, reassignment, Request Changes, optimistic-concurrency resubmission and audited cancellation.
 
 ## Phase 6 — Production E-Signatures — **Completed**
 
-Complete the hardened signing request/participant/field/session/finalization system: signing dashboard, PDF preparation workspace, internal and external signer UX, participant roles/order, normalized fields, consent, secure invitation exchange/session handling, finalization, audit timeline, final PDF and certificate access. Documents/Sheets hand directly into the production signing workflow through immutable PDF signing copies.
+Complete the hardened signing request/participant/field/session/finalization system, including internal/external signer UX, normalized fields, secure invitation exchange/session handling, finalization, audit timeline, final PDF and certificate access. Documents/Sheets feed signing through immutable PDF copies.
 
 ## Phase 7 — Tasks, Calendar and Global Search — **Completed**
 
-Add real RLS-protected task/manual-calendar persistence, production task management, an aggregate operational calendar derived from canonical task/workflow/signing dates, membership-checked server-side workspace search, `/dashboard/search` and Ctrl/Cmd+K command navigation.
+Add RLS-protected Tasks/manual Calendar persistence, aggregate operational Calendar, membership-checked workspace search, `/dashboard/search` and Ctrl/Cmd+K navigation.
 
 ## Phase 8 — Notifications, Activity, Team, Workspace and Settings — **Completed**
 
-Complete the operational administration layer with receipt-aware Notifications, cross-module Activity, secure workspace invitations and role management, workspace identity/creation/switching, and real Settings surfaces over existing profile/signature/template/integration/subscription infrastructure. No duplicate identity, role, notification or audit engine is introduced.
+Complete receipt-aware Notifications, cross-module Activity, secure workspace invitations/role management, workspace identity/creation/switching and real Settings over existing profile/signature/template/integration/subscription infrastructure.
 
-## Phase 9 — Product-wide UX and Route Hardening — **Next**
+## Phase 9 — Product-wide UX and Route Hardening — **Completed**
 
-Eliminate remaining dead actions, mocks, placeholders, fake metrics, broken links, unhandled states and route inconsistencies. Complete responsive, keyboard, accessibility and cross-module interaction hardening while preserving the completed backend contracts.
+Removed fabricated dashboard metrics and dead controls, hardened internal routing, removed internal implementation/release language from user surfaces, improved accessibility labels/states, aligned landing/product metadata and established a permanent product-hardening audit.
 
-## Phase 10 — Security, Performance, Automated Testing and CI
+Validated code checkpoint: `42c4dbd3e4c66f0570ec19c5ad6246bc39e3bb64` — Upgrade Validation `32125480383`.
 
-Expand unit/integration/E2E testing, deterministic real-PDF signing tests, CI gates, security checks and performance hardening. Review inherited RLS planner warnings, advisor findings and scale-sensitive indexes using real query behavior rather than low-traffic assumptions.
+## Phase 10 — Security, Performance, Automated Testing and CI — **Completed**
 
-## Phase 11 — Release Candidate and Documentation
+Added permanent security/product audits, a deterministic real three-page signing-PDF integration, production asset budgets, Chromium Playwright E2E, covering indexes for Phase 4 composite foreign keys, public legal-route hardening and a read-only CI release gate. The tested shared PDF renderer is live through `signing-finalize` version 3 with JWT required.
 
-Complete handoff documentation, Vercel release-candidate validation, release QA and the canonical create → review → changes → resubmit → approve → sign → finalize product journey. Only after this phase may Draft PR #2 be marked ready and merged to `main`.
+Validated source checkpoint: `ddb2edf65ef07da6d4ae5bcaa2a6129966a46c3d` — Upgrade Validation `32129565222` with **42/42 unit/integration tests and 4/4 Chromium E2E tests**.
+
+## Phase 11 — Release Candidate and Documentation — **Next**
+
+Run the final release-candidate journey and Vercel/deployment-platform validation, reconcile remaining documentation/runtime release details, re-review Supabase advisor residuals, validate the canonical create → review → changes → resubmit → approve → sign → finalize product journey, and perform final handoff QA.
+
+Only after Phase 11 passes may Draft PR #2 be marked ready and merged to `main`.
