@@ -28,3 +28,17 @@ for old, new, label in replacements:
     text = text.replace(old, new, 1)
 
 path.write_text(text)
+
+approvals_path = Path("src/routes/dashboard/approvals/index.tsx")
+approvals = approvals_path.read_text()
+approvals = approvals.replace(
+    'import type { Tables, Views } from "@/integrations/supabase/types";',
+    'import type { Database, Tables } from "@/integrations/supabase/types";',
+)
+approvals = approvals.replace(
+    'type QueueRow = Views<"workflow_work_queue">;',
+    'type QueueRow = Database["public"]["Views"]["workflow_work_queue"]["Row"];',
+)
+if 'Views<"workflow_work_queue">' in approvals:
+    raise SystemExit("workflow view helper typing was not reconciled")
+approvals_path.write_text(approvals)
