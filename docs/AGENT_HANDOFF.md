@@ -8,6 +8,8 @@
 
 Draft PR #2 carries the OfficeKonnect Phases 0–11 upgrade. Do not merge it after an individual phase. `main` remains unchanged until the Phase 11 release-candidate gate is complete.
 
+Vercel deployment validation is intentionally deferred until Phase 11. Do not use Vercel status as a Phase 6–10 acceptance gate unless the user explicitly changes this instruction.
+
 ## Current status
 
 - Phase 0 — canonical reconciliation: completed.
@@ -15,7 +17,8 @@ Draft PR #2 carries the OfficeKonnect Phases 0–11 upgrade. Do not merge it aft
 - Phase 2 — documents, native editor and PDF engine: completed.
 - Phase 3 — OfficeKonnect Sheets: completed.
 - Phase 4 — Files and Templates: completed.
-- **Next: Phase 5 — Workflows and Approvals.**
+- Phase 5 — Workflows and Approvals: completed.
+- **Next: Phase 6 — Production E-Signatures.**
 
 ## Do not do
 
@@ -28,54 +31,109 @@ Draft PR #2 carries the OfficeKonnect Phases 0–11 upgrade. Do not merge it aft
 - Do not replace the workbook JSON contract with an XLSX-native persistence model.
 - Do not make folder moves physically relocate private Storage objects.
 - Do not describe Phase 4 explicit shares as a new privacy boundary; existing workspace document SELECT visibility remains canonical.
+- Do not directly write workflow run/step/assignment lifecycle statuses from browser code.
+- Do not review mutable `documents.content` as if it were the submitted workflow version; use `workflow_runs.document_version_id`.
 
 ## Live backend
 
 - Supabase project: `ydgsmnzcwkrlghlhtpgq`.
 - Private resource storage remains workspace-first.
 - Deployed signing Edge Functions remain `signing-actions`, `signing-external`, `signing-finalize`.
-- Phase 4 migrations are applied through:
+- Phase 4 organization migrations are applied:
   - `20260818051912_phase_4_files_templates_workspace_organization`
   - `20260818052526_phase_4_folder_hierarchy_cycle_guard`
-- New Phase 4 organization relations: `workspace_folders`, `document_folder_items`, `document_favorites`, `document_shares`.
-- RLS is enabled on all four new relations.
-- `list_workspace_member_directory` is the membership-checked directory RPC used by the explicit-share picker.
+- Workflow foundation already exists in recovered live migrations; no new Phase 5 migration was required.
 
 ## Canonical document/file/template contracts
 
 - `documents` is the current-state record for native documents, uploaded files and spreadsheets.
-- `document_versions` is the immutable version ledger.
+- `document_versions` is the immutable version ledger and the workflow submission snapshot source.
 - `document_templates` is the reusable native-document/spreadsheet template table.
 - `documents.template_id` links created documents back to their source template.
 - `workspace_folders` and `document_folder_items` organize document identities without moving binaries.
 - `document_favorites` is user-specific.
-- `document_shares` is workspace-internal and currently constrained to `view`.
-- uploaded-file duplicate must copy the real private Storage object and create a fresh document/version record.
-- Mail Center email templates remain separate; do not fold them into document templates.
+- `document_shares` is workspace-internal and constrained to `view`.
+- Uploaded-file duplicate must copy the real private Storage object and create a fresh document/version record.
+- Mail Center email templates remain separate.
 
-## Phase 4 implementation surfaces
+## Canonical workflow contracts
 
-- `/dashboard/files` — real files/folders/favourites/shared/archive/Trash workspace.
-- `/dashboard/templates` — real reusable document/spreadsheet template workspace.
-- `src/lib/files.functions.ts` — authenticated folder, favourite, share, member-directory and uploaded-file duplicate operations.
-- `src/lib/document-templates.functions.ts` — save/use/duplicate/update document-template lifecycle.
-- `src/lib/templates.ts` — canonical generic template categories and structured-content summaries.
-- `docs/PHASE4.md` — detailed Phase 4 architecture, security and limitations.
+Workflow relations:
 
-## Phase 4 security invariants
+- `workflow_templates`
+- `workflow_template_steps`
+- `workflow_runs`
+- `workflow_steps`
+- `workflow_step_assignees`
+- `workflow_decisions`
+- `workflow_comments`
+- `workflow_events`
+- `workflow_work_queue`
 
-- no duplicate document or binary store;
-- no public Storage path introduced;
-- folder hierarchy cycles are rejected server-side;
-- explicit shares require an existing member of the same workspace and are view-only;
-- member-directory RPC verifies workspace membership;
-- template creation/management is constrained by workspace membership plus owner/admin RLS;
+Lifecycle/comment RPCs:
+
+- `start_document_workflow`
+- `submit_workflow_decision`
+- `resubmit_document_workflow`
+- `reassign_workflow_assignment`
+- `cancel_document_workflow`
+- `resolve_workflow_comment`
+- `update_workflow_comment`
+
+Workflow state remains server-authoritative. Starting a workflow creates an immutable `document_versions` snapshot. Decisions operate on that submission until a controlled resubmission creates another immutable version and increments `workflow_revision`.
+
+## Phase 5 implementation surfaces
+
+- `/dashboard/workflows` — workflow runs plus owner/admin versioned template builder.
+- `/dashboard/workflows/$runId` — immutable submitted-version review workspace, decisions, comments, reassignment, cancellation and resubmission.
+- `/dashboard/approvals` — current-user work queue over `workflow_work_queue` plus recent immutable decisions.
+- `src/lib/workflows.ts` — canonical workflow types, decision rules, queue classification and template validation.
+- `src/lib/workflows.functions.ts` — authenticated application wrappers over existing RLS/RPC contracts.
+- `src/components/workflow/workflow-snapshot.tsx` — immutable native/sheet/uploaded-file review rendering.
+- `src/lib/workflows.test.ts` — workflow contract regression tests.
+- `docs/PHASE5.md` — full Phase 5 architecture/security/validation record.
+
+## Phase 5 security invariants
+
+- no replacement workflow state machine;
+- no direct client run/step/assignment status writes;
+- workflow start, decision, resubmit, reassign and cancel use existing RPCs;
+- submitted review content always comes from the immutable version referenced by the run;
+- working document edits remain separate and only enter review through `resubmit_document_workflow`;
+- `workflow_work_queue` is already auth-scoped to the current user's pending active assignment;
+- comments remain protected by existing RLS/RPC rules;
+- all eight workflow state tables retain RLS;
+- no fake workflow data was seeded;
 - browser continues to use publishable credentials only.
 
 ## Validation checkpoint
 
-Clean Phase 4 source passed repository parity, frozen `bun ci`, ESLint, TypeScript, **19 Bun tests / 0 failures**, and production build in Upgrade Validation run `32103495621`. Final documentation head must receive the same canonical gate before Phase 4 is closed.
+Clean Phase 5 source checkpoint before documentation: `556a605457f7f6a033e2f2d89fc50a7b2c18a993`.
 
-## Phase 5 focus
+Upgrade Validation run `32105437719` passed:
 
-Do not rebuild workflows. Use the existing Phase 4/5 backend state machine and tables: `workflow_templates`, `workflow_template_steps`, `workflow_runs`, `workflow_steps`, `workflow_step_assignees`, `workflow_decisions`, `workflow_comments`, and `workflow_events`. Build the production workflow builder, work queue, immutable submitted-version review, Approve/Request Changes/Reject/Acknowledge actions, comments, revision/resubmission and optimistic-concurrency UX over the existing RPC/security contracts.
+- repository parity;
+- frozen `bun ci`;
+- ESLint with 0 errors;
+- TypeScript;
+- **24 Bun tests / 0 failures**, 83 expectations across 6 files;
+- production build.
+
+The final documentation head receives the same read-only gate before Phase 5 is formally closed.
+
+## Phase 6 focus
+
+Do not rebuild signing. Reuse the already hardened backend:
+
+- `signing_requests`
+- `signing_participants`
+- `signing_fields`
+- `signing_tokens`
+- `signing_events`
+- `signing_certificates`
+- private external signing sessions
+- `signing-actions`
+- `signing-external`
+- `signing-finalize`
+
+Phase 6 should replace the obsolete frontend signing path with the production signing dashboard/status buckets, preparation workspace, participant configuration and ordering, normalized drag/resize fields, internal signer UX, external raw-token exchange/session flow, signature/initial/text/date completion, sequential/parallel behavior, finalization, signed PDF access, certificate access and audit timeline. Preserve the existing token/session/hash/immutability/finalization contracts exactly.
