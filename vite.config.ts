@@ -16,11 +16,13 @@ export default defineConfig({
   vite: {
     resolve: {
       alias: {
-        // The legacy react-signature-canvas package can break TanStack Start SSR
-        // through its CommonJS/TypeScript helper chain. Keep the same runtime API
-        // while resolving every existing import to our SSR-safe local canvas.
+        // Keep legacy browser-only interaction packages out of the TanStack Start SSR graph.
+        // OfficeKonnect supplies the small runtime API surface it actually uses.
         "react-signature-canvas": fileURLToPath(
           new URL("./src/components/signature-canvas.tsx", import.meta.url),
+        ),
+        "react-rnd": fileURLToPath(
+          new URL("./src/components/resizable-draggable.tsx", import.meta.url),
         ),
       },
     },
