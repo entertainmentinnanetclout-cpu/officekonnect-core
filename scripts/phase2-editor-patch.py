@@ -43,10 +43,18 @@ s = replace_once(
     '''    const id = node.dataset.blockId || blockId();\n    node.dataset.blockId = id;\n    const tag = node.tagName;\n    const indent = elementIndent(node);\n''',
     "stable block id",
 )
-aligned = "        align: elementAlignment(node),\n"
-if s.count(aligned) != 3:
-    raise SystemExit(f"alignment serializers: expected three blocks, found {s.count(aligned)}")
-s = s.replace(aligned, aligned + "        indent,\n")
+indented_align = "        align: elementAlignment(node),\n"
+if s.count(indented_align) != 2:
+    raise SystemExit(
+        f"heading/quote alignment serializers: expected two blocks, found {s.count(indented_align)}"
+    )
+s = s.replace(indented_align, indented_align + "        indent,\n")
+s = replace_once(
+    s,
+    "      align: elementAlignment(node),\n",
+    "      align: elementAlignment(node),\n      indent,\n",
+    "paragraph indent serializer",
+)
 s = replace_once(
     s,
     '''        items: Array.from(node.querySelectorAll(":scope > li")).map((item) =>\n          sanitizeInlineHtml(item.innerHTML),\n        ),\n''',
