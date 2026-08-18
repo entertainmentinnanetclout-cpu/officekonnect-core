@@ -1,5 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const ciChromiumExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
@@ -11,6 +13,9 @@ export default defineConfig({
     baseURL: "http://127.0.0.1:4173",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
+    ...(ciChromiumExecutable
+      ? { launchOptions: { executablePath: ciChromiumExecutable } }
+      : undefined),
   },
   projects: [
     {
