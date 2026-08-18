@@ -37,6 +37,9 @@ jobs:
       - name: Reconcile Phase 6 and 7 source
         run: python3 scripts/phase67-finalize.py
 
+      - name: Apply Phase 6 and 7 compiler fixes
+        run: python3 scripts/phase67-typescript-fixes.py
+
       - name: Format changed product source
         run: >-
           bunx prettier --write
@@ -46,6 +49,7 @@ jobs:
           src/components/signing/signing-pdf-fields.tsx
           src/components/document/native-document-editor.tsx
           src/components/spreadsheet/spreadsheet-editor.tsx
+          src/components/document/send-document-dialog.tsx
           src/routes/dashboard/signing/index.tsx
           'src/routes/dashboard/signing/$requestId/prepare.tsx'
           'src/routes/dashboard/signing/$requestId/index.tsx'
