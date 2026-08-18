@@ -112,11 +112,11 @@ Recovered workflow migrations already in the repository remain authoritative:
 - `20260727074343_phase_4_workflow_comment_integrity.sql`
 - `20260727074545_phase_4_workflow_composite_indexes.sql`
 
-## Authoritative Phase 5 validation
+## Phase 5 validation record
 
-Final Phase 5 documentation head: `6e03053138e184613088e83671f61bc9f0050cf7`.
+Validated Phase 5 documentation checkpoint: `6e03053138e184613088e83671f61bc9f0050cf7`.
 
-Upgrade Validation run `32105757849` passed on that exact head:
+Upgrade Validation run `32105757849` passed on that checkpoint:
 
 - Repository parity: **PASS**.
 - Deterministic dependency install (`bun ci`): **PASS**.
@@ -124,6 +124,8 @@ Upgrade Validation run `32105757849` passed on that exact head:
 - TypeScript (`tsc --noEmit`): **PASS**.
 - Bun regression tests: **24 passed / 0 failed**, 83 expectations across 6 files.
 - Production build: **PASS**.
+
+Documentation-only commits after this recorded checkpoint are validated by the same read-only gate before Phase 5 is formally closed; the PR/branch head, not this embedded historical SHA, is the authoritative completion head.
 
 ## Known Phase 5 limitations carried forward
 
