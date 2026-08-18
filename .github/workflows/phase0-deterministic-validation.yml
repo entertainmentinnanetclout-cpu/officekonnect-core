@@ -43,7 +43,9 @@ jobs:
         run: bun run build
       - name: Production asset budget
         run: bun run audit:performance
+      - name: Install pinned Playwright test runner
+        run: npm install --no-save --package-lock=false @playwright/test@1.62.1
       - name: Install Playwright Chromium
-        run: npx --yes @playwright/test@1.62.1 install --with-deps chromium
+        run: npx playwright install --with-deps chromium
       - name: Browser E2E
         run: bun run test:e2e
