@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "@supabase/supabase-js";
-import { PDFDocument, StandardFonts, degrees, rgb } from "pdf-lib";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { applySigningFieldsToPdf } from "../_shared/signing-pdf.ts";
 
 interface FinalizationPayload {
   request: {
@@ -228,50 +229,11 @@ Deno.serve(async (req: Request) => {
       "exports",
     ]);
     const sourceHash = await sha256Hex(sourceBytes);
-    const pdf = await PDFDocument.load(sourceBytes, { ignoreEncryption: false });
-    const font = await pdf.embedFont(StandardFonts.Helvetica);
-
-    for (const field of finalizationPayload.fields ?? []) {
-      const pageIndex = Number(field.page) - 1;
-      if (!Number.isInteger(pageIndex) || pageIndex < 0 || pageIndex >= pdf.getPageCount()) {
-        throw new Error(`Signing field ${field.id} references an invalid page`);
-      }
-      const page = pdf.getPage(pageIndex);
-      const { width, height } = page.getSize();
-      const x = Number(field.x) * width;
-      const boxWidth = Number(field.w) * width;
-      const boxHeight = Number(field.h) * height;
-      const y = height - Number(field.y) * height - boxHeight;
-      const rotation = degrees(Number(field.rotation ?? 0));
-
-      if (field.type === "signature" || field.type === "initial") {
-        if (!field.signatureStoragePath)
-          throw new Error(`Signature image missing for required field ${field.id}`);
-        const imageBytes = await downloadFromBuckets(service, field.signatureStoragePath, [
-          "signatures",
-        ]);
-        let image;
-        try {
-          image = await pdf.embedPng(imageBytes);
-        } catch {
-          image = await pdf.embedJpg(imageBytes);
-        }
-        page.drawImage(image, { x, y, width: boxWidth, height: boxHeight, rotate: rotation });
-      } else {
-        const value = String(field.value ?? "");
-        page.drawText(value, {
-          x: x + 2,
-          y: y + Math.max(2, boxHeight / 2 - 5),
-          size: Math.min(11, Math.max(7, boxHeight * 0.42)),
-          font,
-          color: rgb(0.05, 0.08, 0.13),
-          rotate: rotation,
-          maxWidth: Math.max(4, boxWidth - 4),
-        });
-      }
-    }
-
-    const finalBytes = new Uint8Array(await pdf.save());
+    const finalBytes = await applySigningFieldsToPdf(
+      sourceBytes,
+      finalizationPayload.fields ?? [],
+      (storagePath) => downloadFromBuckets(service, storagePath, ["signatures"]),
+    );
     const finalHash = await sha256Hex(finalBytes);
     const { bytes: certificateBytes, manifest } = await buildCertificate(
       finalizationPayload,
