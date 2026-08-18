@@ -16,17 +16,17 @@ export const Route = createFileRoute("/")({
   component: LandingPage,
   head: () => ({
     meta: [
-      { title: "OfficeKonnect — Documents, Signatures & Bulk Email for Modern Teams" },
+      { title: "OfficeKonnect — The connected workspace for modern offices" },
       {
         name: "description",
         content:
-          "OfficeKonnect is the all-in-one workspace for smart documents, legally binding e-signatures, branded letterheads, personalised bulk email and voice-to-text — built for productive offices.",
+          "OfficeKonnect brings documents, Sheets, files, workflows, approvals, e-signatures, tasks, calendar, search, notifications and office communication into one secure workspace.",
       },
       { property: "og:title", content: "OfficeKonnect — One workspace for every office task" },
       {
         property: "og:description",
         content:
-          "Documents, signatures, letterheads, bulk email, contacts and voice notes — unified, secure, and fast.",
+          "Documents, Sheets, workflows, approvals, e-signatures, tasks, search and office communication — unified in one secure workspace.",
       },
     ],
   }),
@@ -41,38 +41,37 @@ const modules = [
   {
     icon: PenTool,
     name: "E-Signatures",
-    desc: "Request and apply legally binding signatures with full audit trails and field placement.",
+    desc: "Request and apply signatures with full audit trails and field placement.",
   },
   {
     icon: Mail,
     name: "Mail Center",
-    desc: "Send personalised bulk campaigns via Brevo with live open, click and bounce analytics.",
+    desc: "Send personalised bulk campaigns via configured providers and track recorded delivery activity.",
   },
   {
     icon: Users,
     name: "Contacts & Groups",
-    desc: "Import, segment and sync contacts. Build the right list for every campaign.",
+    desc: "Import, segment and organise contacts. Build the right list for every campaign.",
   },
   {
     icon: Mic,
     name: "Voice Notes",
-    desc: "Record meetings on any device. Get transcripts in seconds with Whisper-grade accuracy.",
+    desc: "Record meetings on supported devices and manage transcription through configured integrations.",
   },
   {
     icon: Shield,
     name: "Workspace Security",
-    desc: "Row-level security, role-based access, audit logs and encrypted integrations by default.",
+    desc: "Row-level security, role-based access, audit logs and server-side integration boundaries by default.",
   },
 ];
 
 function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Nav */}
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <Link to="/" className="flex items-center gap-2">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground font-bold">
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary font-bold text-primary-foreground">
               O
             </div>
             <span className="text-base font-semibold tracking-tight">OfficeKonnect</span>
@@ -99,7 +98,6 @@ function LandingPage() {
         </div>
       </header>
 
-      {/* Hero */}
       <section className="relative overflow-hidden">
         <div
           aria-hidden
@@ -135,9 +133,9 @@ function LandingPage() {
             </div>
             <ul className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
               {[
-                "Free workspace included",
-                "No credit card required",
-                "Brevo & OpenAI ready",
+                "Workspace included",
+                "Real Supabase identity",
+                "Provider-ready integrations",
                 "Workspace-level security",
               ].map((item) => (
                 <li key={item} className="flex items-center gap-2">
@@ -147,7 +145,6 @@ function LandingPage() {
             </ul>
           </div>
 
-          {/* Mock product card */}
           <div className="relative">
             <div
               aria-hidden
@@ -160,24 +157,24 @@ function LandingPage() {
             />
             <div className="rounded-2xl border border-border bg-card p-3 shadow-xl">
               <div className="rounded-xl bg-muted/40 p-4">
-                <div className="mb-4 flex items-center gap-1.5">
+                <div className="mb-4 flex items-center gap-1.5" aria-hidden="true">
                   <span className="h-2.5 w-2.5 rounded-full bg-destructive/60" />
                   <span className="h-2.5 w-2.5 rounded-full bg-warning/60" />
                   <span className="h-2.5 w-2.5 rounded-full bg-success/60" />
                 </div>
                 <div className="grid gap-3">
-                  {modules.slice(0, 4).map((m) => (
+                  {modules.slice(0, 4).map((module) => (
                     <div
-                      key={m.name}
+                      key={module.name}
                       className="flex items-center justify-between rounded-lg border border-border bg-background px-3 py-3"
                     >
                       <div className="flex min-w-0 items-center gap-3">
                         <div className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
-                          <m.icon className="h-4 w-4" />
+                          <module.icon className="h-4 w-4" />
                         </div>
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-medium">{m.name}</p>
-                          <p className="truncate text-xs text-muted-foreground">{m.desc}</p>
+                          <p className="truncate text-sm font-medium">{module.name}</p>
+                          <p className="truncate text-xs text-muted-foreground">{module.desc}</p>
                         </div>
                       </div>
                       <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -190,7 +187,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Features */}
       <section id="features" className="border-t border-border bg-muted/30">
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
           <div className="max-w-2xl">
@@ -198,31 +194,32 @@ function LandingPage() {
               Everything in one place
             </p>
             <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-              Six modules. Zero context switching.
+              Connected modules. One workspace.
             </h2>
             <p className="mt-3 text-muted-foreground">
-              OfficeKonnect replaces the scattered tools your team uses today — with shared data,
-              shared permissions and a consistent UI.
+              OfficeKonnect connects office tools through shared workspace data, permissions and a
+              consistent interface.
             </p>
           </div>
           <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {modules.map((m) => (
+            {modules.map((module) => (
               <div
-                key={m.name}
+                key={module.name}
                 className="group rounded-2xl border border-border bg-card p-6 transition-shadow hover:shadow-md"
               >
                 <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary">
-                  <m.icon className="h-5 w-5" />
+                  <module.icon className="h-5 w-5" />
                 </div>
-                <h3 className="mt-5 text-base font-semibold">{m.name}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{m.desc}</p>
+                <h3 className="mt-5 text-base font-semibold">{module.name}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                  {module.desc}
+                </p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How */}
       <section id="how" className="border-t border-border">
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
@@ -231,35 +228,35 @@ function LandingPage() {
                 How it works
               </p>
               <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-                Set up your workspace in under a minute.
+                Start with a workspace and connect the tools you need.
               </h2>
               <p className="mt-3 text-muted-foreground">
-                Sign up, invite your team, and connect Brevo for email or OpenAI for transcription.
-                Everything else is already wired.
+                Create your account, work inside your workspace, invite your team and configure
+                optional providers from the authenticated product settings.
               </p>
             </div>
             <ol className="space-y-5">
               {[
                 {
                   t: "Create your workspace",
-                  d: "Personal workspace is provisioned automatically on sign-up.",
+                  d: "Use your authenticated OfficeKonnect identity and workspace membership.",
                 },
                 {
-                  t: "Upload or import",
-                  d: "Drop documents, import contacts via CSV, or record a voice note.",
+                  t: "Create or import",
+                  d: "Work with documents, Sheets, files, contacts and other office resources.",
                 },
                 {
-                  t: "Send, sign, ship",
-                  d: "Send a campaign, request a signature, export a transcript — all from one place.",
+                  t: "Review, approve and sign",
+                  d: "Move work through tasks, workflows, approvals and the production signing path.",
                 },
-              ].map((s, i) => (
-                <li key={s.t} className="flex gap-4 rounded-xl border border-border bg-card p-5">
-                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground font-semibold">
-                    {i + 1}
+              ].map((step, index) => (
+                <li key={step.t} className="flex gap-4 rounded-xl border border-border bg-card p-5">
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary font-semibold text-primary-foreground">
+                    {index + 1}
                   </div>
                   <div>
-                    <p className="font-medium">{s.t}</p>
-                    <p className="text-sm text-muted-foreground">{s.d}</p>
+                    <p className="font-medium">{step.t}</p>
+                    <p className="text-sm text-muted-foreground">{step.d}</p>
                   </div>
                 </li>
               ))}
@@ -268,7 +265,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Security */}
       <section id="security" className="border-t border-border bg-muted/30">
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
           <div className="rounded-3xl border border-border bg-card p-8 sm:p-12">
@@ -278,16 +274,16 @@ function LandingPage() {
                   <Shield className="h-3.5 w-3.5" /> Security & Privacy
                 </div>
                 <h2 className="mt-4 text-3xl font-bold tracking-tight">
-                  Built on row-level security, audit logs and encrypted integrations.
+                  Built on row-level security, authenticated workspace access and audit trails.
                 </h2>
                 <p className="mt-3 text-muted-foreground">
-                  Every workspace is isolated. Every action is logged. Every third-party token is
-                  stored encrypted. You stay in control.
+                  Workspace isolation and server-authoritative transitions remain part of the core
+                  OfficeKonnect security model.
                 </p>
               </div>
               <Button asChild size="lg">
                 <Link to="/auth/register">
-                  Start free <ArrowRight className="ml-2 h-4 w-4" />
+                  Get started <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
             </div>
@@ -295,11 +291,16 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="border-t border-border">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:px-6">
           <p>© {new Date().getFullYear()} OfficeKonnect. All rights reserved.</p>
-          <div className="flex items-center gap-5">
+          <div className="flex flex-wrap items-center justify-center gap-5">
+            <Link to="/privacy" className="hover:text-foreground">
+              Privacy
+            </Link>
+            <Link to="/terms" className="hover:text-foreground">
+              Terms
+            </Link>
             <Link to="/auth/login" className="hover:text-foreground">
               Sign in
             </Link>
