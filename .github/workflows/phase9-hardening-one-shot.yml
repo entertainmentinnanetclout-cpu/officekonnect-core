@@ -1,0 +1,109 @@
+name: Phase 9 Hardening Patch
+
+on:
+  push:
+    branches: [phase-0-canonical-reconciliation]
+    paths: [.github/workflows/phase9-hardening-one-shot.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: phase-0-canonical-reconciliation
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - run: bun ci
+      - name: Apply focused product hardening
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              if old not in text:
+                  raise SystemExit(f"Expected snippet not found in {path}: {old[:100]!r}")
+              p.write_text(text.replace(old, new))
+
+          shell = Path("src/components/officekonnect-shell.tsx")
+          text = shell.read_text()
+          text = text.replace("  Sparkles,\n", "")
+          block = '''      <div className="border-t border-slate-800 p-3">\n        <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-3">\n          <div className="flex items-center gap-2 text-xs font-medium text-slate-200">\n            <Sparkles className="h-4 w-4 text-violet-300" />\n            Upgrade programme\n          </div>\n          <p className="mt-1 text-[11px] leading-4 text-slate-500">\n            PR #2 carries Phases 0–11. Main remains untouched until release-candidate approval.\n          </p>\n        </div>\n      </div>\n'''
+          if block not in text:
+              raise SystemExit("Upgrade programme block not found")
+          text = text.replace(block, "")
+          text = text.replace(
+              'onClick={() => onMobileOpenChange(false)}\n        >\n          <X className="h-5 w-5" />',
+              'onClick={() => onMobileOpenChange(false)}\n          aria-label="Close navigation"\n        >\n          <X className="h-5 w-5" aria-hidden="true" />',
+          )
+          text = text.replace(
+              'onClick={() => onMobileOpenChange(true)}\n          >\n            <Menu className="h-5 w-5" />',
+              'onClick={() => onMobileOpenChange(true)}\n            aria-label="Open navigation"\n          >\n            <Menu className="h-5 w-5" aria-hidden="true" />',
+          )
+          text = text.replace(
+              '<Button variant="ghost" className="h-10 gap-2 px-2">',
+              '<Button variant="ghost" className="h-10 gap-2 px-2" aria-label="Open user menu">',
+          )
+          shell.write_text(text)
+
+          root = Path("src/routes/__root.tsx")
+          text = root.read_text()
+          text = text.replace("  console.error(error);\n", "")
+          text = text.replace(
+              'content: "Professional Office Productivity Platform"',
+              'content: "The connected workspace for modern offices."',
+          )
+          root.write_text(text)
+
+          settings = Path("src/routes/dashboard/settings/index.tsx")
+          text = settings.read_text()
+          text = text.replace(
+              'import { createFileRoute } from "@tanstack/react-router";',
+              'import { createFileRoute, Link } from "@tanstack/react-router";',
+          )
+          for href, label in [
+              ("/dashboard/workspace", "Manage workspace"),
+              ("/dashboard/team", "Manage team"),
+              ("/dashboard/documents", "Open Documents"),
+              ("/dashboard/documents", "Documents"),
+              ("/dashboard/sheets", "Sheets"),
+              ("/dashboard/notifications", "Open notification center"),
+              ("/dashboard/templates", "Manage templates"),
+          ]:
+              text = text.replace(f'<a href="{href}">{label}</a>', f'<Link to="{href}">{label}</Link>')
+          text = text.replace(
+              'Only integrations already connected through a real provider flow are shown here.\n          OfficeKonnect does not expose fake Connect actions.',
+              'Connected provider accounts appear here when a configured integration flow has authorized them. You can review status and disconnect existing connections.',
+          )
+          text = text.replace(
+              'description="This view reflects the real workspace subscription record. No fake upgrade/checkout action is shown until a billing checkout flow is actually configured."',
+              'description="This view reflects the current workspace subscription and linked payment-provider state."',
+          )
+          text = text.replace(
+              'Account deletion is intentionally not presented as a dead control. A production deletion\n          workflow must first define ownership transfer, retention and legal/audit behavior for\n          shared workspaces.',
+              'Account deletion is unavailable while shared-workspace ownership transfer and audit-retention requirements are enforced. You can export the account data currently available through your authenticated access.',
+          )
+          text = text.replace(
+              'onClick={() => setActiveTab(tab.id)}\n                className=',
+              'type="button"\n                onClick={() => setActiveTab(tab.id)}\n                className=',
+          )
+          text = text.replace(
+              'key={option}\n              onClick={() => {',
+              'key={option}\n              type="button"\n              onClick={() => {',
+          )
+          settings.write_text(text)
+      - name: Format focused files
+        run: bunx prettier --write src/components/officekonnect-shell.tsx src/routes/__root.tsx src/routes/dashboard/settings/index.tsx src/routes/dashboard/index.tsx scripts/check-product-hardening.mjs
+      - name: Commit patch
+        run: |
+          git config user.name "officekonnect-phase9-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add src scripts
+          git commit -m "fix(phase9): harden shell settings and root UX"
+          git push origin HEAD:phase-0-canonical-reconciliation
