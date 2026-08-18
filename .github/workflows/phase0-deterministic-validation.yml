@@ -43,7 +43,12 @@ jobs:
         run: bun run typecheck
       - name: Unit and integration tests
         run: bun run test
-      - name: Production build
+      - name: Clone-safe production build
+        env:
+          SUPABASE_URL: ""
+          SUPABASE_PUBLISHABLE_KEY: ""
+          VITE_SUPABASE_URL: ""
+          VITE_SUPABASE_PUBLISHABLE_KEY: ""
         run: bun run build
       - name: Production asset budget
         run: bun run audit:performance
@@ -59,5 +64,10 @@ jobs:
           fi
           echo "PLAYWRIGHT_CHROMIUM_EXECUTABLE=$browser" >> "$GITHUB_ENV"
           "$browser" --version
-      - name: Browser E2E
+      - name: Clone-safe browser E2E
+        env:
+          SUPABASE_URL: ""
+          SUPABASE_PUBLISHABLE_KEY: ""
+          VITE_SUPABASE_URL: ""
+          VITE_SUPABASE_PUBLISHABLE_KEY: ""
         run: bun run test:e2e
