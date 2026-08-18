@@ -176,7 +176,9 @@ export default class SignatureCanvas extends Component<SignatureCanvasProps> {
     this.finishStroke(event);
   };
 
-  private handlePointerCancel = (event: ReactPointerEvent<HTMLCanvasElement>) => {
+  private handlePointerCancel = (
+    event: ReactPointerEvent<HTMLCanvasElement>,
+  ) => {
     this.props.canvasProps?.onPointerCancel?.(event);
     this.finishStroke(event);
   };
