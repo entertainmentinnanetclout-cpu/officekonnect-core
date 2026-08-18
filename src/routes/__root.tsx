@@ -100,8 +100,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <head><HeadContent /></head>
-      <body>{children}<Scripts /></body>
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        {children}
+        <Scripts />
+      </body>
     </html>
   );
 }
@@ -119,7 +124,9 @@ function RootComponent() {
     const isDashboardPage = location.pathname.startsWith("/dashboard");
     const isExternalSigningPage = location.pathname.startsWith("/sign/");
     const isWorkspaceInvitePage = location.pathname.startsWith("/invite/");
-    const isPublicPage = ["/", "/pricing", "/privacy", "/terms", "/contact"].includes(location.pathname);
+    const isPublicPage = ["/", "/pricing", "/privacy", "/terms", "/contact"].includes(
+      location.pathname,
+    );
 
     if (user && !isWorkspaceInvitePage) {
       const pendingInvite = localStorage.getItem(PENDING_WORKSPACE_INVITE_KEY);

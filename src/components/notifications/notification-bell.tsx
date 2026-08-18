@@ -94,7 +94,9 @@ export function NotificationBell({ workspaceId }: { workspaceId: string | null }
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
           ) : notifications.length === 0 ? (
-            <p className="px-4 py-10 text-center text-sm text-muted-foreground">No notifications yet.</p>
+            <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+              No notifications yet.
+            </p>
           ) : (
             notifications.map((notification) => {
               const route = getNotificationRoute(notification);

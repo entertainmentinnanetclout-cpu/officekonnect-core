@@ -49,7 +49,9 @@ function NotificationsPage() {
     onError: (error) => toastError(error, "Could not mark notifications as read"),
   });
 
-  const unreadCount = notifications.filter((notification) => !notification.effective_read_at).length;
+  const unreadCount = notifications.filter(
+    (notification) => !notification.effective_read_at,
+  ).length;
 
   return (
     <div className="space-y-6">

@@ -31,7 +31,11 @@ function WorkspaceInvitationPage() {
   });
 
   if (isLoading) {
-    return <InviteShell><Loader2 className="h-7 w-7 animate-spin text-muted-foreground" /></InviteShell>;
+    return (
+      <InviteShell>
+        <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
+      </InviteShell>
+    );
   }
 
   if (!user) {
@@ -39,14 +43,25 @@ function WorkspaceInvitationPage() {
       <InviteShell>
         <Card className="w-full max-w-lg">
           <CardHeader className="text-center">
-            <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-slate-950 text-white dark:bg-white dark:text-slate-950"><Building2 className="h-5 w-5" /></div>
+            <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-slate-950 text-white dark:bg-white dark:text-slate-950">
+              <Building2 className="h-5 w-5" />
+            </div>
             <CardTitle className="mt-3">Workspace invitation</CardTitle>
-            <CardDescription>Sign in with the invited email address to verify and accept this secure OfficeKonnect invitation.</CardDescription>
+            <CardDescription>
+              Sign in with the invited email address to verify and accept this secure OfficeKonnect
+              invitation.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button asChild className="w-full"><Link to="/auth/login">Sign in to continue</Link></Button>
-            <Button asChild variant="outline" className="w-full"><Link to="/auth/register">Create account</Link></Button>
-            <p className="text-center text-xs text-muted-foreground">The invitation token is retained only in this browser until authentication completes.</p>
+            <Button asChild className="w-full">
+              <Link to="/auth/login">Sign in to continue</Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link to="/auth/register">Create account</Link>
+            </Button>
+            <p className="text-center text-xs text-muted-foreground">
+              The invitation token is retained only in this browser until authentication completes.
+            </p>
           </CardContent>
         </Card>
       </InviteShell>
@@ -57,15 +72,27 @@ function WorkspaceInvitationPage() {
     <InviteShell>
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
-          <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"><ShieldCheck className="h-5 w-5" /></div>
+          <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+            <ShieldCheck className="h-5 w-5" />
+          </div>
           <CardTitle className="mt-3">Accept workspace invitation</CardTitle>
-          <CardDescription>Signed in as {user.email}. OfficeKonnect will verify that this invitation belongs to your authenticated email before adding membership.</CardDescription>
+          <CardDescription>
+            Signed in as {user.email}. OfficeKonnect will verify that this invitation belongs to
+            your authenticated email before adding membership.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <Button className="w-full" onClick={() => accept.mutate()} disabled={accept.isPending}>
-            {accept.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />} Accept invitation
+            {accept.isPending ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <CheckCircle2 className="mr-2 h-4 w-4" />
+            )}{" "}
+            Accept invitation
           </Button>
-          <Button asChild variant="outline" className="w-full"><Link to="/dashboard">Go to dashboard</Link></Button>
+          <Button asChild variant="outline" className="w-full">
+            <Link to="/dashboard">Go to dashboard</Link>
+          </Button>
         </CardContent>
       </Card>
     </InviteShell>
@@ -73,5 +100,9 @@ function WorkspaceInvitationPage() {
 }
 
 function InviteShell({ children }: { children: React.ReactNode }) {
-  return <div className="flex min-h-dvh items-center justify-center bg-slate-50 px-4 dark:bg-slate-950">{children}</div>;
+  return (
+    <div className="flex min-h-dvh items-center justify-center bg-slate-50 px-4 dark:bg-slate-950">
+      {children}
+    </div>
+  );
 }

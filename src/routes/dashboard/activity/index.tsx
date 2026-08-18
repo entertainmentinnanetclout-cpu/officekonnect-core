@@ -24,7 +24,11 @@ function ActivityPage() {
   const workspace = useWorkspaceShell(user);
   const [source, setSource] = useState<SourceFilter>("all");
 
-  const { data: events = [], isLoading, refetch } = useQuery({
+  const {
+    data: events = [],
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["phase8-activity", workspace.activeWorkspaceId],
     enabled: Boolean(workspace.activeWorkspaceId),
     queryFn: () => listWorkspaceActivity(workspace.activeWorkspaceId!, 250),
@@ -96,9 +100,12 @@ function ActivityPage() {
                         <span className="text-sm text-muted-foreground">by {event.actor_name}</span>
                       </div>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {formatEntity(event.entity_type)} · {new Date(event.occurred_at).toLocaleString()}
+                        {formatEntity(event.entity_type)} ·{" "}
+                        {new Date(event.occurred_at).toLocaleString()}
                       </p>
-                      {event.source === "signing" && isObject(event.metadata) && event.metadata.eventHash ? (
+                      {event.source === "signing" &&
+                      isObject(event.metadata) &&
+                      event.metadata.eventHash ? (
                         <p className="mt-1 truncate font-mono text-[10px] text-muted-foreground">
                           Audit hash: {String(event.metadata.eventHash)}
                         </p>

@@ -216,7 +216,11 @@ export async function createOfficeWorkspace(name: string) {
 }
 
 export function getNotificationRoute(notification: WorkspaceNotification): string | null {
-  if (notification.data && typeof notification.data === "object" && !Array.isArray(notification.data)) {
+  if (
+    notification.data &&
+    typeof notification.data === "object" &&
+    !Array.isArray(notification.data)
+  ) {
     const route = (notification.data as Record<string, unknown>).route;
     if (typeof route === "string" && route.startsWith("/")) return route;
   }

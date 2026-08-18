@@ -1,6 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Copy, Loader2, MailPlus, ShieldCheck, Trash2, UserMinus, Users } from "lucide-react";
+import {
+  Check,
+  Copy,
+  Loader2,
+  MailPlus,
+  ShieldCheck,
+  Trash2,
+  UserMinus,
+  Users,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -158,7 +167,8 @@ function TeamPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Team</h1>
           <p className="text-sm text-muted-foreground">
-            Members, roles and secure invitations for {workspace.activeWorkspace?.name ?? "the active workspace"}.
+            Members, roles and secure invitations for{" "}
+            {workspace.activeWorkspace?.name ?? "the active workspace"}.
           </p>
         </div>
         {canAdminister ? (
@@ -176,11 +186,15 @@ function TeamPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             {myInvitations.map((invitation) => (
-              <div key={invitation.invitation_id} className="flex flex-col justify-between gap-3 rounded-lg border bg-background p-4 sm:flex-row sm:items-center">
+              <div
+                key={invitation.invitation_id}
+                className="flex flex-col justify-between gap-3 rounded-lg border bg-background p-4 sm:flex-row sm:items-center"
+              >
                 <div>
                   <p className="font-medium">{invitation.workspace_name}</p>
                   <p className="text-sm text-muted-foreground">
-                    Invited by {invitation.inviter_name} as {invitation.role} · expires {new Date(invitation.expires_at).toLocaleString()}
+                    Invited by {invitation.inviter_name} as {invitation.role} · expires{" "}
+                    {new Date(invitation.expires_at).toLocaleString()}
                   </p>
                 </div>
                 <Button
@@ -204,10 +218,14 @@ function TeamPage() {
       </div>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">Workspace members</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="text-base">Workspace members</CardTitle>
+        </CardHeader>
         <CardContent className="p-0">
           {membersLoading || workspace.isLoading ? (
-            <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+            <div className="flex justify-center py-16">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
           ) : members.length === 0 ? (
             <div className="py-16 text-center text-sm text-muted-foreground">No members found.</div>
           ) : (
@@ -215,33 +233,61 @@ function TeamPage() {
               {members.map((member) => {
                 const isSelf = member.user_id === user?.id;
                 const targetIsOwner = member.role === "owner";
-                const canChange = canAdminister && !isSelf && !targetIsOwner && !(currentRole === "admin" && member.role === "admin");
-                const canRemove = !targetIsOwner && (isSelf || (canAdminister && !(currentRole === "admin" && member.role === "admin")));
+                const canChange =
+                  canAdminister &&
+                  !isSelf &&
+                  !targetIsOwner &&
+                  !(currentRole === "admin" && member.role === "admin");
+                const canRemove =
+                  !targetIsOwner &&
+                  (isSelf ||
+                    (canAdminister && !(currentRole === "admin" && member.role === "admin")));
                 return (
-                  <div key={member.user_id} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center">
+                  <div
+                    key={member.user_id}
+                    className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center"
+                  >
                     <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-muted font-semibold">
                       {(member.full_name || member.email).slice(0, 1).toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">{member.full_name || member.email}{isSelf ? " (you)" : ""}</p>
+                      <p className="truncate font-medium">
+                        {member.full_name || member.email}
+                        {isSelf ? " (you)" : ""}
+                      </p>
                       <p className="truncate text-sm text-muted-foreground">{member.email}</p>
                     </div>
                     {canChange ? (
                       <Select
                         value={member.role}
-                        onValueChange={(value) => roleChange.mutate({ userId: member.user_id, role: value as InviteRole })}
+                        onValueChange={(value) =>
+                          roleChange.mutate({ userId: member.user_id, role: value as InviteRole })
+                        }
                         disabled={roleChange.isPending}
                       >
-                        <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="w-36">
+                          <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
-                          {roleOptions.map((role) => <SelectItem key={role} value={role}>{role}</SelectItem>)}
+                          {roleOptions.map((role) => (
+                            <SelectItem key={role} value={role}>
+                              {role}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     ) : (
-                      <span className="rounded-full border px-3 py-1 text-xs font-semibold uppercase text-muted-foreground">{member.role}</span>
+                      <span className="rounded-full border px-3 py-1 text-xs font-semibold uppercase text-muted-foreground">
+                        {member.role}
+                      </span>
                     )}
                     {canRemove ? (
-                      <Button variant="ghost" size="icon" onClick={() => setRemoveTarget(member)} title={isSelf ? "Leave workspace" : "Remove member"}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setRemoveTarget(member)}
+                        title={isSelf ? "Leave workspace" : "Remove member"}
+                      >
                         <UserMinus className="h-4 w-4 text-red-600" />
                       </Button>
                     ) : null}
@@ -255,17 +301,28 @@ function TeamPage() {
 
       {canAdminister && pending.length > 0 ? (
         <Card>
-          <CardHeader><CardTitle className="text-base">Pending invitations</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle className="text-base">Pending invitations</CardTitle>
+          </CardHeader>
           <CardContent className="space-y-3">
             {pending.map((invitation) => (
-              <div key={invitation.invitation_id} className="flex flex-col justify-between gap-3 rounded-lg border p-4 sm:flex-row sm:items-center">
+              <div
+                key={invitation.invitation_id}
+                className="flex flex-col justify-between gap-3 rounded-lg border p-4 sm:flex-row sm:items-center"
+              >
                 <div>
                   <p className="font-medium">{invitation.email}</p>
                   <p className="text-xs text-muted-foreground">
-                    {invitation.role} · invited by {invitation.inviter_name} · expires {new Date(invitation.expires_at).toLocaleString()}
+                    {invitation.role} · invited by {invitation.inviter_name} · expires{" "}
+                    {new Date(invitation.expires_at).toLocaleString()}
                   </p>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => revokeInvite.mutate(invitation.invitation_id)} disabled={revokeInvite.isPending}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => revokeInvite.mutate(invitation.invitation_id)}
+                  disabled={revokeInvite.isPending}
+                >
                   <Trash2 className="mr-2 h-4 w-4" /> Revoke
                 </Button>
               </div>
@@ -274,7 +331,10 @@ function TeamPage() {
         </Card>
       ) : null}
 
-      <Dialog open={inviteOpen} onOpenChange={(open) => (open ? setInviteOpen(true) : closeInvite())}>
+      <Dialog
+        open={inviteOpen}
+        onOpenChange={(open) => (open ? setInviteOpen(true) : closeInvite())}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Invite workspace member</DialogTitle>
@@ -290,39 +350,79 @@ function TeamPage() {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => void navigator.clipboard.writeText(issuedLink).then(() => toast.success("Invitation link copied"))}
+                  onClick={() =>
+                    void navigator.clipboard
+                      .writeText(issuedLink)
+                      .then(() => toast.success("Invitation link copied"))
+                  }
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">Copy this link now. OfficeKonnect does not persist the raw bearer token.</p>
+              <p className="text-xs text-muted-foreground">
+                Copy this link now. OfficeKonnect does not persist the raw bearer token.
+              </p>
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="space-y-2"><Label>Email address</Label><Input type="email" value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} /></div>
+              <div className="space-y-2">
+                <Label>Email address</Label>
+                <Input
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(event) => setInviteEmail(event.target.value)}
+                />
+              </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Role</Label>
-                  <Select value={inviteRole} onValueChange={(value) => setInviteRole(value as InviteRole)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{roleOptions.map((role) => <SelectItem key={role} value={role}>{role}</SelectItem>)}</SelectContent>
+                  <Select
+                    value={inviteRole}
+                    onValueChange={(value) => setInviteRole(value as InviteRole)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roleOptions.map((role) => (
+                        <SelectItem key={role} value={role}>
+                          {role}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Expires in</Label>
                   <Select value={inviteDays} onValueChange={setInviteDays}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent><SelectItem value="1">1 day</SelectItem><SelectItem value="7">7 days</SelectItem><SelectItem value="14">14 days</SelectItem><SelectItem value="30">30 days</SelectItem></SelectContent>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 day</SelectItem>
+                      <SelectItem value="7">7 days</SelectItem>
+                      <SelectItem value="14">14 days</SelectItem>
+                      <SelectItem value="30">30 days</SelectItem>
+                    </SelectContent>
                   </Select>
                 </div>
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={closeInvite}>Close</Button>
+            <Button variant="outline" onClick={closeInvite}>
+              Close
+            </Button>
             {!issuedLink ? (
-              <Button onClick={() => createInvite.mutate()} disabled={!inviteEmail.trim() || createInvite.isPending}>
-                {createInvite.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MailPlus className="mr-2 h-4 w-4" />}
+              <Button
+                onClick={() => createInvite.mutate()}
+                disabled={!inviteEmail.trim() || createInvite.isPending}
+              >
+                {createInvite.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <MailPlus className="mr-2 h-4 w-4" />
+                )}
                 Create invitation
               </Button>
             ) : null}
@@ -333,7 +433,9 @@ function TeamPage() {
       <Dialog open={Boolean(removeTarget)} onOpenChange={(open) => !open && setRemoveTarget(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{removeTarget?.user_id === user?.id ? "Leave workspace?" : "Remove member?"}</DialogTitle>
+            <DialogTitle>
+              {removeTarget?.user_id === user?.id ? "Leave workspace?" : "Remove member?"}
+            </DialogTitle>
             <DialogDescription>
               {removeTarget?.user_id === user?.id
                 ? "You will lose access to this workspace. The owner cannot leave through this action."
@@ -341,9 +443,19 @@ function TeamPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRemoveTarget(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={() => removeTarget && removeMember.mutate(removeTarget)} disabled={removeMember.isPending}>
-              {removeMember.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserMinus className="mr-2 h-4 w-4" />}
+            <Button variant="outline" onClick={() => setRemoveTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => removeTarget && removeMember.mutate(removeTarget)}
+              disabled={removeMember.isPending}
+            >
+              {removeMember.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <UserMinus className="mr-2 h-4 w-4" />
+              )}
               Confirm
             </Button>
           </DialogFooter>
@@ -356,6 +468,16 @@ function TeamPage() {
 function Summary({ label, value }: { label: string; value: string | number }) {
   const Icon = label === "Your role" ? ShieldCheck : Users;
   return (
-    <Card><CardContent className="flex items-center gap-3 p-4"><div className="grid h-10 w-10 place-items-center rounded-xl bg-muted"><Icon className="h-4 w-4" /></div><div><p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p><p className="text-lg font-semibold capitalize">{value}</p></div></CardContent></Card>
+    <Card>
+      <CardContent className="flex items-center gap-3 p-4">
+        <div className="grid h-10 w-10 place-items-center rounded-xl bg-muted">
+          <Icon className="h-4 w-4" />
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+          <p className="text-lg font-semibold capitalize">{value}</p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
