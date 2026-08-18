@@ -16,7 +16,7 @@
     "audit:product": "node scripts/check-product-hardening.mjs",
     "audit:security": "node scripts/check-security-boundaries.mjs",
     "audit:performance": "node scripts/check-build-budget.mjs",
-    "test:e2e": "npx --yes @playwright/test@1.62.1 test",
+    "test:e2e": "playwright test",
     "check": "bun run phase0:parity && bun run lint && bun run audit:product && bun run audit:security && bun run typecheck && bun run test && bun run build && bun run audit:performance",
     "format": "prettier --write ."
   },
