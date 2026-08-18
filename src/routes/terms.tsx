@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, FileCheck2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/terms" as "/")({
+export const Route = createFileRoute("/terms")({
   component: TermsPage,
   head: () => ({
     meta: [
