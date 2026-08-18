@@ -128,18 +128,53 @@ describe("OfficeKonnect Phase 6 signing contract", () => {
   });
 
   test("prevents CC recipients from owning fields", () => {
-    const cc = participant({ role: "cc" });
-    expect(validateSigningDraftConfiguration([cc], [field({ participant_id: cc.id })])).toContain("CC recipients cannot own");
+    const signer = participant();
+    const cc = participant({
+      id: "00000000-0000-0000-0000-000000000012",
+      user_id: null,
+      email: "copy@example.com",
+      full_name: "Copy Recipient",
+      role: "cc",
+      order_index: 1,
+    });
+    const signerField = field();
+    const ccField = field({
+      id: "00000000-0000-0000-0000-000000000021",
+      participant_id: cc.id,
+    });
+    expect(validateSigningDraftConfiguration([cc, signer], [ccField, signerField])).toContain(
+      "CC recipients cannot own",
+    );
   });
 
   test("enforces sequential signing order", () => {
-    expect(isSigningParticipantEligible(request({ signing_order: "sequential", current_order_index: 0 }), participant({ order_index: 1 }))).toBeFalse();
-    expect(isSigningParticipantEligible(request({ signing_order: "sequential", current_order_index: 1 }), participant({ order_index: 1 }))).toBeTrue();
+    expect(
+      isSigningParticipantEligible(
+        request({ signing_order: "sequential", current_order_index: 0 }),
+        participant({ order_index: 1 }),
+      ),
+    ).toBeFalse();
+    expect(
+      isSigningParticipantEligible(
+        request({ signing_order: "sequential", current_order_index: 1 }),
+        participant({ order_index: 1 }),
+      ),
+    ).toBeTrue();
   });
 
   test("rejects expired, revoked and terminal signing assignments", () => {
-    expect(isSigningParticipantEligible(request({ expires_at: new Date(Date.now() - 1_000).toISOString() }), participant())).toBeFalse();
-    expect(isSigningParticipantEligible(request(), participant({ access_revoked_at: new Date().toISOString() }))).toBeFalse();
+    expect(
+      isSigningParticipantEligible(
+        request({ expires_at: new Date(Date.now() - 1_000).toISOString() }),
+        participant(),
+      ),
+    ).toBeFalse();
+    expect(
+      isSigningParticipantEligible(
+        request(),
+        participant({ access_revoked_at: new Date().toISOString() }),
+      ),
+    ).toBeFalse();
     expect(isSigningParticipantEligible(request(), participant({ status: "signed" }))).toBeFalse();
   });
 });
