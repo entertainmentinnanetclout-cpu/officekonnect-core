@@ -6,43 +6,47 @@
 
 ## Long-running PR
 
-Draft PR #2 carries the OfficeKonnect Phases 0–11 upgrade. Do not merge after an individual phase. `main` remains unchanged until the Phase 11 release-candidate gate is complete.
+Draft PR #2 carries the complete OfficeKonnect Phases 0–11 upgrade. **Do not merge yet.** `main` must remain unchanged until Phase 11 release-candidate, deployment-platform, security and end-to-end QA all pass.
 
-Vercel/deployment-platform validation is intentionally deferred until Phase 11. Do not use Vercel status as a Phase 9–10 acceptance gate unless the user explicitly changes this instruction.
+Vercel/deployment-platform validation is intentionally deferred until Phase 11.
 
 ## Current status
 
 - Phase 0 — Canonical reconciliation: completed.
-- Phase 1 — Development identity and application shell: completed.
-- Phase 2 — Documents, native editor and PDF engine: completed.
+- Phase 1 — Development identity/application shell: completed.
+- Phase 2 — Documents/native editor/PDF: completed.
 - Phase 3 — OfficeKonnect Sheets: completed.
-- Phase 4 — Files and Templates: completed.
-- Phase 5 — Workflows and Approvals: completed.
+- Phase 4 — Files/Templates: completed.
+- Phase 5 — Workflows/Approvals: completed.
 - Phase 6 — Production E-Signatures: completed.
-- Phase 7 — Tasks, Calendar and Global Search: completed.
-- Phase 8 — Notifications, Activity, Team, Workspace and Settings: completed and validated.
-- **Next: Phase 9 — Product-wide UX and Route Hardening.**
+- Phase 7 — Tasks/Calendar/Global Search: completed.
+- Phase 8 — Notifications/Activity/Team/Workspace/Settings: completed and validated.
+- Phase 9 — Product-wide UX/route hardening: completed and validated.
+- Phase 10 — Security/performance/automated testing/CI: completed, live-backend reconciled and validated.
+- **Next: Phase 11 — Release Candidate and Documentation.**
 
 ## Do not do
 
 - Do not reset production.
+- Do not merge Draft PR #2 before Phase 11 passes.
 - Do not create replacement document, spreadsheet, file, template, workflow, signing, task, calendar, search, role, notification, audit, tenancy or storage engines.
-- Do not weaken RLS to make frontend code work.
-- Do not expose service-role credentials to the browser.
+- Do not weaken RLS to make client code work.
+- Do not expose service-role credentials to browser-capable source.
 - Do not delete Mail, Contacts or Voice.
-- Do not mutate/squash historical migrations.
-- Do not replace the workbook JSON persistence model with XLSX-native persistence.
+- Do not mutate/squash historical applied migrations.
+- Do not replace workbook JSON persistence with XLSX-native persistence.
 - Do not physically relocate private Storage binaries during ordinary folder moves.
 - Do not directly write workflow/signing lifecycle states owned by RPCs/Edge Functions.
 - Do not review mutable document content as a submitted workflow version.
 - Do not reintroduce `signing-public.functions.ts`.
-- Do not retain external signing raw tokens after session exchange.
-- Do not persist derived task/workflow/signing dates into `calendar_events`.
-- Do not build a duplicate search-copy database/index.
-- Do not grant anonymous execution to authenticated application SECURITY DEFINER RPCs.
-- Do not store raw workspace invitation bearer tokens in Postgres or persistent browser storage.
-- Do not introduce fake Connect, upgrade/checkout, account-delete or preference controls whose backend behavior does not exist.
-- Do not remove integrity/relationship indexes solely because low-traffic advisor statistics say unused.
+- Do not retain raw external-signing invitations after exchange.
+- Do not store raw workspace invitation tokens in Postgres or persistent browser storage.
+- Do not duplicate derived task/workflow/signing dates into `calendar_events`.
+- Do not create a duplicate search-copy database/index.
+- Do not grant anonymous execution to authenticated application RPCs.
+- Do not introduce fake Connect/checkout/account-delete/preferences or fabricated KPIs.
+- Do not remove integrity/relationship/future-scale indexes solely because low-traffic advisor statistics mark them unused.
+- Do not leave temporary write/autofix workflows in permanent CI.
 
 ## Live backend
 
@@ -50,27 +54,35 @@ Supabase project: `ydgsmnzcwkrlghlhtpgq`.
 
 Private resource Storage remains workspace-first.
 
-### Phase 4 migrations
+### Applied upgrade migrations of note
+
+Phase 4:
 
 - `20260818051912_phase_4_files_templates_workspace_organization`
 - `20260818052526_phase_4_folder_hierarchy_cycle_guard`
 
-### Phase 7 migrations
+Phase 7:
 
 - `20260818062157_phase_7_tasks_calendar_search`
 - `20260818080155_phase_7_rpc_execute_acl_hardening`
 
-### Phase 8 migrations
+Phase 8:
 
 - `20260818082337_phase_8_notifications_team_workspace_activity`
 - `20260818082454_phase_8_workspace_invitation_directory`
 - `20260818084738_phase_8_activity_workspace_identity_hardening`
 
+Phase 10:
+
+- `20260818101750_phase_10_files_fk_covering_indexes`
+
 ### Live signing Edge Functions
 
 - `signing-actions` — ACTIVE, JWT required.
-- `signing-external` — ACTIVE, JWT disabled intentionally for custom invitation/session authentication.
-- `signing-finalize` — ACTIVE version 2, JWT required.
+- `signing-external` — ACTIVE, JWT intentionally disabled for its custom invitation/session exchange contract.
+- `signing-finalize` — **ACTIVE version 3, JWT required**.
+
+The version 3 finalizer consumes the same `supabase/functions/_shared/signing-pdf.ts` renderer exercised by Phase 10's deterministic real three-page PDF integration tests.
 
 ## Canonical product contracts
 
@@ -82,7 +94,7 @@ Private resource Storage remains workspace-first.
 - `workspace_folders` + `document_folder_items` — relational organization only.
 - `document_favorites` — user-specific.
 - `document_shares` — workspace-internal view markers.
-- Workbook persistence remains `{kind:"workbook",schemaVersion:1,...}`.
+- workbook persistence remains `{kind:"workbook",schemaVersion:1,...}`.
 
 ### Workflows
 
@@ -94,126 +106,130 @@ Lifecycle/comment/reassignment/cancellation/resubmission RPCs remain authoritati
 
 Canonical relations remain `signing_requests`, `signing_participants`, `signing_fields`, `signing_tokens`, `signing_events`, `signing_certificates` and private signing sessions.
 
-External raw tokens are exchange-only; active external signing uses short-lived `sessionStorage` session tokens. `signing-finalize` remains the only completed-PDF/certificate generator.
+External raw tokens are exchange-only. Active external signing uses short-lived `sessionStorage` sessions. `signing-finalize` remains the only completed-PDF/certificate generator.
 
 ### Tasks / Calendar / Search
 
 - `tasks` remains the lightweight task table.
 - `calendar_events` stores manual events only; operational dates are derived.
-- `search_workspace_objects` remains the canonical membership-checked global-search RPC.
-- anonymous search/directory RPC execution remains revoked.
+- `search_workspace_objects` remains the membership-checked Global Search RPC.
 
-## Canonical Phase 8 contracts
+### Notifications / Activity / Team / Workspace
 
-### Notifications
+- `notifications` remains canonical; `notification_receipts` stores per-user broadcast read state only.
+- `list_workspace_activity` aggregates `activity_logs`, `workflow_events`, `signing_events`; no duplicate consolidated activity table.
+- `workspace_members` remains actual membership; `workspace_invitations` is pending invitation state only.
+- workspace invitation raw tokens are hash-only server-side and session-scoped in browser continuation.
+- `workspaces`, `profiles.default_workspace_id` and `subscriptions` remain canonical tenancy/subscription state.
 
-- `notifications` remains the canonical event row.
-- `notification_receipts` exists only for per-user read state of broadcast rows.
-- Direct notification `read_at` is not migrated into a duplicate table.
-- Canonical RPCs: list, unread count, mark read, mark all read.
-- Surfaces: header `NotificationBell` and `/dashboard/notifications`.
+## Phase 9 hardening checkpoint
 
-### Activity
+Code checkpoint:
 
-- No duplicate consolidated activity table.
-- `list_workspace_activity` aggregates `activity_logs`, `workflow_events`, `signing_events`.
-- owner/admin gets workspace view; ordinary members get own actor-scoped view.
-- audit triggers cover tasks/calendar/templates/members/workspaces/invitations.
-- `log_activity()` special-cases `workspaces` so the row id is the tenant scope.
-- Surface: `/dashboard/activity`.
-
-### Team
-
-- `workspace_members` and `workspace_role` remain canonical.
-- `workspace_invitations` is pending state only.
-- raw token is generated server-side, returned once, SHA-256 hash stored.
-- browser auth continuation uses `sessionStorage` and clears token after success.
-- acceptance verifies authenticated profile email.
-- owner cannot be invited/changed/removed through ordinary member-management actions.
-- admin cannot manage another admin.
-- Surfaces: `/dashboard/team`, `/invite/$token`.
-
-### Workspace
-
-- `workspaces`, memberships, default workspace and subscriptions remain canonical.
-- `create_workspace` atomically creates workspace + owner membership + free subscription + default workspace.
-- Surface: `/dashboard/workspace`.
-
-### Settings
-
-The completed Settings page exposes only real behavior:
-
-- profile/avatar;
-- workspace/team links;
-- actual document/PDF module behavior;
-- notification state;
-- reusable signatures;
-- template state;
-- Auth password/session actions;
-- persisted theme preference;
-- actual integrations with disconnect;
-- actual subscription state without fake checkout;
-- non-secret developer identifiers;
-- personal-data export.
-
-Disabled/fake account deletion was removed pending an explicit retention/ownership/audit deletion contract.
-
-## Security/advisor interpretation
-
-All new Phase 8 public application RPCs revoke anonymous execution. Authenticated execution is intentional for the SECURITY DEFINER functions because they implement the controlled application transaction boundary and perform `auth.uid()`, membership, role and/or invited-email checks internally.
-
-The `signing_tokens` RLS/no-direct-policy notice is intentional. Leaked-password protection and inherited RLS planner/multiple-policy warnings belong to Phase 10 security/performance hardening.
-
-Low/no-traffic unused-index notices are not evidence to remove future-scale/relationship indexes.
-
-## Generated types / repository hygiene
-
-The repository generated Supabase types include Phase 8 tables/RPCs.
-
-Temporary write workflows used to synchronize route-tree generation, scoped formatting and generated type reconciliation were deleted after use. Do not reintroduce them as permanent CI.
-
-## Production data integrity
-
-No fake Phase 8 rows were seeded during completion:
-
-- notification receipts: 0
-- workspace invitations: 0
-- notifications: 0
-
-## Final Phase 8 validation checkpoint
-
-Validated source/documentation head:
-
-`3b0082f5c9a8f4a0d0b3039636a4d40c59a5e883`
+`42c4dbd3e4c66f0570ec19c5ad6246bc39e3bb64`
 
 Upgrade Validation:
 
-`32118737416`
+`32125480383`
 
-Passed:
+Phase 9 removed fabricated dashboard metrics/dead controls/internal release language, hardened internal navigation and accessibility, and established permanent `scripts/check-product-hardening.mjs`.
 
-- repository parity;
+See `docs/PHASE9.md`.
+
+## Phase 10 security/performance/testing contract
+
+### Permanent audits
+
+- `scripts/check-product-hardening.mjs`
+- `scripts/check-security-boundaries.mjs`
+- `scripts/check-build-budget.mjs`
+
+The security audit separates server-only `.server.*` code from browser-capable source and verifies service-role, environment, session-token, development-session and external-signing boundaries.
+
+### Tests
+
+Unit/integration command:
+
+```text
+bun test src tests
+```
+
+Current result: **42/42 pass**.
+
+`tests/signing-finalization-pdf.integration.test.ts` creates a deterministic real three-page PDF and exercises the same shared renderer used by production finalization.
+
+Browser E2E:
+
+- `playwright.config.ts`
+- `e2e/public-routes.spec.ts`
+- pinned Playwright 1.62.1 CI runner
+- Chromium
+
+Current result: **4/4 pass** covering landing/runtime, login, mobile auth and public Privacy/Terms routes.
+
+### Performance
+
+Per-asset budgets:
+
+- JavaScript <= 640 KiB;
+- CSS <= 150 KiB.
+
+The Phase 10 FK covering-index migration clears the Supabase `unindexed_foreign_keys` advisor category.
+
+### Permanent Upgrade Validation
+
+`.github/workflows/phase0-deterministic-validation.yml` is read-only (`contents: read`) and must stay that way unless the user explicitly authorizes another scoped reconciliation.
+
+It gates:
+
+- parity;
 - frozen `bun ci`;
-- ESLint with 0 errors and 7 inherited Fast Refresh warnings;
+- lint;
+- product audit;
+- security audit;
 - TypeScript;
-- **39 Bun tests / 0 failures**;
-- production client build;
-- production SSR build;
-- production Nitro build.
+- 42 unit/integration tests;
+- production client/SSR/Nitro build;
+- asset budget;
+- pinned Playwright/Chromium setup;
+- 4 browser E2E tests.
 
-Vercel remains intentionally deferred until Phase 11.
+Validated Phase 10 source checkpoint:
 
-## Phase 9 focus
+`ddb2edf65ef07da6d4ae5bcaa2a6129966a46c3d`
 
-Phase 9 must harden the complete product horizontally rather than add replacement systems:
+Upgrade Validation:
 
-- audit all user-facing actions for dead/no-op behavior;
-- verify every navigation/route/deep link and route parameter;
-- remove remaining mock/sample/placeholder/fake production state;
-- improve empty/loading/error/permission/expired/terminal states;
-- harden mobile/tablet/desktop layouts;
-- keyboard/focus/accessibility review;
-- cross-module consistency for documents, sheets, files, templates, workflows, approvals, signing, tasks, calendar, search, notifications, activity, team, workspace and settings;
-- retain current RLS/workspace/state-machine contracts.
+`32129565222`
 
-Keep Draft PR #2 open and unmerged after Phase 9.
+## Supabase advisor interpretation after Phase 10
+
+Do not claim zero warnings.
+
+Security residuals:
+
+- `signing_tokens` RLS/no-policy notice is intentional; direct client access remains prohibited.
+- authenticated `SECURITY DEFINER` warnings remain for controlled application RPCs that perform internal authentication/membership/role/invited-email checks.
+- leaked-password protection remains disabled; changing it requires a safe Auth-configuration mutation path.
+
+Performance residuals:
+
+- inherited RLS init-plan warnings remain;
+- multiple-permissive SELECT warnings remain on older tables;
+- unused-index INFO notices remain, including newly added covering indexes before meaningful production traffic exists.
+
+Do not weaken RLS or drop indexes merely to make advisor counts look cleaner.
+
+## Phase 11 focus
+
+Phase 11 should now be the release-candidate phase, not another broad feature build:
+
+1. run Vercel/deployment-platform validation;
+2. validate the canonical create → review → changes → resubmit → approve → sign → finalize journey;
+3. verify all public/auth/dashboard routes and deployment environment boundaries;
+4. recheck live Supabase migrations, Edge Functions, RLS/advisor state and generated types;
+5. complete release/handoff documentation;
+6. run the full permanent read-only CI gate on the final release head;
+7. only then decide whether Draft PR #2 can be marked ready and merged.
+
+Keep PR #2 Draft/open/unmerged until every Phase 11 release condition passes.
