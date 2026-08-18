@@ -53,7 +53,10 @@ describe("OfficeKonnect native document PDF renderer", () => {
     expect(pdf.getTitle()).toBe("Phase 2 Renderer");
     expect(pdf.getAuthor()).toBe("OfficeKonnect");
     expect(pdf.getCreator()).toBe("OfficeKonnect Native Document Engine");
-    expect(pdf.getCreationDate().toISOString()).toBe("2026-08-18T00:00:00.000Z");
+    const creationDate = pdf.getCreationDate();
+    expect(creationDate).toBeDefined();
+    if (!creationDate) throw new Error("Expected deterministic PDF creation metadata");
+    expect(creationDate.toISOString()).toBe("2026-08-18T00:00:00.000Z");
   });
 
   test("honors Letter landscape page dimensions", async () => {
