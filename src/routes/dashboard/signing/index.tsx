@@ -9,10 +9,13 @@ import {
   Plus,
   Search,
   ShieldCheck,
+  Trash2,
+  UserPlus,
   Users,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { OfficeKonnectAccountPicker } from "@/components/signing/officekonnect-account-picker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -36,20 +39,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { toastError } from "@/lib/errors";
+import type { OfficeKonnectDirectoryEntry } from "@/lib/signing-account.functions";
 import { createSigningDraft } from "@/lib/signing.functions";
-import {
-  participantDisplayName,
-  signingStatusLabel,
-  type ParticipantRole,
-  type SigningParticipantInput,
-} from "@/lib/signing";
+import { signingStatusLabel, type ParticipantRole } from "@/lib/signing";
 
 export const Route = createFileRoute("/dashboard/signing/")({ component: SigningDashboard });
 
 type RequestRow = Tables<"signing_requests">;
 type ParticipantRow = Tables<"signing_participants">;
 
-type DraftParticipant = SigningParticipantInput & { key: string };
+type DraftParticipant = {
+  key: string;
+  entry: OfficeKonnectDirectoryEntry;
+  role: ParticipantRole;
+};
 
 const statusTabs = [
   "all",
@@ -71,17 +74,6 @@ function statusClass(status: string) {
   return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300";
 }
 
-function blankParticipant(index: number): DraftParticipant {
-  return {
-    key: `participant-${Date.now()}-${index}`,
-    role: "signer",
-    orderIndex: index,
-    userId: null,
-    email: "",
-    fullName: "",
-  };
-}
-
 function SigningDashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -89,11 +81,13 @@ function SigningDashboard() {
   const [status, setStatus] = useState<(typeof statusTabs)[number]>("all");
   const [query, setQuery] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerRole, setPickerRole] = useState<ParticipantRole>("signer");
   const [documentId, setDocumentId] = useState("");
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [order, setOrder] = useState<"parallel" | "sequential">("parallel");
-  const [participants, setParticipants] = useState<DraftParticipant[]>([blankParticipant(0)]);
+  const [participants, setParticipants] = useState<DraftParticipant[]>([]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -111,18 +105,31 @@ function SigningDashboard() {
     queryFn: async () => {
       const { data: auth, error: authError } = await supabase.auth.getUser();
       if (authError || !auth.user) throw authError ?? new Error("Authentication required");
+      if (auth.user.is_anonymous || !auth.user.email) {
+        throw new Error("Sign in with an OfficeKonnect account to use secure e-signatures");
+      }
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("default_workspace_id")
+        .select("default_workspace_id,full_name,email,username,avatar_url")
         .eq("id", auth.user.id)
         .single();
       if (profileError) throw profileError;
       if (!profile.default_workspace_id) throw new Error("No active workspace selected");
-      return { userId: auth.user.id, workspaceId: profile.default_workspace_id };
+      return {
+        userId: auth.user.id,
+        workspaceId: profile.default_workspace_id,
+        ownEntry: {
+          user_id: auth.user.id,
+          full_name: profile.full_name,
+          email: profile.email || auth.user.email,
+          username: profile.username,
+          avatar_url: profile.avatar_url,
+        } as OfficeKonnectDirectoryEntry,
+      };
     },
   });
 
-  const { data: requests, isLoading } = useQuery({
+  const { data: requests = [], isLoading } = useQuery({
     queryKey: ["signing-requests", context?.workspaceId],
     enabled: Boolean(context?.workspaceId),
     queryFn: async () => {
@@ -136,8 +143,8 @@ function SigningDashboard() {
     },
   });
 
-  const requestIds = (requests ?? []).map((request) => request.id);
-  const { data: allParticipants } = useQuery({
+  const requestIds = requests.map((request) => request.id);
+  const { data: allParticipants = [] } = useQuery({
     queryKey: ["signing-participants-dashboard", requestIds.join(",")],
     enabled: requestIds.length > 0,
     queryFn: async () => {
@@ -151,19 +158,7 @@ function SigningDashboard() {
     },
   });
 
-  const { data: memberDirectory } = useQuery({
-    queryKey: ["signing-member-directory", context?.workspaceId, createOpen],
-    enabled: Boolean(context?.workspaceId && createOpen),
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("list_workspace_member_directory", {
-        p_workspace_id: context!.workspaceId,
-      });
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: pdfDocuments } = useQuery({
+  const { data: pdfDocuments = [] } = useQuery({
     queryKey: ["signing-pdf-documents", context?.workspaceId, createOpen],
     enabled: Boolean(context?.workspaceId && createOpen),
     queryFn: async () => {
@@ -187,7 +182,7 @@ function SigningDashboard() {
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    return (requests ?? []).filter((request) => {
+    return requests.filter((request) => {
       if (status !== "all" && request.status !== status) return false;
       if (!needle) return true;
       return (
@@ -197,37 +192,47 @@ function SigningDashboard() {
     });
   }, [requests, query, status]);
 
-  const counts = useMemo(() => {
-    const rows = requests ?? [];
-    return {
-      drafts: rows.filter((row) => row.status === "draft").length,
-      active: rows.filter((row) => row.status === "sent" || row.status === "in_progress").length,
-      complete: rows.filter((row) => row.status === "completed").length,
-      waitingOnMe: (allParticipants ?? []).filter(
+  const counts = useMemo(
+    () => ({
+      drafts: requests.filter((row) => row.status === "draft").length,
+      active: requests.filter((row) => row.status === "sent" || row.status === "in_progress").length,
+      complete: requests.filter((row) => row.status === "completed").length,
+      waitingOnMe: allParticipants.filter(
         (participant) =>
           participant.user_id === context?.userId &&
           ["pending", "viewed"].includes(participant.status),
       ).length,
-    };
-  }, [requests, allParticipants, context?.userId]);
+    }),
+    [requests, allParticipants, context?.userId],
+  );
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const normalized = participants.map((participant, index) => ({
-        ...participant,
-        orderIndex: index,
-      }));
       if (!documentId) throw new Error("Choose a PDF document");
       if (!title.trim()) throw new Error("Enter a request title");
-      if (normalized.some((participant) => !participant.userId && !participant.email?.trim()))
-        throw new Error("Every participant needs an account or email address");
+      if (!participants.some((participant) => participant.role !== "cc")) {
+        throw new Error("Add at least one registered signer or approver");
+      }
       return createDraftFn({
-        data: { documentId, title, message, signingOrder: order, participants: normalized },
+        data: {
+          documentId,
+          title,
+          message,
+          signingOrder: order,
+          participants: participants.map((participant, index) => ({
+            userId: participant.entry.user_id,
+            email: participant.entry.email,
+            fullName: participant.entry.full_name,
+            role: participant.role,
+            orderIndex: index,
+          })),
+        },
       });
     },
     onSuccess: async (result) => {
       toast.success("Signing draft created");
       setCreateOpen(false);
+      setParticipants([]);
       await queryClient.invalidateQueries({ queryKey: ["signing-requests"] });
       await navigate({
         to: "/dashboard/signing/$requestId/prepare",
@@ -237,31 +242,26 @@ function SigningDashboard() {
     onError: (error) => toastError(error, "Could not create signing draft"),
   });
 
-  const setParticipantMember = (key: string, value: string) => {
-    setParticipants((current) =>
-      current.map((participant) => {
-        if (participant.key !== key) return participant;
-        if (value === "external") return { ...participant, userId: null, email: "", fullName: "" };
-        const member = memberDirectory?.find((candidate) => candidate.user_id === value);
-        return {
-          ...participant,
-          userId: value,
-          email: member?.email ?? "",
-          fullName: member?.full_name ?? "",
-        };
-      }),
-    );
+  const addEntry = (entry: OfficeKonnectDirectoryEntry, role: ParticipantRole) => {
+    setParticipants((current) => {
+      if (current.some((participant) => participant.entry.user_id === entry.user_id)) return current;
+      return [...current, { key: crypto.randomUUID(), entry, role }];
+    });
   };
 
-  const addParticipant = () =>
-    setParticipants((current) => [...current, blankParticipant(current.length)]);
-  const removeParticipant = (key: string) =>
-    setParticipants((current) =>
-      current.length === 1 ? current : current.filter((participant) => participant.key !== key),
-    );
-
   const participantsFor = (requestId: string) =>
-    (allParticipants ?? []).filter((participant) => participant.request_id === requestId);
+    allParticipants.filter((participant) => participant.request_id === requestId);
+
+  const resetCreate = (open: boolean) => {
+    setCreateOpen(open);
+    if (!open) {
+      setDocumentId("");
+      setTitle("");
+      setMessage("");
+      setOrder("parallel");
+      setParticipants([]);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -269,7 +269,7 @@ function SigningDashboard() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">E-signatures</h1>
           <p className="text-sm text-muted-foreground">
-            Prepare, send, sign, finalize and audit legally traceable PDF signature requests.
+            Prepare, pre-sign, send and audit PDF requests between registered OfficeKonnect accounts.
           </p>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
@@ -324,235 +324,192 @@ function SigningDashboard() {
       </div>
 
       {isLoading ? (
-        <div className="flex h-48 items-center justify-center">
-          <Loader2 className="h-5 w-5 animate-spin" />
-        </div>
+        <div className="flex h-48 items-center justify-center"><Loader2 className="h-5 w-5 animate-spin" /></div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed p-12 text-center">
+        <div className="rounded-xl border border-dashed p-10 text-center">
           <FileSignature className="mx-auto h-8 w-8 text-muted-foreground" />
-          <p className="mt-3 font-medium">No signature requests match this view</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Create a request from a PDF signing copy or uploaded PDF.
-          </p>
+          <h2 className="mt-3 font-semibold">No signing requests here</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Create a request from a saved PDF document.</p>
         </div>
       ) : (
         <div className="grid gap-3">
           {filtered.map((request: RequestRow) => {
-            const requestParticipants = participantsFor(request.id);
-            const myParticipant = requestParticipants.find(
-              (participant) => participant.user_id === context?.userId,
-            );
+            const people = participantsFor(request.id);
             return (
               <Link
                 key={request.id}
                 to="/dashboard/signing/$requestId"
                 params={{ requestId: request.id }}
-                className="block rounded-xl border bg-card p-4 transition hover:border-primary/40 hover:shadow-sm"
+                className="rounded-xl border bg-card p-4 transition hover:border-primary/40 hover:shadow-sm"
               >
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 className="truncate font-semibold">{request.title}</h2>
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${statusClass(request.status)}`}
-                      >
+                      <span className={`rounded-full px-2 py-1 text-xs ${statusClass(request.status)}`}>
                         {signingStatusLabel(request.status)}
                       </span>
-                      {myParticipant && (
-                        <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[11px] text-violet-700 dark:bg-violet-950/40 dark:text-violet-300">
-                          Assigned to you
-                        </span>
-                      )}
                     </div>
-                    <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
-                      {request.message ||
-                        `${requestParticipants.length} participant${requestParticipants.length === 1 ? "" : "s"}`}
+                    <p className="mt-1 truncate text-sm text-muted-foreground">
+                      {request.message || `${people.length} participant${people.length === 1 ? "" : "s"}`}
                     </p>
                   </div>
-                  <div className="flex shrink-0 items-center gap-5 text-xs text-muted-foreground">
-                    <span>{requestParticipants.length} participants</span>
-                    <span>
-                      {formatDistanceToNow(new Date(request.updated_at), { addSuffix: true })}
-                    </span>
+                  <div className="shrink-0 text-xs text-muted-foreground">
+                    {formatDistanceToNow(new Date(request.updated_at), { addSuffix: true })}
                   </div>
                 </div>
-                {requestParticipants.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {requestParticipants.slice(0, 5).map((participant: ParticipantRow) => (
-                      <span
-                        key={participant.id}
-                        className="rounded-md bg-muted px-2 py-1 text-[11px]"
-                      >
-                        {participantDisplayName(participant)} · {participant.role}
-                      </span>
-                    ))}
-                  </div>
-                )}
               </Link>
             );
           })}
         </div>
       )}
 
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+      <Dialog open={createOpen} onOpenChange={resetCreate}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>New e-signature request</DialogTitle>
+            <DialogTitle>New signing request</DialogTitle>
             <DialogDescription>
-              Choose a PDF, configure participants, then place fields in the preparation workspace
-              before sending.
+              Choose a saved PDF and registered OfficeKonnect accounts. You can add yourself as a signer and sign before sending.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-5 py-2">
-            <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 py-2">
+            <div className="space-y-2">
+              <Label>PDF document</Label>
+              <Select value={documentId} onValueChange={setDocumentId}>
+                <SelectTrigger><SelectValue placeholder="Choose a saved PDF" /></SelectTrigger>
+                <SelectContent>
+                  {pdfDocuments.map((document) => (
+                    <SelectItem key={document.id} value={document.id}>{document.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {pdfDocuments.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  No saved PDFs found. Open a native document and use Save as → PDF document first.
+                </p>
+              )}
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>PDF document</Label>
-                <Select
-                  value={documentId}
-                  onValueChange={(value) => {
-                    setDocumentId(value);
-                    const doc = pdfDocuments?.find((item) => item.id === value);
-                    if (doc && !title) setTitle(doc.title);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a PDF" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {pdfDocuments?.map((document) => (
-                      <SelectItem key={document.id} value={document.id}>
-                        {document.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Request title</Label>
+                <Input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="e.g. Service agreement" />
               </div>
               <div className="space-y-2">
                 <Label>Signing order</Label>
-                <Select
-                  value={order}
-                  onValueChange={(value) => setOrder(value as "parallel" | "sequential")}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                <Select value={order} onValueChange={(value) => setOrder(value as "parallel" | "sequential")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="parallel">Parallel — everyone can act now</SelectItem>
-                    <SelectItem value="sequential">Sequential — one turn at a time</SelectItem>
+                    <SelectItem value="parallel">Parallel</SelectItem>
+                    <SelectItem value="sequential">Sequential</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Request title</Label>
-              <Input
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                placeholder="Agreement for signature"
-              />
-            </div>
-            <div className="space-y-2">
               <Label>Message</Label>
-              <Textarea
-                value={message}
-                onChange={(event) => setMessage(event.target.value)}
-                placeholder="Optional instructions for participants"
-              />
+              <Textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Optional instructions for signers" />
             </div>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>Participants</Label>
-                <Button type="button" size="sm" variant="outline" onClick={addParticipant}>
-                  <Plus className="mr-1 h-3 w-3" />
-                  Add
-                </Button>
-              </div>
-              {participants.map((participant, index) => (
-                <div
-                  key={participant.key}
-                  className="grid gap-2 rounded-lg border p-3 md:grid-cols-[1.2fr_.8fr_1fr_auto]"
-                >
-                  <Select
-                    value={participant.userId ?? "external"}
-                    onValueChange={(value) => setParticipantMember(participant.key, value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="external">External email</SelectItem>
-                      {memberDirectory?.map((member) => (
-                        <SelectItem key={member.user_id} value={member.user_id}>
-                          {member.full_name || member.email}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select
-                    value={participant.role}
-                    onValueChange={(value) =>
-                      setParticipants((current) =>
-                        current.map((row) =>
-                          row.key === participant.key
-                            ? { ...row, role: value as ParticipantRole }
-                            : row,
-                        ),
-                      )
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="signer">Signer</SelectItem>
-                      <SelectItem value="approver">Approver</SelectItem>
-                      <SelectItem value="cc">CC</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {participant.userId ? (
-                    <div className="flex items-center rounded-md border px-3 text-sm text-muted-foreground">
-                      {participant.email}
-                    </div>
-                  ) : (
-                    <Input
-                      placeholder="name@example.com"
-                      value={participant.email ?? ""}
-                      onChange={(event) =>
-                        setParticipants((current) =>
-                          current.map((row) =>
-                            row.key === participant.key
-                              ? { ...row, email: event.target.value }
-                              : row,
-                          ),
-                        )
-                      }
-                    />
-                  )}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    disabled={participants.length === 1}
-                    onClick={() => removeParticipant(participant.key)}
-                    aria-label={`Remove participant ${index + 1}`}
-                  >
-                    ×
-                  </Button>
+
+            <div className="rounded-xl border p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold">Participants</p>
+                  <p className="text-xs text-muted-foreground">Only registered OfficeKonnect profiles can be selected.</p>
                 </div>
-              ))}
+                <div className="flex flex-wrap gap-2">
+                  {context?.ownEntry && !participants.some((participant) => participant.entry.user_id === context.userId) && (
+                    <Button size="sm" variant="outline" onClick={() => addEntry(context.ownEntry, "signer")}>
+                      <UserPlus className="mr-2 h-4 w-4" /> Add myself
+                    </Button>
+                  )}
+                  {(["signer", "approver", "cc"] as ParticipantRole[]).map((role) => (
+                    <Button
+                      key={role}
+                      size="sm"
+                      variant="outline"
+                      className="capitalize"
+                      onClick={() => {
+                        setPickerRole(role);
+                        setPickerOpen(true);
+                      }}
+                    >
+                      <Plus className="mr-1 h-3.5 w-3.5" /> {role}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-3 space-y-2">
+                {participants.length === 0 ? (
+                  <div className="rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">
+                    Add at least one signer or approver.
+                  </div>
+                ) : (
+                  participants.map((participant, index) => (
+                    <div key={participant.key} className="flex items-center gap-3 rounded-lg border p-3">
+                      <div className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full bg-muted text-xs font-semibold">
+                        {participant.entry.avatar_url ? (
+                          <img src={participant.entry.avatar_url} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          (participant.entry.full_name || participant.entry.email).slice(0, 2).toUpperCase()
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">
+                          {participant.entry.full_name || participant.entry.email}
+                          {participant.entry.username ? ` · @${participant.entry.username}` : ""}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">{participant.entry.email}</p>
+                      </div>
+                      <Select
+                        value={participant.role}
+                        onValueChange={(value) =>
+                          setParticipants((current) =>
+                            current.map((item) =>
+                              item.key === participant.key ? { ...item, role: value as ParticipantRole } : item,
+                            ),
+                          )
+                        }
+                      >
+                        <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="signer">Signer</SelectItem>
+                          <SelectItem value="approver">Approver</SelectItem>
+                          <SelectItem value="cc">CC</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <span className="w-5 text-center text-xs text-muted-foreground">{index + 1}</span>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-destructive"
+                        onClick={() => setParticipants((current) => current.filter((item) => item.key !== participant.key))}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => resetCreate(false)}>Cancel</Button>
             <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
-              {createMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Create
-              & prepare
+              {createMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Create and prepare
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <OfficeKonnectAccountPicker
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        excludeUserIds={participants.map((participant) => participant.entry.user_id)}
+        title={`Add ${pickerRole}`}
+        onSelect={(entry) => addEntry(entry, pickerRole)}
+      />
     </div>
   );
 }
