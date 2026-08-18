@@ -17,6 +17,7 @@ import {
   Bold,
   ChevronDown,
   FileDown,
+  FileSignature,
   Heading1,
   Heading2,
   Heading3,
@@ -75,6 +76,7 @@ import {
   type NativeDocumentBlock,
   type NativeDocumentContent,
 } from "@/lib/native-document";
+import { createNativeDocumentSigningCopy } from "@/lib/document-signing-copy.functions";
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 
@@ -136,25 +138,30 @@ function sanitizeInlineHtml(value: string) {
   return root.innerHTML;
 }
 
-function alignStyle(align?: NativeDocumentAlignment) {
-  return align && align !== "left" ? ` style="text-align:${align}"` : "";
+function blockAttributes(align?: NativeDocumentAlignment, indent?: number) {
+  const styles: string[] = [];
+  if (align && align !== "left") styles.push(`text-align:${align}`);
+  if (indent && indent > 0) styles.push(`margin-left:${indent * 36}px`);
+  const indentAttribute = indent && indent > 0 ? ` data-indent="${indent}"` : "";
+  const styleAttribute = styles.length > 0 ? ` style="${styles.join(";")}"` : "";
+  return `${indentAttribute}${styleAttribute}`;
 }
 
 function editorHtml(content: NativeDocumentContent) {
   return content.blocks
     .map((block) => {
       if (block.type === "paragraph") {
-        return `<p data-block-id="${escapeHtml(block.id)}"${alignStyle(block.align)}>${sanitizeInlineHtml(block.html) || "<br>"}</p>`;
+        return `<p data-block-id="${escapeHtml(block.id)}"${blockAttributes(block.align, block.indent)}>${sanitizeInlineHtml(block.html) || "<br>"}</p>`;
       }
       if (block.type === "heading") {
-        return `<h${block.level} data-block-id="${escapeHtml(block.id)}"${alignStyle(block.align)}>${sanitizeInlineHtml(block.html) || "<br>"}</h${block.level}>`;
+        return `<h${block.level} data-block-id="${escapeHtml(block.id)}"${blockAttributes(block.align, block.indent)}>${sanitizeInlineHtml(block.html) || "<br>"}</h${block.level}>`;
       }
       if (block.type === "quote") {
-        return `<blockquote data-block-id="${escapeHtml(block.id)}"${alignStyle(block.align)}>${sanitizeInlineHtml(block.html) || "<br>"}</blockquote>`;
+        return `<blockquote data-block-id="${escapeHtml(block.id)}"${blockAttributes(block.align, block.indent)}>${sanitizeInlineHtml(block.html) || "<br>"}</blockquote>`;
       }
       if (block.type === "bulletList" || block.type === "orderedList") {
         const tag = block.type === "bulletList" ? "ul" : "ol";
-        return `<${tag} data-block-id="${escapeHtml(block.id)}">${block.items
+        return `<${tag} data-block-id="${escapeHtml(block.id)}"${blockAttributes(undefined, block.indent)}>${block.items
           .map((item) => `<li>${sanitizeInlineHtml(item) || "<br>"}</li>`)
           .join("")}</${tag}>`;
       }
@@ -183,6 +190,14 @@ function elementAlignment(element: HTMLElement): NativeDocumentAlignment | undef
   return align === "center" || align === "right" || align === "justify" ? align : undefined;
 }
 
+function elementIndent(element: HTMLElement): number | undefined {
+  const explicit = Number(element.dataset.indent);
+  if (Number.isFinite(explicit) && explicit > 0) return Math.min(8, Math.round(explicit));
+  const margin = Number.parseFloat(element.style.marginLeft);
+  if (!Number.isFinite(margin) || margin <= 0) return undefined;
+  return Math.min(8, Math.max(1, Math.round(margin / 36)));
+}
+
 function serializeEditor(
   root: HTMLDivElement,
   page: NativeDocumentContent["page"],
@@ -198,7 +213,9 @@ function serializeEditor(
     if (!(node instanceof HTMLElement)) continue;
 
     const id = node.dataset.blockId || blockId();
+    node.dataset.blockId = id;
     const tag = node.tagName;
+    const indent = elementIndent(node);
 
     if (node.dataset.pageBreak === "true") {
       blocks.push({ id, type: "pageBreak" });
@@ -215,6 +232,7 @@ function serializeEditor(
         level: Number(tag.slice(1)) as 1 | 2 | 3,
         html: sanitizeInlineHtml(node.innerHTML),
         align: elementAlignment(node),
+        indent,
       });
       continue;
     }
@@ -224,6 +242,7 @@ function serializeEditor(
         type: "quote",
         html: sanitizeInlineHtml(node.innerHTML),
         align: elementAlignment(node),
+        indent,
       });
       continue;
     }
@@ -234,6 +253,7 @@ function serializeEditor(
         items: Array.from(node.querySelectorAll(":scope > li")).map((item) =>
           sanitizeInlineHtml(item.innerHTML),
         ),
+        indent,
       });
       continue;
     }
@@ -253,6 +273,7 @@ function serializeEditor(
       type: "paragraph",
       html: sanitizeInlineHtml(node.innerHTML),
       align: elementAlignment(node),
+      indent,
     });
   }
 
@@ -300,6 +321,7 @@ export function NativeDocumentEditor({ document, onDocumentUpdated }: NativeDocu
   const editorRef = useRef<HTMLDivElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
   const savingRef = useRef(false);
+  const hydratedDocumentIdRef = useRef<string | null>(null);
   const latestContentRef = useRef<NativeDocumentContent>(
     normalizeNativeDocumentContent(document.content),
   );
@@ -321,6 +343,7 @@ export function NativeDocumentEditor({ document, onDocumentUpdated }: NativeDocu
   const [replaceText, setReplaceText] = useState("");
   const [zoom, setZoom] = useState(100);
   const [exporting, setExporting] = useState(false);
+  const [creatingSigningCopy, setCreatingSigningCopy] = useState(false);
   const [restoringVersionId, setRestoringVersionId] = useState<string | null>(null);
 
   const saveFn = useServerFn(saveNativeDocument);
@@ -328,6 +351,7 @@ export function NativeDocumentEditor({ document, onDocumentUpdated }: NativeDocu
   const restoreFn = useServerFn(restoreNativeDocumentVersion);
   const exportFn = useServerFn(exportNativeDocumentPdf);
   const letterheadFn = useServerFn(setDocumentLetterhead);
+  const signingCopyFn = useServerFn(createNativeDocumentSigningCopy);
 
   const { data: versions, refetch: refetchVersions } = useQuery({
     queryKey: ["document-versions", document.id],
@@ -369,9 +393,14 @@ export function NativeDocumentEditor({ document, onDocumentUpdated }: NativeDocu
   }, []);
 
   useEffect(() => {
+    setTitle(document.title);
+    const isInitialDocument = hydratedDocumentIdRef.current !== document.id;
+    const incomingVersionIsNewer = document.editor_version > latestEditorVersionRef.current;
+    if (!isInitialDocument && (!incomingVersionIsNewer || saveState !== "saved")) return;
+
     const next = normalizeNativeDocumentContent(document.content);
     applyContentToEditor(next);
-    setTitle(document.title);
+    hydratedDocumentIdRef.current = document.id;
     setEditorVersion(document.editor_version);
     latestEditorVersionRef.current = document.editor_version;
     setSaveState("saved");
@@ -381,7 +410,9 @@ export function NativeDocumentEditor({ document, onDocumentUpdated }: NativeDocu
     document.content,
     document.editor_version,
     document.title,
+    document.updated_at,
     applyContentToEditor,
+    saveState,
   ]);
 
   useEffect(() => {
@@ -477,6 +508,27 @@ export function NativeDocumentEditor({ document, onDocumentUpdated }: NativeDocu
 
   const insertHtml = (html: string) => exec("insertHTML", html);
 
+  const adjustIndent = (delta: number) => {
+    const root = editorRef.current;
+    const selection = window.getSelection();
+    if (!root || !selection?.rangeCount) return;
+    const container = selection.getRangeAt(0).commonAncestorContainer;
+    let element = container instanceof HTMLElement ? container : container.parentElement;
+    while (element && element.parentElement !== root) element = element.parentElement;
+    if (!element || !root.contains(element)) return;
+
+    const current = elementIndent(element) ?? 0;
+    const next = Math.max(0, Math.min(8, current + delta));
+    if (next > 0) {
+      element.dataset.indent = String(next);
+      element.style.marginLeft = `${next * 36}px`;
+    } else {
+      delete element.dataset.indent;
+      element.style.marginLeft = "";
+    }
+    syncFromEditor();
+  };
+
   const updatePage = (patch: Partial<NativeDocumentContent["page"]>) => {
     const next = {
       ...latestContentRef.current,
@@ -507,8 +559,8 @@ export function NativeDocumentEditor({ document, onDocumentUpdated }: NativeDocu
     setExporting(true);
     try {
       syncFromEditor();
-      const saved = saveState === "saved" ? true : Boolean(await persist());
-      if (!saved && saveState === "conflict") return;
+      const saved = Boolean(await persist());
+      if (!saved) return;
       const result = await exportFn({ data: { documentId: document.id } });
       if (print) {
         window.open(result.url, "_blank", "noopener,noreferrer");
@@ -526,6 +578,22 @@ export function NativeDocumentEditor({ document, onDocumentUpdated }: NativeDocu
       toastError(error, print ? "Print preparation failed" : "PDF export failed");
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleCreateSigningCopy = async () => {
+    setCreatingSigningCopy(true);
+    try {
+      syncFromEditor();
+      const saved = Boolean(await persist());
+      if (!saved) return;
+      const result = await signingCopyFn({ data: { documentId: document.id } });
+      window.open(`/dashboard/documents/${result.document.id}`, "_blank", "noopener,noreferrer");
+      toast.success("Immutable PDF signing copy created");
+    } catch (error) {
+      toastError(error, "Signing copy creation failed");
+    } finally {
+      setCreatingSigningCopy(false);
     }
   };
 
@@ -698,11 +766,28 @@ export function NativeDocumentEditor({ document, onDocumentUpdated }: NativeDocu
               <DropdownMenuItem onClick={() => setHistoryOpen(true)}>
                 <History className="mr-2 h-4 w-4" /> Version history
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => void handleExport(false)}>
+              <DropdownMenuItem
+                disabled={exporting || saveState === "saving" || saveState === "conflict"}
+                onClick={() => void handleExport(false)}
+              >
                 <FileDown className="mr-2 h-4 w-4" /> Export PDF
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => void handleExport(true)}>
+              <DropdownMenuItem
+                disabled={exporting || saveState === "saving" || saveState === "conflict"}
+                onClick={() => void handleExport(true)}
+              >
                 <Printer className="mr-2 h-4 w-4" /> Print
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={
+                  creatingSigningCopy ||
+                  exporting ||
+                  saveState === "saving" ||
+                  saveState === "conflict"
+                }
+                onClick={() => void handleCreateSigningCopy()}
+              >
+                <FileSignature className="mr-2 h-4 w-4" /> Create signing copy
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -779,10 +864,10 @@ export function NativeDocumentEditor({ document, onDocumentUpdated }: NativeDocu
           <ToolbarButton label="Justify" onPress={() => exec("justifyFull")}>
             <AlignJustify className="h-4 w-4" />
           </ToolbarButton>
-          <ToolbarButton label="Decrease indent" onPress={() => exec("outdent")}>
+          <ToolbarButton label="Decrease indent" onPress={() => adjustIndent(-1)}>
             <IndentDecrease className="h-4 w-4" />
           </ToolbarButton>
-          <ToolbarButton label="Increase indent" onPress={() => exec("indent")}>
+          <ToolbarButton label="Increase indent" onPress={() => adjustIndent(1)}>
             <IndentIncrease className="h-4 w-4" />
           </ToolbarButton>
           <span className="mx-1 h-5 w-px bg-border" />

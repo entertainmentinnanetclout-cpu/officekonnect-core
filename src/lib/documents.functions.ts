@@ -207,7 +207,7 @@ export const exportNativeDocumentPdf = createServerFn({ method: "POST" })
     const workspaceId = await getActiveWorkspaceId(supabase, userId);
     const { data: document, error: documentError } = await supabase
       .from("documents")
-      .select("id,workspace_id,title,document_kind,content,letterhead_id")
+      .select("id,workspace_id,title,document_kind,content,letterhead_id,updated_at")
       .eq("id", data.documentId)
       .single();
     if (documentError) throw new Error(documentError.message);
@@ -259,6 +259,7 @@ export const exportNativeDocumentPdf = createServerFn({ method: "POST" })
       letterhead,
       logoBytes,
       logoMimeType,
+      renderedAt: document.updated_at,
     });
 
     const storagePath = `${workspaceId}/${userId}/documents/${document.id}/export-${Date.now()}.pdf`;
