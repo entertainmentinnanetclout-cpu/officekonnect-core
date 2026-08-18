@@ -93,7 +93,9 @@ function safeWinAnsi(value: string) {
     .replace(/[\u2013\u2014]/g, "-")
     .replace(/\u2026/g, "...")
     .replace(/\u2022/g, "•")
-    .replace(/[^\x09\x0a\x0d\x20-\x7e\xa0-\xff]/g, "?");
+    .replace(/[^\x20-\x7e\xa0-\xff]/g, (character) =>
+      character === "\n" || character === "\r" || character === "\t" ? character : "?",
+    );
 }
 
 function parseCssColor(value: string | undefined): RGB | undefined {
@@ -147,7 +149,8 @@ function styleFromTag(tag: string, attributes: string, parent: InlineStyle): Inl
     for (const declaration of styleMatch[1].split(";")) {
       const [property, ...rest] = declaration.split(":");
       const value = rest.join(":").trim();
-      if (property?.trim().toLowerCase() === "color") next.color = parseCssColor(value) ?? next.color;
+      if (property?.trim().toLowerCase() === "color")
+        next.color = parseCssColor(value) ?? next.color;
       if (property?.trim().toLowerCase() === "background-color") {
         next.background = parseCssColor(value) ?? next.background;
       }
@@ -256,14 +259,14 @@ function plainCompanyDetails(value: unknown) {
 function chromeReservation(state: Omit<RendererState, "page" | "y">) {
   const hasHeader = Boolean(
     state.logo ||
-      state.letterhead?.header_content?.trim() ||
-      plainCompanyDetails(state.letterhead?.company_details) ||
-      state.content.page.header.trim(),
+    state.letterhead?.header_content?.trim() ||
+    plainCompanyDetails(state.letterhead?.company_details) ||
+    state.content.page.header.trim(),
   );
   const hasFooter = Boolean(
     state.letterhead?.footer_content?.trim() ||
-      state.content.page.footer.trim() ||
-      state.content.page.showPageNumbers,
+    state.content.page.footer.trim() ||
+    state.content.page.showPageNumbers,
   );
   return {
     contentTop: Math.max(state.top, hasHeader ? 54 : state.top),
@@ -378,7 +381,11 @@ function drawPlainTextBlock(
     color?: RGB;
   },
 ) {
-  return drawRichTextBlock(state, safeWinAnsi(text).replace(/&/g, "&amp;").replace(/</g, "&lt;"), options);
+  return drawRichTextBlock(
+    state,
+    safeWinAnsi(text).replace(/&/g, "&amp;").replace(/</g, "&lt;"),
+    options,
+  );
 }
 
 function drawTable(state: RendererState, rows: string[][]) {
@@ -395,7 +402,9 @@ function drawTable(state: RendererState, rows: string[][]) {
     const row = rows[rowIndex];
     const font = rowIndex === 0 ? next.bold : next.regular;
     const wrapped = Array.from({ length: maxColumns }, (_, columnIndex) => {
-      const words = safeWinAnsi(htmlToPlainText(row[columnIndex] ?? "")).split(/\s+/).filter(Boolean);
+      const words = safeWinAnsi(htmlToPlainText(row[columnIndex] ?? ""))
+        .split(/\s+/)
+        .filter(Boolean);
       const lines: string[] = [];
       let current = "";
       for (const word of words) {
@@ -510,7 +519,10 @@ function drawBlock(state: RendererState, block: NativeDocumentBlock) {
     if (rendered.page === state.page) {
       rendered.page.drawLine({
         start: { x: rendered.left + 6 + indentPoints(block), y: beforeY - 2 },
-        end: { x: rendered.left + 6 + indentPoints(block), y: Math.max(rendered.y + 6, rendered.contentBottom) },
+        end: {
+          x: rendered.left + 6 + indentPoints(block),
+          y: Math.max(rendered.y + 6, rendered.contentBottom),
+        },
         thickness: 2,
         color: rgb(0.58, 0.62, 0.7),
       });
@@ -531,7 +543,12 @@ function drawBlock(state: RendererState, block: NativeDocumentBlock) {
   return state;
 }
 
-function drawPageChrome(state: RendererState, page: PDFPage, pageNumber: number, totalPages: number) {
+function drawPageChrome(
+  state: RendererState,
+  page: PDFPage,
+  pageNumber: number,
+  totalPages: number,
+) {
   const letterheadHeader = state.letterhead?.header_content?.trim() ?? "";
   const companyDetails = plainCompanyDetails(state.letterhead?.company_details);
   const header = [letterheadHeader, state.content.page.header.trim()].filter(Boolean).join(" • ");
@@ -558,7 +575,8 @@ function drawPageChrome(state: RendererState, page: PDFPage, pageNumber: number,
     let current = "";
     for (const word of words) {
       const candidate = current ? `${current} ${word}` : word;
-      if (state.regular.widthOfTextAtSize(candidate, 7.5) <= maxWidth || !current) current = candidate;
+      if (state.regular.widthOfTextAtSize(candidate, 7.5) <= maxWidth || !current)
+        current = candidate;
       else {
         lines.push(current);
         current = word;

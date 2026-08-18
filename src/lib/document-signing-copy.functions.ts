@@ -83,14 +83,12 @@ export const createNativeDocumentSigningCopy = createServerFn({ method: "POST" }
     const copyTitle = signingCopyTitle(source.title);
     const copyId = crypto.randomUUID();
     const storagePath = `${workspaceId}/${userId}/documents/${copyId}/signing-copy.pdf`;
-    const { error: uploadError } = await supabase.storage.from("documents").upload(
-      storagePath,
-      rendered.bytes,
-      {
+    const { error: uploadError } = await supabase.storage
+      .from("documents")
+      .upload(storagePath, rendered.bytes, {
         contentType: "application/pdf",
         upsert: false,
-      },
-    );
+      });
     if (uploadError) throw new Error(uploadError.message);
 
     const { data: copy, error: insertError } = await supabase

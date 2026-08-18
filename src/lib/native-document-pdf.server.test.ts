@@ -22,13 +22,13 @@ describe("OfficeKonnect native document PDF renderer", () => {
             id: "heading",
             type: "heading",
             level: 1,
-            html: "<strong>Professional <span style=\"color:#1f2937\">document</span></strong>",
+            html: '<strong>Professional <span style="color:#1f2937">document</span></strong>',
             align: "center",
           },
           {
             id: "paragraph",
             type: "paragraph",
-            html: "Normal <strong>bold</strong> <em>italic</em> <u>underline</u> <s>strike</s> <span style=\"background-color:#fff3bf\">highlight</span>.",
+            html: 'Normal <strong>bold</strong> <em>italic</em> <u>underline</u> <s>strike</s> <span style="background-color:#fff3bf">highlight</span>.',
             indent: 2,
           },
           {
