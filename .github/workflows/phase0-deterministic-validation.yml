@@ -31,6 +31,8 @@ jobs:
         run: bun ci
       - name: Lint
         run: bun run lint
+      - name: Product hardening audit
+        run: node scripts/check-product-hardening.mjs
       - name: TypeScript
         run: bun run typecheck
       - name: Tests
