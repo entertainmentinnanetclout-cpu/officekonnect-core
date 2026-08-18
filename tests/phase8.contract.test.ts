@@ -110,7 +110,7 @@ describe("Phase 8 operational contracts", () => {
     );
   });
 
-  test("Phase 8 surfaces are active and settings contain no coming-soon controls", () => {
+  test("Phase 8 surfaces are active and settings expose real product state", () => {
     expect(shell).toContain('href: "/dashboard/notifications"');
     expect(shell).toContain('href: "/dashboard/team"');
     expect(shell).toContain('href: "/dashboard/activity"');
@@ -118,7 +118,9 @@ describe("Phase 8 operational contracts", () => {
     expect(shell).toContain("<NotificationBell workspaceId={workspace.activeWorkspaceId} />");
     expect(settings).not.toContain("Coming soon");
     expect(settings).not.toContain("Delete Account");
-    expect(settings).toContain("No fake upgrade/checkout action");
-    expect(settings).toContain("does not expose fake Connect actions");
+    expect(settings).not.toContain("fake Connect");
+    expect(settings).not.toContain("fake upgrade/checkout");
+    expect(settings).toContain("current workspace subscription and linked payment-provider state");
+    expect(settings).toContain("Connected provider accounts appear here");
   });
 });
