@@ -20,11 +20,9 @@ import {
   BorderAll,
   ChevronDown,
   Columns3,
-  Copy,
   FileDown,
   FileSignature,
   Filter,
-  Grid2X2Plus,
   Italic,
   Loader2,
   Merge,
@@ -32,14 +30,12 @@ import {
   MoveRight,
   Plus,
   Printer,
-  Redo2,
   Rows3,
   Save,
   Scissors,
   Search,
   Trash2,
   Underline,
-  Undo2,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -148,7 +144,10 @@ function rangeLabel(range: CellRange) {
 }
 
 function parseClipboard(text: string) {
-  return text.replace(/\r/g, "").split("\n").map((row) => row.split("\t"));
+  return text
+    .replace(/\r/g, "")
+    .split("\n")
+    .map((row) => row.split("\t"));
 }
 
 function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorProps) {
@@ -181,7 +180,9 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
   const [renderRowLimit, setRenderRowLimit] = useState(MAX_RENDER_ROWS);
   const [renderColumnLimit, setRenderColumnLimit] = useState(MAX_RENDER_COLUMNS);
   const [pdfOpen, setPdfOpen] = useState(false);
-  const [pdfSheetIds, setPdfSheetIds] = useState<string[]>(() => workbook.sheets.map((sheet) => sheet.id));
+  const [pdfSheetIds, setPdfSheetIds] = useState<string[]>(() =>
+    workbook.sheets.map((sheet) => sheet.id),
+  );
   const [pdfBusy, setPdfBusy] = useState(false);
   const [fileBusy, setFileBusy] = useState(false);
   const [signingCopyBusy, setSigningCopyBusy] = useState(false);
@@ -192,8 +193,12 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
   const exportPdfFn = useServerFn(exportSpreadsheetPdf);
   const signingCopyFn = useServerFn(createSpreadsheetSigningCopy);
 
-  const activeSheet = workbook.sheets.find((sheet) => sheet.id === workbook.activeSheetId) ?? workbook.sheets[0]!;
-  const selectionRange = useMemo(() => rangeFromPositions(selectionAnchor, selectionFocus), [selectionAnchor, selectionFocus]);
+  const activeSheet =
+    workbook.sheets.find((sheet) => sheet.id === workbook.activeSheetId) ?? workbook.sheets[0]!;
+  const selectionRange = useMemo(
+    () => rangeFromPositions(selectionAnchor, selectionFocus),
+    [selectionAnchor, selectionFocus],
+  );
   const activeAddress = cellAddress(selectionFocus.row, selectionFocus.column);
   const activeCell = getCell(activeSheet, activeAddress);
   const evaluated = useMemo(() => evaluateWorkbook(workbook), [workbook]);
@@ -204,7 +209,9 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
     queryFn: async () => {
       const { data, error } = await supabase
         .from("document_versions")
-        .select("id,version_number,title,change_summary,created_at,sheet_count,cell_count,formula_count,content")
+        .select(
+          "id,version_number,title,change_summary,created_at,sheet_count,cell_count,formula_count,content",
+        )
         .eq("document_id", document.id)
         .not("content", "is", null)
         .order("version_number", { ascending: false });
@@ -233,10 +240,21 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
     setLastSavedAt(new Date(document.updated_at));
     setSaveState("saved");
     setPdfSheetIds(next.sheets.map((sheet) => sheet.id));
-  }, [document.id, document.content, document.editor_version, document.title, document.updated_at, saveState]);
+  }, [
+    document.id,
+    document.content,
+    document.editor_version,
+    document.title,
+    document.updated_at,
+    saveState,
+  ]);
 
   const persist = useCallback(
-    async (options?: { createVersion?: boolean; versionTitle?: string; changeSummary?: string }) => {
+    async (options?: {
+      createVersion?: boolean;
+      versionTitle?: string;
+      changeSummary?: string;
+    }) => {
       if (savingRef.current || saveState === "conflict") return null;
       savingRef.current = true;
       setSaveState("saving");
@@ -257,7 +275,9 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
         setEditorVersion(result.editor_version);
         setLastSavedAt(new Date(result.updated_at));
         onDocumentUpdated?.(result);
-        setSaveState(JSON.stringify(latestWorkbookRef.current) === snapshotJson ? "saved" : "dirty");
+        setSaveState(
+          JSON.stringify(latestWorkbookRef.current) === snapshotJson ? "saved" : "dirty",
+        );
         if (options?.createVersion) await refetchVersions();
         return result;
       } catch (error) {
@@ -291,7 +311,8 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
     return () => window.removeEventListener("mouseup", release);
   }, []);
 
-  const updateActiveSheet = (next: WorkbookSheet) => applyWorkbook(setWorkbookSheet(latestWorkbookRef.current, next));
+  const updateActiveSheet = (next: WorkbookSheet) =>
+    applyWorkbook(setWorkbookSheet(latestWorkbookRef.current, next));
 
   const commitEdit = (move?: { row: number; column: number }) => {
     if (!editingAddress) return;
@@ -305,7 +326,15 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
       };
       setSelectionAnchor(nextPosition);
       setSelectionFocus(nextPosition);
-      window.setTimeout(() => rootRef.current?.querySelector<HTMLInputElement>(`[data-cell="${cellAddress(nextPosition.row, nextPosition.column)}"]`)?.focus(), 0);
+      window.setTimeout(
+        () =>
+          rootRef.current
+            ?.querySelector<HTMLInputElement>(
+              `[data-cell="${cellAddress(nextPosition.row, nextPosition.column)}"]`,
+            )
+            ?.focus(),
+        0,
+      );
     }
   };
 
@@ -330,7 +359,10 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
     if (mouseSelectingRef.current && editingAddress === null) setSelectionFocus(position);
   };
 
-  const handleCellKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>, position: CellPosition) => {
+  const handleCellKeyDown = (
+    event: ReactKeyboardEvent<HTMLInputElement>,
+    position: CellPosition,
+  ) => {
     if (event.key === "Enter") {
       event.preventDefault();
       commitEdit({ row: position.row + (event.shiftKey ? -1 : 1), column: position.column });
@@ -344,7 +376,8 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
     }
   };
 
-  const applyFormat = (patch: Parameters<typeof updateCellFormat>[2]) => updateActiveSheet(updateCellFormat(activeSheet, selectionRange, patch));
+  const applyFormat = (patch: Parameters<typeof updateCellFormat>[2]) =>
+    updateActiveSheet(updateCellFormat(activeSheet, selectionRange, patch));
 
   const handleCopy = (event: ClipboardEvent<HTMLDivElement>) => {
     if (editingAddress) return;
@@ -397,7 +430,10 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
       event.preventDefault();
       const next = {
         row: Math.max(1, Math.min(activeSheet.rowCount, selectionFocus.row + delta.row)),
-        column: Math.max(1, Math.min(activeSheet.columnCount, selectionFocus.column + delta.column)),
+        column: Math.max(
+          1,
+          Math.min(activeSheet.columnCount, selectionFocus.column + delta.column),
+        ),
       };
       if (event.shiftKey) setSelectionFocus(next);
       else {
@@ -428,6 +464,8 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
     fileMenuExportingRef.current = true;
     setFileBusy(true);
     try {
+      const saved = await persist();
+      if (!saved) return;
       const XLSX = await import("xlsx");
       const book = XLSX.utils.book_new();
       const values = evaluateWorkbook(latestWorkbookRef.current);
@@ -435,13 +473,19 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
         const worksheet = XLSX.utils.aoa_to_sheet(matrixFromSheet(sheet, values));
         for (const [address, cell] of Object.entries(sheet.cells)) {
           if (!cell.formula) continue;
-          const target = worksheet[address] ?? { t: "n", v: values.bySheet[sheet.id]?.[address] ?? 0 };
+          const target = worksheet[address] ?? {
+            t: "n",
+            v: values.bySheet[sheet.id]?.[address] ?? 0,
+          };
           target.f = cell.formula.replace(/^=/, "");
           worksheet[address] = target;
         }
-        worksheet["!cols"] = Array.from({ length: sheetUsedRange(sheet).end.column }, (_, index) => ({
-          wpx: sheet.columnWidths[columnIndexToLabel(index + 1)] ?? 112,
-        }));
+        worksheet["!cols"] = Array.from(
+          { length: sheetUsedRange(sheet).end.column },
+          (_, index) => ({
+            wpx: sheet.columnWidths[columnIndexToLabel(index + 1)] ?? 112,
+          }),
+        );
         worksheet["!merges"] = sheet.merges
           .map((merge) => XLSX.utils.decode_range(merge.range))
           .filter(Boolean);
@@ -460,9 +504,15 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
   const exportCsv = async () => {
     setFileBusy(true);
     try {
+      const saved = await persist();
+      if (!saved) return;
       const XLSX = await import("xlsx");
       const worksheet = XLSX.utils.aoa_to_sheet(matrixFromSheet(activeSheet, evaluated));
-      downloadText(XLSX.utils.sheet_to_csv(worksheet), safeName(`${title} - ${activeSheet.name}`, "csv"), "text/csv;charset=utf-8");
+      downloadText(
+        XLSX.utils.sheet_to_csv(worksheet),
+        safeName(`${title} - ${activeSheet.name}`, "csv"),
+        "text/csv;charset=utf-8",
+      );
       toast.success("CSV export ready");
     } catch (error) {
       toastError(error, "CSV export failed");
@@ -476,7 +526,9 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
     try {
       const saved = await persist();
       if (!saved) return;
-      const result = await exportPdfFn({ data: { documentId: document.id, sheetIds: pdfSheetIds } });
+      const result = await exportPdfFn({
+        data: { documentId: document.id, sheetIds: pdfSheetIds },
+      });
       if (print) window.open(result.url, "_blank", "noopener,noreferrer");
       else {
         const anchor = window.document.createElement("a");
@@ -501,7 +553,9 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
     try {
       const saved = await persist();
       if (!saved) return;
-      const result = await signingCopyFn({ data: { documentId: document.id, sheetIds: pdfSheetIds } });
+      const result = await signingCopyFn({
+        data: { documentId: document.id, sheetIds: pdfSheetIds },
+      });
       window.open(`/dashboard/documents/${result.document.id}`, "_blank", "noopener,noreferrer");
       toast.success("Immutable spreadsheet signing copy created");
     } catch (error) {
@@ -569,20 +623,47 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
     const query = filterText.trim().toLowerCase();
     return rows.filter((row) => {
       const address = cellAddress(row, selectionFocus.column);
-      const value = evaluated.bySheet[activeSheet.id]?.[address] ?? getCell(activeSheet, address)?.value ?? "";
+      const value =
+        evaluated.bySheet[activeSheet.id]?.[address] ?? getCell(activeSheet, address)?.value ?? "";
       return String(value).toLowerCase().includes(query);
     });
   }, [activeSheet, evaluated, filterText, renderRowLimit, selectionFocus.column]);
 
   const visibleColumns = useMemo(
-    () => Array.from({ length: Math.min(activeSheet.columnCount, renderColumnLimit) }, (_, index) => index + 1),
+    () =>
+      Array.from(
+        { length: Math.min(activeSheet.columnCount, renderColumnLimit) },
+        (_, index) => index + 1,
+      ),
     [activeSheet.columnCount, renderColumnLimit],
   );
 
   const selectedCellStyle = activeCell?.format ?? {};
   const selectedRangeText = rangeLabel(selectionRange);
-  const formulaBarValue = editingAddress === activeAddress ? editValue : getCellInput(activeSheet, activeAddress);
+  const formulaBarValue =
+    editingAddress === activeAddress ? editValue : getCellInput(activeSheet, activeAddress);
   const usedRange = sheetUsedRange(activeSheet);
+  const selectedColumnLabel = columnIndexToLabel(selectionFocus.column);
+  const selectedColumnWidth = activeSheet.columnWidths[selectedColumnLabel] ?? 112;
+  const selectedRowHeight = activeSheet.rowHeights[String(selectionFocus.row)] ?? 30;
+  const frozenColumnOffsets = useMemo(() => {
+    const offsets: Record<number, number> = {};
+    let left = 48;
+    for (let column = 1; column <= activeSheet.frozenColumns; column += 1) {
+      offsets[column] = left;
+      left += activeSheet.columnWidths[columnIndexToLabel(column)] ?? 112;
+    }
+    return offsets;
+  }, [activeSheet.columnWidths, activeSheet.frozenColumns]);
+  const frozenRowOffsets = useMemo(() => {
+    const offsets: Record<number, number> = {};
+    let top = 28;
+    for (let row = 1; row <= activeSheet.frozenRows; row += 1) {
+      offsets[row] = top;
+      top += activeSheet.rowHeights[String(row)] ?? 30;
+    }
+    return offsets;
+  }, [activeSheet.frozenRows, activeSheet.rowHeights]);
 
   return (
     <div
@@ -614,8 +695,11 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
             {saveStateLabel(saveState)}
           </span>
           <span className="hidden text-xs text-muted-foreground lg:inline">
-            {metrics.cellCount.toLocaleString()} cells · {metrics.formulaCount.toLocaleString()} formulas · v{editorVersion}
-            {lastSavedAt ? ` · ${lastSavedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : ""}
+            {metrics.cellCount.toLocaleString()} cells · {metrics.formulaCount.toLocaleString()}{" "}
+            formulas · v{editorVersion}
+            {lastSavedAt
+              ? ` · ${lastSavedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+              : ""}
           </span>
           <Button
             variant="outline"
@@ -623,7 +707,11 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
             disabled={saveState === "saving" || saveState === "conflict"}
             onClick={() => void persist()}
           >
-            {saveState === "saving" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+            {saveState === "saving" ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="mr-2 h-4 w-4" />
+            )}
             Save
           </Button>
           <DropdownMenu>
@@ -637,7 +725,9 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
               <DropdownMenuItem onClick={() => setVersionDialogOpen(true)}>
                 <Save className="mr-2 h-4 w-4" /> Save version
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setHistoryOpen(true)}>Version history</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setHistoryOpen(true)}>
+                Version history
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem disabled={fileBusy} onClick={() => void exportXlsx()}>
                 <FileDown className="mr-2 h-4 w-4" /> Export XLSX
@@ -649,7 +739,10 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
                 <Printer className="mr-2 h-4 w-4" /> PDF / Print
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem disabled={signingCopyBusy || saveState === "conflict"} onClick={() => void createSigningCopy()}>
+              <DropdownMenuItem
+                disabled={signingCopyBusy || saveState === "conflict"}
+                onClick={() => void createSigningCopy()}
+              >
                 <FileSignature className="mr-2 h-4 w-4" /> Create signing copy
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -657,46 +750,102 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
         </div>
 
         <div className="flex flex-wrap items-center gap-1 border-t px-3 py-1.5">
-          <Button variant="ghost" size="icon" className="h-8 w-8" title="Undo" onClick={() => toast.info("Use browser undo while editing a cell; workbook history is available under File → Version history.") }>
-            <Undo2 className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" title="Redo" onClick={() => toast.info("Use browser redo while editing a cell; saved workbook versions remain available in Version history.") }>
-            <Redo2 className="h-4 w-4" />
-          </Button>
-          <span className="mx-1 h-5 w-px bg-border" />
-          <Button variant={selectedCellStyle.bold ? "secondary" : "ghost"} size="icon" className="h-8 w-8" title="Bold" onClick={() => applyFormat({ bold: !selectedCellStyle.bold })}>
+          <Button
+            variant={selectedCellStyle.bold ? "secondary" : "ghost"}
+            size="icon"
+            className="h-8 w-8"
+            title="Bold"
+            onClick={() => applyFormat({ bold: !selectedCellStyle.bold })}
+          >
             <Bold className="h-4 w-4" />
           </Button>
-          <Button variant={selectedCellStyle.italic ? "secondary" : "ghost"} size="icon" className="h-8 w-8" title="Italic" onClick={() => applyFormat({ italic: !selectedCellStyle.italic })}>
+          <Button
+            variant={selectedCellStyle.italic ? "secondary" : "ghost"}
+            size="icon"
+            className="h-8 w-8"
+            title="Italic"
+            onClick={() => applyFormat({ italic: !selectedCellStyle.italic })}
+          >
             <Italic className="h-4 w-4" />
           </Button>
-          <Button variant={selectedCellStyle.underline ? "secondary" : "ghost"} size="icon" className="h-8 w-8" title="Underline" onClick={() => applyFormat({ underline: !selectedCellStyle.underline })}>
+          <Button
+            variant={selectedCellStyle.underline ? "secondary" : "ghost"}
+            size="icon"
+            className="h-8 w-8"
+            title="Underline"
+            onClick={() => applyFormat({ underline: !selectedCellStyle.underline })}
+          >
             <Underline className="h-4 w-4" />
           </Button>
-          <Button variant={selectedCellStyle.border ? "secondary" : "ghost"} size="icon" className="h-8 w-8" title="Borders" onClick={() => applyFormat({ border: !selectedCellStyle.border })}>
+          <Button
+            variant={selectedCellStyle.border ? "secondary" : "ghost"}
+            size="icon"
+            className="h-8 w-8"
+            title="Borders"
+            onClick={() => applyFormat({ border: !selectedCellStyle.border })}
+          >
             <BorderAll className="h-4 w-4" />
           </Button>
-          <label className="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-md hover:bg-accent" title="Text color">
+          <label
+            className="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-md hover:bg-accent"
+            title="Text color"
+          >
             <span className="text-sm font-bold">A</span>
-            <input type="color" className="absolute inset-0 cursor-pointer opacity-0" value={selectedCellStyle.textColor ?? "#111827"} onChange={(event) => applyFormat({ textColor: event.target.value })} />
+            <input
+              type="color"
+              className="absolute inset-0 cursor-pointer opacity-0"
+              value={selectedCellStyle.textColor ?? "#111827"}
+              onChange={(event) => applyFormat({ textColor: event.target.value })}
+            />
           </label>
-          <label className="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-md hover:bg-accent" title="Fill color">
-            <span className="h-4 w-4 rounded border" style={{ backgroundColor: selectedCellStyle.backgroundColor ?? "#ffffff" }} />
-            <input type="color" className="absolute inset-0 cursor-pointer opacity-0" value={selectedCellStyle.backgroundColor ?? "#ffffff"} onChange={(event) => applyFormat({ backgroundColor: event.target.value })} />
+          <label
+            className="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-md hover:bg-accent"
+            title="Fill color"
+          >
+            <span
+              className="h-4 w-4 rounded border"
+              style={{ backgroundColor: selectedCellStyle.backgroundColor ?? "#ffffff" }}
+            />
+            <input
+              type="color"
+              className="absolute inset-0 cursor-pointer opacity-0"
+              value={selectedCellStyle.backgroundColor ?? "#ffffff"}
+              onChange={(event) => applyFormat({ backgroundColor: event.target.value })}
+            />
           </label>
           <span className="mx-1 h-5 w-px bg-border" />
-          <Button variant={selectedCellStyle.horizontalAlign === "left" ? "secondary" : "ghost"} size="icon" className="h-8 w-8" title="Align left" onClick={() => applyFormat({ horizontalAlign: "left" })}>
+          <Button
+            variant={selectedCellStyle.horizontalAlign === "left" ? "secondary" : "ghost"}
+            size="icon"
+            className="h-8 w-8"
+            title="Align left"
+            onClick={() => applyFormat({ horizontalAlign: "left" })}
+          >
             <AlignLeft className="h-4 w-4" />
           </Button>
-          <Button variant={selectedCellStyle.horizontalAlign === "center" ? "secondary" : "ghost"} size="icon" className="h-8 w-8" title="Align center" onClick={() => applyFormat({ horizontalAlign: "center" })}>
+          <Button
+            variant={selectedCellStyle.horizontalAlign === "center" ? "secondary" : "ghost"}
+            size="icon"
+            className="h-8 w-8"
+            title="Align center"
+            onClick={() => applyFormat({ horizontalAlign: "center" })}
+          >
             <AlignCenter className="h-4 w-4" />
           </Button>
-          <Button variant={selectedCellStyle.horizontalAlign === "right" ? "secondary" : "ghost"} size="icon" className="h-8 w-8" title="Align right" onClick={() => applyFormat({ horizontalAlign: "right" })}>
+          <Button
+            variant={selectedCellStyle.horizontalAlign === "right" ? "secondary" : "ghost"}
+            size="icon"
+            className="h-8 w-8"
+            title="Align right"
+            onClick={() => applyFormat({ horizontalAlign: "right" })}
+          >
             <AlignRight className="h-4 w-4" />
           </Button>
           <select
             value={selectedCellStyle.numberFormat ?? "general"}
-            onChange={(event) => applyFormat({ numberFormat: event.target.value as CellNumberFormat })}
+            onChange={(event) =>
+              applyFormat({ numberFormat: event.target.value as CellNumberFormat })
+            }
             className="h-8 rounded-md border bg-background px-2 text-xs"
             title="Number format"
           >
@@ -707,38 +856,129 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
             <option value="date">Date</option>
             <option value="text">Text</option>
           </select>
-          <Button variant="ghost" size="icon" className="h-8 w-8" title="Merge / unmerge selection" onClick={() => updateActiveSheet(toggleMerge(activeSheet, selectionRange))}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            title="Merge / unmerge selection"
+            onClick={() => updateActiveSheet(toggleMerge(activeSheet, selectionRange))}
+          >
             <Merge className="h-4 w-4" />
           </Button>
           <span className="mx-1 h-5 w-px bg-border" />
-          <Button variant="ghost" size="icon" className="h-8 w-8" title="Sort selected rows ascending" onClick={() => updateActiveSheet(sortRange(activeSheet, selectionRange.start.row === selectionRange.end.row ? usedRange : selectionRange, selectionFocus.column, "asc", evaluated))}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            title="Sort selected rows ascending"
+            onClick={() =>
+              updateActiveSheet(
+                sortRange(
+                  activeSheet,
+                  selectionRange.start.row === selectionRange.end.row ? usedRange : selectionRange,
+                  selectionFocus.column,
+                  "asc",
+                  evaluated,
+                ),
+              )
+            }
+          >
             <ArrowDownAZ className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" title="Sort selected rows descending" onClick={() => updateActiveSheet(sortRange(activeSheet, selectionRange.start.row === selectionRange.end.row ? usedRange : selectionRange, selectionFocus.column, "desc", evaluated))}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            title="Sort selected rows descending"
+            onClick={() =>
+              updateActiveSheet(
+                sortRange(
+                  activeSheet,
+                  selectionRange.start.row === selectionRange.end.row ? usedRange : selectionRange,
+                  selectionFocus.column,
+                  "desc",
+                  evaluated,
+                ),
+              )
+            }
+          >
             <ArrowUpAZ className="h-4 w-4" />
           </Button>
-          <Button variant={filterOpen ? "secondary" : "ghost"} size="icon" className="h-8 w-8" title="Filter active column" onClick={() => setFilterOpen((open) => !open)}>
+          <Button
+            variant={filterOpen ? "secondary" : "ghost"}
+            size="icon"
+            className="h-8 w-8"
+            title="Filter active column"
+            onClick={() => setFilterOpen((open) => !open)}
+          >
             <Filter className="h-4 w-4" />
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">More <ChevronDown className="ml-1 h-3 w-3" /></Button>
+              <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
+                More <ChevronDown className="ml-1 h-3 w-3" />
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
-              <DropdownMenuItem onClick={() => updateActiveSheet(fillRange(activeSheet, selectionRange, "down"))}>Fill down <span className="ml-auto pl-4 text-xs text-muted-foreground">Ctrl+D</span></DropdownMenuItem>
-              <DropdownMenuItem onClick={() => updateActiveSheet(fillRange(activeSheet, selectionRange, "right"))}>Fill right <span className="ml-auto pl-4 text-xs text-muted-foreground">Ctrl+R</span></DropdownMenuItem>
-              <DropdownMenuItem onClick={() => updateActiveSheet(clearRange(activeSheet, selectionRange, "contents"))}><Scissors className="mr-2 h-4 w-4" /> Clear contents</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => updateActiveSheet(clearRange(activeSheet, selectionRange, "format"))}>Clear formatting</DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => updateActiveSheet(fillRange(activeSheet, selectionRange, "down"))}
+              >
+                Fill down <span className="ml-auto pl-4 text-xs text-muted-foreground">Ctrl+D</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => updateActiveSheet(fillRange(activeSheet, selectionRange, "right"))}
+              >
+                Fill right{" "}
+                <span className="ml-auto pl-4 text-xs text-muted-foreground">Ctrl+R</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  updateActiveSheet(clearRange(activeSheet, selectionRange, "contents"))
+                }
+              >
+                <Scissors className="mr-2 h-4 w-4" /> Clear contents
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => updateActiveSheet(clearRange(activeSheet, selectionRange, "format"))}
+              >
+                Clear formatting
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => updateActiveSheet({ ...activeSheet, frozenRows: Math.max(0, selectionFocus.row - 1) })}><Rows3 className="mr-2 h-4 w-4" /> Freeze rows above selection</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => updateActiveSheet({ ...activeSheet, frozenColumns: Math.max(0, selectionFocus.column - 1) })}><Columns3 className="mr-2 h-4 w-4" /> Freeze columns left of selection</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => updateActiveSheet({ ...activeSheet, frozenRows: 0, frozenColumns: 0 })}>Unfreeze panes</DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  updateActiveSheet({
+                    ...activeSheet,
+                    frozenRows: Math.max(0, selectionFocus.row - 1),
+                  })
+                }
+              >
+                <Rows3 className="mr-2 h-4 w-4" /> Freeze rows above selection
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  updateActiveSheet({
+                    ...activeSheet,
+                    frozenColumns: Math.max(0, selectionFocus.column - 1),
+                  })
+                }
+              >
+                <Columns3 className="mr-2 h-4 w-4" /> Freeze columns left of selection
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  updateActiveSheet({ ...activeSheet, frozenRows: 0, frozenColumns: 0 })
+                }
+              >
+                Unfreeze panes
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
 
         <div className="flex items-center gap-2 border-t bg-muted/20 px-3 py-1.5">
-          <span className="w-20 shrink-0 rounded border bg-background px-2 py-1 text-center text-xs font-medium">{selectedRangeText}</span>
+          <span className="w-20 shrink-0 rounded border bg-background px-2 py-1 text-center text-xs font-medium">
+            {selectedRangeText}
+          </span>
           <span className="font-mono text-xs font-semibold text-muted-foreground">fx</span>
           <Input
             value={formulaBarValue}
@@ -760,8 +1000,22 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
           {filterOpen && (
             <div className="flex items-center gap-1">
               <Search className="h-3.5 w-3.5 text-muted-foreground" />
-              <Input value={filterText} onChange={(event) => setFilterText(event.target.value)} placeholder={`Filter ${columnIndexToLabel(selectionFocus.column)}…`} className="h-8 w-44 text-xs" />
-              {filterText && <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setFilterText("")}><X className="h-3.5 w-3.5" /></Button>}
+              <Input
+                value={filterText}
+                onChange={(event) => setFilterText(event.target.value)}
+                placeholder={`Filter ${columnIndexToLabel(selectionFocus.column)}…`}
+                className="h-8 w-44 text-xs"
+              />
+              {filterText && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => setFilterText("")}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              )}
             </div>
           )}
         </div>
@@ -769,16 +1023,32 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div className="min-w-0 flex-1 overflow-auto bg-white dark:bg-slate-950">
-          <table className="border-separate border-spacing-0 text-xs" style={{ tableLayout: "fixed" }}>
+          <table
+            className="border-separate border-spacing-0 text-xs"
+            style={{ tableLayout: "fixed" }}
+          >
             <colgroup>
               <col style={{ width: 48 }} />
-              {visibleColumns.map((column) => <col key={column} style={{ width: activeSheet.columnWidths[columnIndexToLabel(column)] ?? 112 }} />)}
+              {visibleColumns.map((column) => (
+                <col
+                  key={column}
+                  style={{ width: activeSheet.columnWidths[columnIndexToLabel(column)] ?? 112 }}
+                />
+              ))}
             </colgroup>
             <thead>
               <tr>
                 <th className="sticky left-0 top-0 z-30 h-7 min-w-12 border-b border-r bg-slate-100 text-[10px] text-muted-foreground dark:bg-slate-900" />
                 {visibleColumns.map((column) => (
-                  <th key={column} className="sticky top-0 z-20 h-7 min-w-[48px] border-b border-r bg-slate-100 px-2 text-center text-[10px] font-medium text-muted-foreground dark:bg-slate-900">
+                  <th
+                    key={column}
+                    className="sticky top-0 z-20 h-7 min-w-[48px] border-b border-r bg-slate-100 px-2 text-center text-[10px] font-medium text-muted-foreground dark:bg-slate-900"
+                    style={
+                      column <= activeSheet.frozenColumns
+                        ? { left: frozenColumnOffsets[column], zIndex: 31 }
+                        : undefined
+                    }
+                  >
                     {columnIndexToLabel(column)}
                   </th>
                 ))}
@@ -787,16 +1057,33 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
             <tbody>
               {visibleRows.map((row) => (
                 <tr key={row} style={{ height: activeSheet.rowHeights[String(row)] ?? 30 }}>
-                  <th className="sticky left-0 z-10 border-b border-r bg-slate-100 px-2 text-right text-[10px] font-medium text-muted-foreground dark:bg-slate-900">{row}</th>
+                  <th
+                    className="sticky left-0 z-10 border-b border-r bg-slate-100 px-2 text-right text-[10px] font-medium text-muted-foreground dark:bg-slate-900"
+                    style={
+                      row <= activeSheet.frozenRows
+                        ? { top: frozenRowOffsets[row], zIndex: 30 }
+                        : undefined
+                    }
+                  >
+                    {row}
+                  </th>
                   {visibleColumns.map((column) => {
                     const position = { row, column };
                     const address = cellAddress(row, column);
                     const merge = mergeForCell(activeSheet, position);
-                    if (merge && (merge.start.row !== row || merge.start.column !== column)) return null;
-                    const selected = row >= selectionRange.start.row && row <= selectionRange.end.row && column >= selectionRange.start.column && column <= selectionRange.end.column;
+                    if (merge && (merge.start.row !== row || merge.start.column !== column))
+                      return null;
+                    const selected =
+                      row >= selectionRange.start.row &&
+                      row <= selectionRange.end.row &&
+                      column >= selectionRange.start.column &&
+                      column <= selectionRange.end.column;
                     const focused = selectionFocus.row === row && selectionFocus.column === column;
                     const cell = getCell(activeSheet, address);
-                    const display = formatWorkbookValue(evaluated.bySheet[activeSheet.id]?.[address] ?? cell?.value ?? null, cell?.format);
+                    const display = formatWorkbookValue(
+                      evaluated.bySheet[activeSheet.id]?.[address] ?? cell?.value ?? null,
+                      cell?.format,
+                    );
                     const isEditing = editingAddress === address;
                     const colSpan = merge ? merge.end.column - merge.start.column + 1 : 1;
                     const rowSpan = merge ? merge.end.row - merge.start.row + 1 : 1;
@@ -809,6 +1096,21 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
                         style={{
                           backgroundColor: cell?.format?.backgroundColor,
                           minWidth: activeSheet.columnWidths[columnIndexToLabel(column)] ?? 112,
+                          position:
+                            row <= activeSheet.frozenRows || column <= activeSheet.frozenColumns
+                              ? "sticky"
+                              : undefined,
+                          top: row <= activeSheet.frozenRows ? frozenRowOffsets[row] : undefined,
+                          left:
+                            column <= activeSheet.frozenColumns
+                              ? frozenColumnOffsets[column]
+                              : undefined,
+                          zIndex:
+                            row <= activeSheet.frozenRows && column <= activeSheet.frozenColumns
+                              ? 29
+                              : row <= activeSheet.frozenRows || column <= activeSheet.frozenColumns
+                                ? 18
+                                : undefined,
                         }}
                         onMouseDown={(event) => handleCellMouseDown(position, event)}
                         onMouseEnter={() => handleCellMouseEnter(position)}
@@ -825,8 +1127,12 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
                             color: cell?.format?.textColor,
                             fontWeight: cell?.format?.bold ? 700 : 400,
                             fontStyle: cell?.format?.italic ? "italic" : "normal",
-                            textDecoration: `${cell?.format?.underline ? "underline" : ""} ${cell?.format?.strikethrough ? "line-through" : ""}`.trim() || undefined,
-                            textAlign: cell?.format?.horizontalAlign ?? (typeof cell?.value === "number" ? "right" : "left"),
+                            textDecoration:
+                              `${cell?.format?.underline ? "underline" : ""} ${cell?.format?.strikethrough ? "line-through" : ""}`.trim() ||
+                              undefined,
+                            textAlign:
+                              cell?.format?.horizontalAlign ??
+                              (typeof cell?.value === "number" ? "right" : "left"),
                             border: cell?.format?.border ? "1px solid currentColor" : undefined,
                           }}
                           aria-label={`Cell ${address}`}
@@ -839,52 +1145,234 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
             </tbody>
           </table>
 
-          {(activeSheet.rowCount > renderRowLimit || activeSheet.columnCount > renderColumnLimit) && (
+          {(activeSheet.rowCount > renderRowLimit ||
+            activeSheet.columnCount > renderColumnLimit) && (
             <div className="sticky bottom-2 left-2 m-3 flex w-fit items-center gap-2 rounded-lg border bg-background/95 p-2 text-xs shadow-lg backdrop-blur">
               <span className="text-muted-foreground">Large sheet viewport:</span>
-              {activeSheet.rowCount > renderRowLimit && <Button variant="outline" size="sm" className="h-7" onClick={() => setRenderRowLimit((limit) => Math.min(activeSheet.rowCount, limit + MAX_RENDER_ROWS))}>Show {Math.min(MAX_RENDER_ROWS, activeSheet.rowCount - renderRowLimit)} more rows</Button>}
-              {activeSheet.columnCount > renderColumnLimit && <Button variant="outline" size="sm" className="h-7" onClick={() => setRenderColumnLimit((limit) => Math.min(activeSheet.columnCount, limit + MAX_RENDER_COLUMNS))}>Show more columns</Button>}
+              {activeSheet.rowCount > renderRowLimit && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7"
+                  onClick={() =>
+                    setRenderRowLimit((limit) =>
+                      Math.min(activeSheet.rowCount, limit + MAX_RENDER_ROWS),
+                    )
+                  }
+                >
+                  Show {Math.min(MAX_RENDER_ROWS, activeSheet.rowCount - renderRowLimit)} more rows
+                </Button>
+              )}
+              {activeSheet.columnCount > renderColumnLimit && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7"
+                  onClick={() =>
+                    setRenderColumnLimit((limit) =>
+                      Math.min(activeSheet.columnCount, limit + MAX_RENDER_COLUMNS),
+                    )
+                  }
+                >
+                  Show more columns
+                </Button>
+              )}
             </div>
           )}
         </div>
 
-        <aside className="hidden w-64 shrink-0 overflow-y-auto border-l bg-background p-4 2xl:block">
+        <aside className="hidden w-64 shrink-0 overflow-y-auto border-l bg-background p-4 xl:block">
+          <h3 className="text-sm font-semibold">Cell geometry</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Resize the selected row or column. Dimensions persist in the workbook.
+          </p>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label htmlFor="selected-column-width">{selectedColumnLabel} width</Label>
+              <Input
+                id="selected-column-width"
+                type="number"
+                min={48}
+                max={420}
+                value={selectedColumnWidth}
+                onChange={(event) =>
+                  updateActiveSheet({
+                    ...activeSheet,
+                    columnWidths: {
+                      ...activeSheet.columnWidths,
+                      [selectedColumnLabel]: Math.max(
+                        48,
+                        Math.min(420, Number(event.target.value) || 112),
+                      ),
+                    },
+                  })
+                }
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="selected-row-height">Row {selectionFocus.row}</Label>
+              <Input
+                id="selected-row-height"
+                type="number"
+                min={20}
+                max={180}
+                value={selectedRowHeight}
+                onChange={(event) =>
+                  updateActiveSheet({
+                    ...activeSheet,
+                    rowHeights: {
+                      ...activeSheet.rowHeights,
+                      [String(selectionFocus.row)]: Math.max(
+                        20,
+                        Math.min(180, Number(event.target.value) || 30),
+                      ),
+                    },
+                  })
+                }
+              />
+            </div>
+          </div>
+          <div className="my-4 border-t" />
           <h3 className="text-sm font-semibold">Print setup</h3>
-          <p className="mt-1 text-xs text-muted-foreground">Stored with this worksheet and used by PDF/signing-copy output.</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Stored with this worksheet and used by PDF/signing-copy output.
+          </p>
           <div className="mt-4 space-y-4">
             <div className="space-y-1.5">
               <Label>Orientation</Label>
-              <select value={activeSheet.print.orientation} onChange={(event) => updateActiveSheet({ ...activeSheet, print: { ...activeSheet.print, orientation: event.target.value === "landscape" ? "landscape" : "portrait" } })} className="h-9 w-full rounded-md border bg-background px-3 text-sm">
+              <select
+                value={activeSheet.print.orientation}
+                onChange={(event) =>
+                  updateActiveSheet({
+                    ...activeSheet,
+                    print: {
+                      ...activeSheet.print,
+                      orientation: event.target.value === "landscape" ? "landscape" : "portrait",
+                    },
+                  })
+                }
+                className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+              >
                 <option value="portrait">Portrait</option>
                 <option value="landscape">Landscape</option>
               </select>
             </div>
             <div className="space-y-1.5">
               <Label>Scale (%)</Label>
-              <Input type="number" min={25} max={200} value={activeSheet.print.scale} onChange={(event) => updateActiveSheet({ ...activeSheet, print: { ...activeSheet.print, scale: Math.max(25, Math.min(200, Number(event.target.value) || 100)) } })} />
+              <Input
+                type="number"
+                min={25}
+                max={200}
+                value={activeSheet.print.scale}
+                onChange={(event) =>
+                  updateActiveSheet({
+                    ...activeSheet,
+                    print: {
+                      ...activeSheet.print,
+                      scale: Math.max(25, Math.min(200, Number(event.target.value) || 100)),
+                    },
+                  })
+                }
+              />
             </div>
             <label className="flex items-center justify-between gap-3 text-sm">
               <span>Fit to page width</span>
-              <input type="checkbox" checked={activeSheet.print.fitToWidth} onChange={(event) => updateActiveSheet({ ...activeSheet, print: { ...activeSheet.print, fitToWidth: event.target.checked } })} />
+              <input
+                type="checkbox"
+                checked={activeSheet.print.fitToWidth}
+                onChange={(event) =>
+                  updateActiveSheet({
+                    ...activeSheet,
+                    print: { ...activeSheet.print, fitToWidth: event.target.checked },
+                  })
+                }
+              />
             </label>
             <label className="flex items-center justify-between gap-3 text-sm">
               <span>Print gridlines</span>
-              <input type="checkbox" checked={activeSheet.print.gridlines} onChange={(event) => updateActiveSheet({ ...activeSheet, print: { ...activeSheet.print, gridlines: event.target.checked } })} />
+              <input
+                type="checkbox"
+                checked={activeSheet.print.gridlines}
+                onChange={(event) =>
+                  updateActiveSheet({
+                    ...activeSheet,
+                    print: { ...activeSheet.print, gridlines: event.target.checked },
+                  })
+                }
+              />
             </label>
             <div className="space-y-1.5">
               <Label>Print area</Label>
-              <Input value={activeSheet.print.printArea ?? ""} placeholder="A1:H40" onChange={(event) => updateActiveSheet({ ...activeSheet, print: { ...activeSheet.print, printArea: event.target.value.toUpperCase() || undefined } })} />
-              <Button variant="outline" size="sm" className="w-full" onClick={() => updateActiveSheet({ ...activeSheet, print: { ...activeSheet.print, printArea: selectedRangeText } })}>Use current selection</Button>
+              <Input
+                value={activeSheet.print.printArea ?? ""}
+                placeholder="A1:H40"
+                onChange={(event) =>
+                  updateActiveSheet({
+                    ...activeSheet,
+                    print: {
+                      ...activeSheet.print,
+                      printArea: event.target.value.toUpperCase() || undefined,
+                    },
+                  })
+                }
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() =>
+                  updateActiveSheet({
+                    ...activeSheet,
+                    print: { ...activeSheet.print, printArea: selectedRangeText },
+                  })
+                }
+              >
+                Use current selection
+              </Button>
             </div>
             <div className="space-y-1.5">
               <Label>Repeat top rows</Label>
-              <Input type="number" min={0} max={100} value={activeSheet.print.repeatHeaderRows ?? 0} onChange={(event) => updateActiveSheet({ ...activeSheet, print: { ...activeSheet.print, repeatHeaderRows: Math.max(0, Math.min(100, Number(event.target.value) || 0)) || undefined } })} />
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                value={activeSheet.print.repeatHeaderRows ?? 0}
+                onChange={(event) =>
+                  updateActiveSheet({
+                    ...activeSheet,
+                    print: {
+                      ...activeSheet.print,
+                      repeatHeaderRows:
+                        Math.max(0, Math.min(100, Number(event.target.value) || 0)) || undefined,
+                    },
+                  })
+                }
+              />
             </div>
             <div>
               <Label>Margins (mm)</Label>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 {(["top", "right", "bottom", "left"] as const).map((side) => (
-                  <Input key={side} type="number" min={5} max={50} value={activeSheet.print.margins[side]} aria-label={`${side} margin`} onChange={(event) => updateActiveSheet({ ...activeSheet, print: { ...activeSheet.print, margins: { ...activeSheet.print.margins, [side]: Math.max(5, Math.min(50, Number(event.target.value) || 12.7)) } } })} />
+                  <Input
+                    key={side}
+                    type="number"
+                    min={5}
+                    max={50}
+                    value={activeSheet.print.margins[side]}
+                    aria-label={`${side} margin`}
+                    onChange={(event) =>
+                      updateActiveSheet({
+                        ...activeSheet,
+                        print: {
+                          ...activeSheet.print,
+                          margins: {
+                            ...activeSheet.print.margins,
+                            [side]: Math.max(5, Math.min(50, Number(event.target.value) || 12.7)),
+                          },
+                        },
+                      })
+                    }
+                  />
                 ))}
               </div>
             </div>
@@ -893,7 +1381,13 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
       </div>
 
       <div className="flex shrink-0 items-center gap-1 overflow-x-auto border-t bg-background px-2 py-1.5">
-        <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" title="Add worksheet" onClick={() => applyWorkbook(addSheet(latestWorkbookRef.current))}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 shrink-0"
+          title="Add worksheet"
+          onClick={() => applyWorkbook(addSheet(latestWorkbookRef.current))}
+        >
           <Plus className="h-4 w-4" />
         </Button>
         {workbook.sheets.map((sheet) => (
@@ -916,30 +1410,101 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
-              <DropdownMenuItem onClick={() => { setRenameSheetId(sheet.id); setRenameSheetValue(sheet.name); }}>Rename</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => applyWorkbook(moveSheet(latestWorkbookRef.current, sheet.id, -1))}><MoveLeft className="mr-2 h-4 w-4" /> Move left</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => applyWorkbook(moveSheet(latestWorkbookRef.current, sheet.id, 1))}><MoveRight className="mr-2 h-4 w-4" /> Move right</DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setRenameSheetId(sheet.id);
+                  setRenameSheetValue(sheet.name);
+                }}
+              >
+                Rename
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => applyWorkbook(moveSheet(latestWorkbookRef.current, sheet.id, -1))}
+              >
+                <MoveLeft className="mr-2 h-4 w-4" /> Move left
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => applyWorkbook(moveSheet(latestWorkbookRef.current, sheet.id, 1))}
+              >
+                <MoveRight className="mr-2 h-4 w-4" /> Move right
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem disabled={workbook.sheets.length <= 1} className="text-red-600 focus:text-red-600" onClick={() => applyWorkbook(deleteSheet(latestWorkbookRef.current, sheet.id))}><Trash2 className="mr-2 h-4 w-4" /> Delete worksheet</DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={workbook.sheets.length <= 1}
+                className="text-red-600 focus:text-red-600"
+                onClick={() => applyWorkbook(deleteSheet(latestWorkbookRef.current, sheet.id))}
+              >
+                <Trash2 className="mr-2 h-4 w-4" /> Delete worksheet
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         ))}
-        <span className="ml-auto shrink-0 px-2 text-[10px] text-muted-foreground">{activeSheet.rowCount.toLocaleString()} rows × {activeSheet.columnCount.toLocaleString()} columns</span>
-        <Button variant="ghost" size="sm" className="h-7 shrink-0 text-xs" onClick={() => updateActiveSheet({ ...activeSheet, rowCount: Math.min(10_000, activeSheet.rowCount + 100) })}><Rows3 className="mr-1 h-3.5 w-3.5" /> +100 rows</Button>
-        <Button variant="ghost" size="sm" className="h-7 shrink-0 text-xs" onClick={() => updateActiveSheet({ ...activeSheet, columnCount: Math.min(256, activeSheet.columnCount + 10) })}><Columns3 className="mr-1 h-3.5 w-3.5" /> +10 cols</Button>
+        <span className="ml-auto shrink-0 px-2 text-[10px] text-muted-foreground">
+          {activeSheet.rowCount.toLocaleString()} rows × {activeSheet.columnCount.toLocaleString()}{" "}
+          columns
+        </span>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 shrink-0 text-xs"
+          onClick={() =>
+            updateActiveSheet({
+              ...activeSheet,
+              rowCount: Math.min(10_000, activeSheet.rowCount + 100),
+            })
+          }
+        >
+          <Rows3 className="mr-1 h-3.5 w-3.5" /> +100 rows
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 shrink-0 text-xs"
+          onClick={() =>
+            updateActiveSheet({
+              ...activeSheet,
+              columnCount: Math.min(256, activeSheet.columnCount + 10),
+            })
+          }
+        >
+          <Columns3 className="mr-1 h-3.5 w-3.5" /> +10 cols
+        </Button>
       </div>
 
       <Dialog open={versionDialogOpen} onOpenChange={setVersionDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Save spreadsheet version</DialogTitle>
-            <DialogDescription>Create an immutable workbook milestone before a significant change.</DialogDescription>
+            <DialogDescription>
+              Create an immutable workbook milestone before a significant change.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
-            <div className="space-y-1.5"><Label>Version title</Label><Input value={versionTitle} onChange={(event) => setVersionTitle(event.target.value)} placeholder="Quarter-end review" /></div>
-            <div className="space-y-1.5"><Label>Change summary</Label><Textarea value={versionSummary} onChange={(event) => setVersionSummary(event.target.value)} placeholder="What changed in this version?" /></div>
+            <div className="space-y-1.5">
+              <Label>Version title</Label>
+              <Input
+                value={versionTitle}
+                onChange={(event) => setVersionTitle(event.target.value)}
+                placeholder="Quarter-end review"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Change summary</Label>
+              <Textarea
+                value={versionSummary}
+                onChange={(event) => setVersionSummary(event.target.value)}
+                placeholder="What changed in this version?"
+              />
+            </div>
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setVersionDialogOpen(false)}>Cancel</Button><Button onClick={() => void createVersion()} disabled={saveState === "saving"}>Save version</Button></DialogFooter>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setVersionDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => void createVersion()} disabled={saveState === "saving"}>
+              Save version
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -947,20 +1512,44 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
         <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Version history</DialogTitle>
-            <DialogDescription>Restoring a workbook first creates an automatic pre-restore backup in the existing version ledger.</DialogDescription>
+            <DialogDescription>
+              Restoring a workbook first creates an automatic pre-restore backup in the existing
+              version ledger.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
             {(versions ?? []).length === 0 ? (
-              <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">No milestone versions have been saved yet.</div>
+              <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+                No milestone versions have been saved yet.
+              </div>
             ) : (
               (versions ?? []).map((version) => (
                 <div key={version.id} className="flex items-start gap-3 rounded-lg border p-3">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium">{version.title || `Version ${version.version_number}`}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">{new Date(version.created_at).toLocaleString()} · {(version.sheet_count ?? 0).toLocaleString()} sheets · {(version.cell_count ?? 0).toLocaleString()} cells · {(version.formula_count ?? 0).toLocaleString()} formulas</p>
-                    {version.change_summary && <p className="mt-2 text-xs">{version.change_summary}</p>}
+                    <p className="text-sm font-medium">
+                      {version.title || `Version ${version.version_number}`}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {new Date(version.created_at).toLocaleString()} ·{" "}
+                      {(version.sheet_count ?? 0).toLocaleString()} sheets ·{" "}
+                      {(version.cell_count ?? 0).toLocaleString()} cells ·{" "}
+                      {(version.formula_count ?? 0).toLocaleString()} formulas
+                    </p>
+                    {version.change_summary && (
+                      <p className="mt-2 text-xs">{version.change_summary}</p>
+                    )}
                   </div>
-                  <Button variant="outline" size="sm" disabled={restoringVersionId === version.id || saveState === "saving"} onClick={() => void restoreVersion(version.id)}>{restoringVersionId === version.id && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}Restore</Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={restoringVersionId === version.id || saveState === "saving"}
+                    onClick={() => void restoreVersion(version.id)}
+                  >
+                    {restoringVersionId === version.id && (
+                      <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                    )}
+                    Restore
+                  </Button>
                 </div>
               ))
             )}
@@ -968,30 +1557,88 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
         </DialogContent>
       </Dialog>
 
-      <Dialog open={Boolean(renameSheetId)} onOpenChange={(open) => !open && setRenameSheetId(null)}>
+      <Dialog
+        open={Boolean(renameSheetId)}
+        onOpenChange={(open) => !open && setRenameSheetId(null)}
+      >
         <DialogContent className="sm:max-w-sm">
-          <DialogHeader><DialogTitle>Rename worksheet</DialogTitle><DialogDescription>Worksheet names must be unique in this workbook.</DialogDescription></DialogHeader>
-          <Input value={renameSheetValue} autoFocus onChange={(event) => setRenameSheetValue(event.target.value)} onKeyDown={(event) => event.key === "Enter" && commitSheetRename()} />
-          <DialogFooter><Button variant="outline" onClick={() => setRenameSheetId(null)}>Cancel</Button><Button onClick={commitSheetRename}>Rename</Button></DialogFooter>
+          <DialogHeader>
+            <DialogTitle>Rename worksheet</DialogTitle>
+            <DialogDescription>Worksheet names must be unique in this workbook.</DialogDescription>
+          </DialogHeader>
+          <Input
+            value={renameSheetValue}
+            autoFocus
+            onChange={(event) => setRenameSheetValue(event.target.value)}
+            onKeyDown={(event) => event.key === "Enter" && commitSheetRename()}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameSheetId(null)}>
+              Cancel
+            </Button>
+            <Button onClick={commitSheetRename}>Rename</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={pdfOpen} onOpenChange={setPdfOpen}>
         <DialogContent className="sm:max-w-lg">
-          <DialogHeader><DialogTitle>PDF and print</DialogTitle><DialogDescription>Select worksheets. Each sheet uses its saved orientation, print area, scaling, margins, repeated header rows and gridline preference.</DialogDescription></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>PDF and print</DialogTitle>
+            <DialogDescription>
+              Select worksheets. Each sheet uses its saved orientation, print area, scaling,
+              margins, repeated header rows and gridline preference.
+            </DialogDescription>
+          </DialogHeader>
           <div className="space-y-2">
             {workbook.sheets.map((sheet) => (
-              <label key={sheet.id} className="flex items-center gap-3 rounded-lg border p-3 text-sm">
-                <input type="checkbox" checked={pdfSheetIds.includes(sheet.id)} onChange={(event) => setPdfSheetIds((ids) => event.target.checked ? [...ids, sheet.id] : ids.filter((id) => id !== sheet.id))} />
+              <label
+                key={sheet.id}
+                className="flex items-center gap-3 rounded-lg border p-3 text-sm"
+              >
+                <input
+                  type="checkbox"
+                  checked={pdfSheetIds.includes(sheet.id)}
+                  onChange={(event) =>
+                    setPdfSheetIds((ids) =>
+                      event.target.checked
+                        ? [...ids, sheet.id]
+                        : ids.filter((id) => id !== sheet.id),
+                    )
+                  }
+                />
                 <span className="min-w-0 flex-1 truncate font-medium">{sheet.name}</span>
                 <span className="text-xs text-muted-foreground">{sheet.print.orientation}</span>
               </label>
             ))}
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setPdfOpen(false)}>Cancel</Button>
-            <Button variant="outline" disabled={pdfBusy || pdfSheetIds.length === 0} onClick={() => void exportPdf(true)}>{pdfBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}Print</Button>
-            <Button disabled={pdfBusy || pdfSheetIds.length === 0} onClick={() => void exportPdf(false)}>{pdfBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}Download PDF</Button>
+            <Button variant="outline" onClick={() => setPdfOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="outline"
+              disabled={pdfBusy || pdfSheetIds.length === 0}
+              onClick={() => void exportPdf(true)}
+            >
+              {pdfBusy ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Printer className="mr-2 h-4 w-4" />
+              )}
+              Print
+            </Button>
+            <Button
+              disabled={pdfBusy || pdfSheetIds.length === 0}
+              onClick={() => void exportPdf(false)}
+            >
+              {pdfBusy ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <FileDown className="mr-2 h-4 w-4" />
+              )}
+              Download PDF
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -98,7 +98,8 @@ export const restoreSpreadsheetVersion = createServerFn({ method: "POST" })
       },
     );
     if (error) throw new Error(error.message);
-    if (document.document_kind !== "spreadsheet") throw new Error("The restored version is not a spreadsheet");
+    if (document.document_kind !== "spreadsheet")
+      throw new Error("The restored version is not a spreadsheet");
     return document;
   });
 
@@ -114,8 +115,10 @@ export const duplicateSpreadsheet = createServerFn({ method: "POST" })
       .eq("id", data.documentId)
       .single();
     if (sourceError) throw new Error(sourceError.message);
-    if (source.workspace_id !== workspaceId) throw new Error("Spreadsheet is outside the active workspace");
-    if (source.document_kind !== "spreadsheet") throw new Error("Only spreadsheets can use this duplicate action");
+    if (source.workspace_id !== workspaceId)
+      throw new Error("Spreadsheet is outside the active workspace");
+    if (source.document_kind !== "spreadsheet")
+      throw new Error("Only spreadsheets can use this duplicate action");
     const workbook = normalizeWorkbookContent(source.content);
     const metrics = workbookMetrics(workbook);
     const { data: copy, error } = await supabase
@@ -156,9 +159,12 @@ export const exportSpreadsheetPdf = createServerFn({ method: "POST" })
       .eq("id", data.documentId)
       .single();
     if (sourceError) throw new Error(sourceError.message);
-    if (source.workspace_id !== workspaceId) throw new Error("Spreadsheet is outside the active workspace");
-    if (source.document_kind !== "spreadsheet") throw new Error("Only OfficeKonnect Sheets use this PDF renderer");
-    if (source.document_status === "deleted") throw new Error("Restore this spreadsheet before exporting it");
+    if (source.workspace_id !== workspaceId)
+      throw new Error("Spreadsheet is outside the active workspace");
+    if (source.document_kind !== "spreadsheet")
+      throw new Error("Only OfficeKonnect Sheets use this PDF renderer");
+    if (source.document_status === "deleted")
+      throw new Error("Restore this spreadsheet before exporting it");
     const rendered = await buildSpreadsheetPdf({
       title: source.title,
       content: source.content,
@@ -199,9 +205,12 @@ export const createSpreadsheetSigningCopy = createServerFn({ method: "POST" })
       .eq("id", data.documentId)
       .single();
     if (sourceError) throw new Error(sourceError.message);
-    if (source.workspace_id !== workspaceId) throw new Error("Spreadsheet is outside the active workspace");
-    if (source.document_kind !== "spreadsheet") throw new Error("Only spreadsheets can generate this signing copy");
-    if (source.document_status === "deleted") throw new Error("Restore this spreadsheet before generating a signing copy");
+    if (source.workspace_id !== workspaceId)
+      throw new Error("Spreadsheet is outside the active workspace");
+    if (source.document_kind !== "spreadsheet")
+      throw new Error("Only spreadsheets can generate this signing copy");
+    if (source.document_status === "deleted")
+      throw new Error("Restore this spreadsheet before generating a signing copy");
 
     const rendered = await buildSpreadsheetPdf({
       title: source.title,

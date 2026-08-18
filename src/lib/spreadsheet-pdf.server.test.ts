@@ -20,7 +20,11 @@ describe("OfficeKonnect Sheets PDF renderer", () => {
     first = updateCellInput(first, "A2", "Operations");
     first = updateCellInput(first, "B2", "1200");
     first = updateCellInput(first, "B3", "=B2*1.1");
-    first = updateCellFormat(first, parseRange("A1:B1")!, { bold: true, backgroundColor: "#e2e8f0", border: true });
+    first = updateCellFormat(first, parseRange("A1:B1")!, {
+      bold: true,
+      backgroundColor: "#e2e8f0",
+      border: true,
+    });
     first = { ...first, print: { ...first.print, printArea: "A1:B3", repeatHeaderRows: 1 } };
     workbook = setWorkbookSheet(workbook, first);
     workbook = addSheet(workbook, "Landscape");

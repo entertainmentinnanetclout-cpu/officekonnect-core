@@ -28,7 +28,8 @@ function SpreadsheetDetail() {
         .eq("id", documentId)
         .single();
       if (documentError) throw documentError;
-      if (data.document_kind !== "spreadsheet") throw new Error("This item is not an OfficeKonnect spreadsheet");
+      if (data.document_kind !== "spreadsheet")
+        throw new Error("This item is not an OfficeKonnect spreadsheet");
       return data;
     },
     retry: 1,
@@ -55,7 +56,9 @@ function SpreadsheetDetail() {
       <div className="flex h-[calc(100vh-8rem)] flex-col items-center justify-center px-4 text-center">
         <h1 className="text-xl font-semibold">Spreadsheet unavailable</h1>
         <p className="mt-2 max-w-md text-sm text-muted-foreground">
-          {error instanceof Error ? error.message : "The spreadsheet could not be found in this workspace."}
+          {error instanceof Error
+            ? error.message
+            : "The spreadsheet could not be found in this workspace."}
         </p>
         <div className="mt-5 flex gap-2">
           <Button variant="outline" asChild>

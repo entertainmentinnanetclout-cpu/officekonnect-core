@@ -96,7 +96,10 @@ const DEFAULT_PRINT: WorkbookPrintSettings = {
 };
 
 function makeId(prefix: string) {
-  const id = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+  const id =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2);
   return `${prefix}-${id}`;
 }
 
@@ -136,7 +139,9 @@ function normalizedColor(value: unknown) {
 
 function normalizeFormat(value: unknown): WorkbookCellFormat | undefined {
   if (!isRecord(value)) return undefined;
-  const numberFormat = ["general", "number", "currency", "percent", "date", "text"].includes(String(value.numberFormat))
+  const numberFormat = ["general", "number", "currency", "percent", "date", "text"].includes(
+    String(value.numberFormat),
+  )
     ? (String(value.numberFormat) as CellNumberFormat)
     : undefined;
   const horizontalAlign = ["left", "center", "right"].includes(String(value.horizontalAlign))
@@ -151,7 +156,10 @@ function normalizeFormat(value: unknown): WorkbookCellFormat | undefined {
     backgroundColor: normalizedColor(value.backgroundColor),
     horizontalAlign,
     numberFormat,
-    currency: typeof value.currency === "string" && value.currency.trim() ? value.currency.trim().slice(0, 8) : undefined,
+    currency:
+      typeof value.currency === "string" && value.currency.trim()
+        ? value.currency.trim().slice(0, 8)
+        : undefined,
     decimals: finiteInteger(value.decimals, 2, 0, 8),
     border: value.border === true || undefined,
   };
@@ -161,14 +169,16 @@ function normalizeFormat(value: unknown): WorkbookCellFormat | undefined {
 function normalizeCell(value: unknown): WorkbookCell | undefined {
   if (value === null || value === undefined) return undefined;
   if (!isRecord(value)) {
-    if (["string", "number", "boolean"].includes(typeof value)) return { value: value as WorkbookValue };
+    if (["string", "number", "boolean"].includes(typeof value))
+      return { value: value as WorkbookValue };
     return undefined;
   }
-  const formula = typeof value.formula === "string" && value.formula.trim()
-    ? value.formula.trim().startsWith("=")
-      ? value.formula.trim()
-      : `=${value.formula.trim()}`
-    : undefined;
+  const formula =
+    typeof value.formula === "string" && value.formula.trim()
+      ? value.formula.trim().startsWith("=")
+        ? value.formula.trim()
+        : `=${value.formula.trim()}`
+      : undefined;
   let cellValue: WorkbookValue | undefined;
   if (value.value === null || ["string", "number", "boolean"].includes(typeof value.value)) {
     cellValue = value.value as WorkbookValue;
@@ -190,7 +200,10 @@ function normalizePrint(value: unknown): WorkbookPrintSettings {
       bottom: finiteInteger(marginsRecord.bottom, DEFAULT_PRINT.margins.bottom, 5, 50),
       left: finiteInteger(marginsRecord.left, DEFAULT_PRINT.margins.left, 5, 50),
     },
-    printArea: typeof value.printArea === "string" && value.printArea.trim() ? value.printArea.trim().toUpperCase() : undefined,
+    printArea:
+      typeof value.printArea === "string" && value.printArea.trim()
+        ? value.printArea.trim().toUpperCase()
+        : undefined,
     repeatHeaderRows: finiteInteger(value.repeatHeaderRows, 0, 0, 100) || undefined,
     gridlines: value.gridlines !== false,
     scale: finiteInteger(value.scale, 100, 25, 200),
@@ -222,12 +235,18 @@ function normalizeSheet(value: unknown, index: number): WorkbookSheet {
 
   const used = usedRangeFromCells(cells);
   const rowCount = finiteInteger(value.rowCount, Math.max(DEFAULT_ROWS, used.end.row), 1, MAX_ROWS);
-  const columnCount = finiteInteger(value.columnCount, Math.max(DEFAULT_COLUMNS, used.end.column), 1, MAX_COLUMNS);
+  const columnCount = finiteInteger(
+    value.columnCount,
+    Math.max(DEFAULT_COLUMNS, used.end.column),
+    1,
+    MAX_COLUMNS,
+  );
   const widths: Record<string, number> = {};
   if (isRecord(value.columnWidths)) {
     for (const [column, width] of Object.entries(value.columnWidths)) {
       const label = column.toUpperCase();
-      if (/^[A-Z]{1,3}$/.test(label)) widths[label] = finiteInteger(width, DEFAULT_COLUMN_WIDTH, 48, 420);
+      if (/^[A-Z]{1,3}$/.test(label))
+        widths[label] = finiteInteger(width, DEFAULT_COLUMN_WIDTH, 48, 420);
     }
   }
   const heights: Record<string, number> = {};
@@ -240,14 +259,19 @@ function normalizeSheet(value: unknown, index: number): WorkbookSheet {
     ? value.merges
         .map((entry) => {
           const range = isRecord(entry) ? entry.range : entry;
-          return typeof range === "string" && parseRange(range) ? { range: normalizeRange(range) } : null;
+          return typeof range === "string" && parseRange(range)
+            ? { range: normalizeRange(range) }
+            : null;
         })
         .filter((entry): entry is WorkbookMerge => Boolean(entry))
     : [];
 
   return {
     id: typeof value.id === "string" && value.id ? value.id : fallback.id,
-    name: typeof value.name === "string" && value.name.trim() ? value.name.trim().slice(0, 80) : fallback.name,
+    name:
+      typeof value.name === "string" && value.name.trim()
+        ? value.name.trim().slice(0, 80)
+        : fallback.name,
     rowCount: Math.max(rowCount, used.end.row),
     columnCount: Math.max(columnCount, used.end.column),
     cells,
@@ -261,12 +285,15 @@ function normalizeSheet(value: unknown, index: number): WorkbookSheet {
 }
 
 export function normalizeWorkbookContent(value: unknown): WorkbookContent {
-  if (!isRecord(value) || value.kind !== "workbook" || !Array.isArray(value.sheets)) return createEmptyWorkbook();
+  if (!isRecord(value) || value.kind !== "workbook" || !Array.isArray(value.sheets))
+    return createEmptyWorkbook();
   const sheets = value.sheets.map((sheet, index) => normalizeSheet(sheet, index));
   if (sheets.length === 0) sheets.push(createEmptySheet());
-  const activeSheetId = typeof value.activeSheetId === "string" && sheets.some((sheet) => sheet.id === value.activeSheetId)
-    ? value.activeSheetId
-    : sheets[0]!.id;
+  const activeSheetId =
+    typeof value.activeSheetId === "string" &&
+    sheets.some((sheet) => sheet.id === value.activeSheetId)
+      ? value.activeSheetId
+      : sheets[0]!.id;
   return { kind: "workbook", schemaVersion: 1, activeSheetId, sheets };
 }
 
@@ -288,7 +315,9 @@ export function columnIndexToLabel(index: number) {
 export function columnLabelToIndex(label: string) {
   const normalized = label.replace(/\$/g, "").toUpperCase();
   if (!/^[A-Z]+$/.test(normalized)) return 0;
-  return normalized.split("").reduce((total, character) => total * 26 + character.charCodeAt(0) - 64, 0);
+  return normalized
+    .split("")
+    .reduce((total, character) => total * 26 + character.charCodeAt(0) - 64, 0);
 }
 
 export function cellAddress(row: number, column: number) {
@@ -300,7 +329,8 @@ export function parseCellAddress(address: string): CellPosition | null {
   if (!match) return null;
   const row = Number(match[2]);
   const column = columnLabelToIndex(match[1]!);
-  if (!Number.isFinite(row) || row < 1 || row > MAX_ROWS || column < 1 || column > MAX_COLUMNS) return null;
+  if (!Number.isFinite(row) || row < 1 || row > MAX_ROWS || column < 1 || column > MAX_COLUMNS)
+    return null;
   return { row, column };
 }
 
@@ -323,13 +353,16 @@ export function parseRange(range: string): CellRange | null {
 
 export function normalizeRange(range: string) {
   const parsed = parseRange(range);
-  return parsed ? `${cellAddress(parsed.start.row, parsed.start.column)}:${cellAddress(parsed.end.row, parsed.end.column)}` : "A1:A1";
+  return parsed
+    ? `${cellAddress(parsed.start.row, parsed.start.column)}:${cellAddress(parsed.end.row, parsed.end.column)}`
+    : "A1:A1";
 }
 
 export function positionsInRange(range: CellRange) {
   const positions: CellPosition[] = [];
   for (let row = range.start.row; row <= range.end.row; row += 1) {
-    for (let column = range.start.column; column <= range.end.column; column += 1) positions.push({ row, column });
+    for (let column = range.start.column; column <= range.end.column; column += 1)
+      positions.push({ row, column });
   }
   return positions;
 }
@@ -399,7 +432,11 @@ export function updateCellInput(sheet: WorkbookSheet, address: string, input: st
   };
 }
 
-export function updateCellFormat(sheet: WorkbookSheet, range: CellRange, patch: Partial<WorkbookCellFormat>) {
+export function updateCellFormat(
+  sheet: WorkbookSheet,
+  range: CellRange,
+  patch: Partial<WorkbookCellFormat>,
+) {
   const cells = { ...sheet.cells };
   for (const position of positionsInRange(range)) {
     const address = cellAddress(position.row, position.column);
@@ -408,13 +445,18 @@ export function updateCellFormat(sheet: WorkbookSheet, range: CellRange, patch: 
     for (const key of Object.keys(format) as Array<keyof WorkbookCellFormat>) {
       if (format[key] === undefined) delete format[key];
     }
-    if (Object.keys(format).length === 0 && current.value === undefined && !current.formula) delete cells[address];
+    if (Object.keys(format).length === 0 && current.value === undefined && !current.formula)
+      delete cells[address];
     else cells[address] = { ...current, format: Object.keys(format).length ? format : undefined };
   }
   return { ...sheet, cells };
 }
 
-export function clearRange(sheet: WorkbookSheet, range: CellRange, mode: "contents" | "format" | "all" = "contents") {
+export function clearRange(
+  sheet: WorkbookSheet,
+  range: CellRange,
+  mode: "contents" | "format" | "all" = "contents",
+) {
   const cells = { ...sheet.cells };
   for (const position of positionsInRange(range)) {
     const address = cellAddress(position.row, position.column);
@@ -439,7 +481,8 @@ export function workbookMetrics(workbook: WorkbookContent): WorkbookMetrics {
   let formulaCount = 0;
   for (const sheet of workbook.sheets) {
     for (const cell of Object.values(sheet.cells)) {
-      if (cell.formula || (cell.value !== undefined && cell.value !== null && cell.value !== "")) cellCount += 1;
+      if (cell.formula || (cell.value !== undefined && cell.value !== null && cell.value !== ""))
+        cellCount += 1;
       if (cell.formula) formulaCount += 1;
     }
   }
@@ -465,12 +508,22 @@ export function addSheet(workbook: WorkbookContent, preferredName?: string) {
 export function deleteSheet(workbook: WorkbookContent, sheetId: string) {
   if (workbook.sheets.length <= 1) return workbook;
   const sheets = workbook.sheets.filter((sheet) => sheet.id !== sheetId);
-  return { ...workbook, activeSheetId: workbook.activeSheetId === sheetId ? sheets[0]!.id : workbook.activeSheetId, sheets };
+  return {
+    ...workbook,
+    activeSheetId: workbook.activeSheetId === sheetId ? sheets[0]!.id : workbook.activeSheetId,
+    sheets,
+  };
 }
 
 export function renameSheet(workbook: WorkbookContent, sheetId: string, nextName: string) {
   const name = nextName.trim().slice(0, 80);
-  if (!name || workbook.sheets.some((sheet) => sheet.id !== sheetId && sheet.name.toLowerCase() === name.toLowerCase())) return workbook;
+  if (
+    !name ||
+    workbook.sheets.some(
+      (sheet) => sheet.id !== sheetId && sheet.name.toLowerCase() === name.toLowerCase(),
+    )
+  )
+    return workbook;
   const source = workbook.sheets.find((sheet) => sheet.id === sheetId);
   if (!source || source.name === name) return workbook;
   const escapedOld = source.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -484,7 +537,13 @@ export function renameSheet(workbook: WorkbookContent, sheetId: string, nextName
       Object.entries(sheet.cells).map(([address, cell]) => [
         address,
         cell.formula
-          ? { ...cell, formula: cell.formula.split(oldQuoted).join(newQuoted).replace(plainPattern, `${name}!`) }
+          ? {
+              ...cell,
+              formula: cell.formula
+                .split(oldQuoted)
+                .join(newQuoted)
+                .replace(plainPattern, `${name}!`),
+            }
           : cell,
       ]),
     ),
@@ -502,7 +561,10 @@ export function moveSheet(workbook: WorkbookContent, sheetId: string, direction:
 }
 
 export function setWorkbookSheet(workbook: WorkbookContent, sheet: WorkbookSheet) {
-  return { ...workbook, sheets: workbook.sheets.map((entry) => (entry.id === sheet.id ? sheet : entry)) };
+  return {
+    ...workbook,
+    sheets: workbook.sheets.map((entry) => (entry.id === sheet.id ? sheet : entry)),
+  };
 }
 
 export function matrixToSheet(name: string, matrix: unknown[][]): WorkbookSheet {
@@ -513,8 +575,10 @@ export function matrixToSheet(name: string, matrix: unknown[][]): WorkbookSheet 
       if (raw === null || raw === undefined || raw === "") return;
       const address = cellAddress(rowIndex + 1, columnIndex + 1);
       if (typeof raw === "string" && raw.startsWith("=")) cells[address] = { formula: raw };
-      else if (["string", "number", "boolean"].includes(typeof raw)) cells[address] = { value: raw as WorkbookValue };
-      else if (raw instanceof Date) cells[address] = { value: raw.toISOString(), format: { numberFormat: "date" } };
+      else if (["string", "number", "boolean"].includes(typeof raw))
+        cells[address] = { value: raw as WorkbookValue };
+      else if (raw instanceof Date)
+        cells[address] = { value: raw.toISOString(), format: { numberFormat: "date" } };
       else cells[address] = { value: String(raw) };
     });
   });
@@ -528,8 +592,12 @@ export function matrixToSheet(name: string, matrix: unknown[][]): WorkbookSheet 
   return sheet;
 }
 
-export function workbookFromMatrices(entries: Array<{ name: string; matrix: unknown[][] }>): WorkbookContent {
-  const sheets = entries.length ? entries.map((entry, index) => matrixToSheet(entry.name || `Sheet ${index + 1}`, entry.matrix)) : [createEmptySheet()];
+export function workbookFromMatrices(
+  entries: Array<{ name: string; matrix: unknown[][] }>,
+): WorkbookContent {
+  const sheets = entries.length
+    ? entries.map((entry, index) => matrixToSheet(entry.name || `Sheet ${index + 1}`, entry.matrix))
+    : [createEmptySheet()];
   return { kind: "workbook", schemaVersion: 1, activeSheetId: sheets[0]!.id, sheets };
 }
 
@@ -537,7 +605,8 @@ export function rangeToInputMatrix(sheet: WorkbookSheet, range: CellRange) {
   const rows: string[][] = [];
   for (let row = range.start.row; row <= range.end.row; row += 1) {
     const values: string[] = [];
-    for (let column = range.start.column; column <= range.end.column; column += 1) values.push(getCellInput(sheet, cellAddress(row, column)));
+    for (let column = range.start.column; column <= range.end.column; column += 1)
+      values.push(getCellInput(sheet, cellAddress(row, column)));
     rows.push(values);
   }
   return rows;
@@ -549,7 +618,8 @@ export function pasteInputMatrix(sheet: WorkbookSheet, start: CellPosition, matr
     rowValues.forEach((input, columnOffset) => {
       const row = start.row + rowOffset;
       const column = start.column + columnOffset;
-      if (row <= MAX_ROWS && column <= MAX_COLUMNS) next = updateCellInput(next, cellAddress(row, column), input);
+      if (row <= MAX_ROWS && column <= MAX_COLUMNS)
+        next = updateCellInput(next, cellAddress(row, column), input);
     });
   });
   return next;
@@ -560,12 +630,14 @@ export function fillRange(sheet: WorkbookSheet, range: CellRange, direction: "do
   if (direction === "down") {
     for (let column = range.start.column; column <= range.end.column; column += 1) {
       const source = getCellInput(sheet, cellAddress(range.start.row, column));
-      for (let row = range.start.row + 1; row <= range.end.row; row += 1) next = updateCellInput(next, cellAddress(row, column), source);
+      for (let row = range.start.row + 1; row <= range.end.row; row += 1)
+        next = updateCellInput(next, cellAddress(row, column), source);
     }
   } else {
     for (let row = range.start.row; row <= range.end.row; row += 1) {
       const source = getCellInput(sheet, cellAddress(row, range.start.column));
-      for (let column = range.start.column + 1; column <= range.end.column; column += 1) next = updateCellInput(next, cellAddress(row, column), source);
+      for (let column = range.start.column + 1; column <= range.end.column; column += 1)
+        next = updateCellInput(next, cellAddress(row, column), source);
     }
   }
   return next;
@@ -575,7 +647,8 @@ export function toggleMerge(sheet: WorkbookSheet, range: CellRange) {
   const normalized = `${cellAddress(range.start.row, range.start.column)}:${cellAddress(range.end.row, range.end.column)}`;
   if (range.start.row === range.end.row && range.start.column === range.end.column) return sheet;
   const existing = sheet.merges.find((merge) => merge.range === normalized);
-  if (existing) return { ...sheet, merges: sheet.merges.filter((merge) => merge.range !== normalized) };
+  if (existing)
+    return { ...sheet, merges: sheet.merges.filter((merge) => merge.range !== normalized) };
   const overlaps = sheet.merges.some((merge) => rangesOverlap(parseRange(merge.range)!, range));
   if (overlaps) return sheet;
   return { ...sheet, merges: [...sheet.merges, { range: normalized }] };
@@ -594,27 +667,49 @@ export function mergeForCell(sheet: WorkbookSheet, position: CellPosition) {
   for (const merge of sheet.merges) {
     const range = parseRange(merge.range);
     if (!range) continue;
-    if (position.row >= range.start.row && position.row <= range.end.row && position.column >= range.start.column && position.column <= range.end.column) return range;
+    if (
+      position.row >= range.start.row &&
+      position.row <= range.end.row &&
+      position.column >= range.start.column &&
+      position.column <= range.end.column
+    )
+      return range;
   }
   return null;
 }
 
-export function sortRange(sheet: WorkbookSheet, range: CellRange, sortColumn: number, direction: "asc" | "desc", evaluated?: EvaluatedWorkbook) {
+export function sortRange(
+  sheet: WorkbookSheet,
+  range: CellRange,
+  sortColumn: number,
+  direction: "asc" | "desc",
+  evaluated?: EvaluatedWorkbook,
+) {
   if (sortColumn < range.start.column || sortColumn > range.end.column) return sheet;
-  const rows = Array.from({ length: range.end.row - range.start.row + 1 }, (_, offset) => range.start.row + offset);
+  const rows = Array.from(
+    { length: range.end.row - range.start.row + 1 },
+    (_, offset) => range.start.row + offset,
+  );
   const sheetValues = evaluated?.bySheet[sheet.id] ?? {};
-  const comparable = (row: number) => sheetValues[cellAddress(row, sortColumn)] ?? getCell(sheet, cellAddress(row, sortColumn))?.value ?? "";
+  const comparable = (row: number) =>
+    sheetValues[cellAddress(row, sortColumn)] ??
+    getCell(sheet, cellAddress(row, sortColumn))?.value ??
+    "";
   rows.sort((left, right) => {
     const a = comparable(left);
     const b = comparable(right);
-    const result = typeof a === "number" && typeof b === "number" ? a - b : String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: "base" });
+    const result =
+      typeof a === "number" && typeof b === "number"
+        ? a - b
+        : String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: "base" });
     return direction === "asc" ? result : -result;
   });
   const source = sheet.cells;
   const cells = { ...source };
   const rowSnapshots = rows.map((row) => {
     const snapshot: Record<number, WorkbookCell | undefined> = {};
-    for (let column = range.start.column; column <= range.end.column; column += 1) snapshot[column] = source[cellAddress(row, column)];
+    for (let column = range.start.column; column <= range.end.column; column += 1)
+      snapshot[column] = source[cellAddress(row, column)];
     return snapshot;
   });
   for (let targetOffset = 0; targetOffset < rows.length; targetOffset += 1) {
@@ -630,13 +725,33 @@ export function sortRange(sheet: WorkbookSheet, range: CellRange, sortColumn: nu
   return { ...sheet, cells };
 }
 
-type TokenType = "number" | "string" | "sheet" | "identifier" | "operator" | "lparen" | "rparen" | "comma" | "colon" | "bang" | "eof";
-interface Token { type: TokenType; value: string }
-interface RangeValue { kind: "range"; values: EvalValue[] }
+type TokenType =
+  | "number"
+  | "string"
+  | "sheet"
+  | "identifier"
+  | "operator"
+  | "lparen"
+  | "rparen"
+  | "comma"
+  | "colon"
+  | "bang"
+  | "eof";
+interface Token {
+  type: TokenType;
+  value: string;
+}
+interface RangeValue {
+  kind: "range";
+  values: EvalValue[];
+}
 type EvalValue = WorkbookValue | SpreadsheetError | RangeValue;
 
 function isSpreadsheetError(value: EvalValue): value is SpreadsheetError {
-  return typeof value === "string" && ["#REF!", "#DIV/0!", "#VALUE!", "#NAME?", "#CYCLE!"].includes(value);
+  return (
+    typeof value === "string" &&
+    ["#REF!", "#DIV/0!", "#VALUE!", "#NAME?", "#CYCLE!"].includes(value)
+  );
 }
 
 function tokenizeFormula(formula: string): Token[] {
@@ -645,37 +760,71 @@ function tokenizeFormula(formula: string): Token[] {
   let index = 0;
   while (index < input.length) {
     const character = input[index]!;
-    if (/\s/.test(character)) { index += 1; continue; }
+    if (/\s/.test(character)) {
+      index += 1;
+      continue;
+    }
     if (character === '"') {
       let value = "";
       index += 1;
       while (index < input.length) {
-        if (input[index] === '"' && input[index + 1] === '"') { value += '"'; index += 2; continue; }
-        if (input[index] === '"') { index += 1; break; }
-        value += input[index]!; index += 1;
+        if (input[index] === '"' && input[index + 1] === '"') {
+          value += '"';
+          index += 2;
+          continue;
+        }
+        if (input[index] === '"') {
+          index += 1;
+          break;
+        }
+        value += input[index]!;
+        index += 1;
       }
-      tokens.push({ type: "string", value }); continue;
+      tokens.push({ type: "string", value });
+      continue;
     }
     if (character === "'") {
       let value = "";
       index += 1;
       while (index < input.length) {
-        if (input[index] === "'" && input[index + 1] === "'") { value += "'"; index += 2; continue; }
-        if (input[index] === "'") { index += 1; break; }
-        value += input[index]!; index += 1;
+        if (input[index] === "'" && input[index + 1] === "'") {
+          value += "'";
+          index += 2;
+          continue;
+        }
+        if (input[index] === "'") {
+          index += 1;
+          break;
+        }
+        value += input[index]!;
+        index += 1;
       }
-      tokens.push({ type: "sheet", value }); continue;
+      tokens.push({ type: "sheet", value });
+      continue;
     }
     const numberMatch = /^(?:\d+\.?\d*|\.\d+)/.exec(input.slice(index));
-    if (numberMatch) { tokens.push({ type: "number", value: numberMatch[0] }); index += numberMatch[0].length; continue; }
+    if (numberMatch) {
+      tokens.push({ type: "number", value: numberMatch[0] });
+      index += numberMatch[0].length;
+      continue;
+    }
     const identifierMatch = /^[$A-Za-z_][A-Za-z0-9_.$]*/.exec(input.slice(index));
-    if (identifierMatch) { tokens.push({ type: "identifier", value: identifierMatch[0] }); index += identifierMatch[0].length; continue; }
+    if (identifierMatch) {
+      tokens.push({ type: "identifier", value: identifierMatch[0] });
+      index += identifierMatch[0].length;
+      continue;
+    }
     const pair = input.slice(index, index + 2);
-    if (["<=", ">=", "<>", "=="].includes(pair)) { tokens.push({ type: "operator", value: pair }); index += 2; continue; }
+    if (["<=", ">=", "<>", "=="].includes(pair)) {
+      tokens.push({ type: "operator", value: pair });
+      index += 2;
+      continue;
+    }
     if ("+-*/^&%=<>".includes(character)) tokens.push({ type: "operator", value: character });
     else if (character === "(") tokens.push({ type: "lparen", value: character });
     else if (character === ")") tokens.push({ type: "rparen", value: character });
-    else if (character === "," || character === ";") tokens.push({ type: "comma", value: character });
+    else if (character === "," || character === ";")
+      tokens.push({ type: "comma", value: character });
     else if (character === ":") tokens.push({ type: "colon", value: character });
     else if (character === "!") tokens.push({ type: "bang", value: character });
     else tokens.push({ type: "identifier", value: character });
@@ -686,7 +835,11 @@ function tokenizeFormula(formula: string): Token[] {
 }
 
 function flatten(values: EvalValue[]): EvalValue[] {
-  return values.flatMap((value) => (typeof value === "object" && value !== null && "kind" in value && value.kind === "range" ? flatten(value.values) : [value]));
+  return values.flatMap((value) =>
+    typeof value === "object" && value !== null && "kind" in value && value.kind === "range"
+      ? flatten(value.values)
+      : [value],
+  );
 }
 
 function toNumber(value: EvalValue): number | SpreadsheetError {
@@ -721,11 +874,21 @@ class FormulaParser {
 
   parse(): EvalValue {
     const value = this.parseComparison();
-    return this.peek().type === "eof" || this.peek().type === "rparen" || this.peek().type === "comma" ? value : "#VALUE!";
+    return this.peek().type === "eof" ||
+      this.peek().type === "rparen" ||
+      this.peek().type === "comma"
+      ? value
+      : "#VALUE!";
   }
 
-  private peek(offset = 0) { return this.tokens[this.index + offset] ?? { type: "eof" as const, value: "" }; }
-  private take() { const token = this.peek(); this.index += 1; return token; }
+  private peek(offset = 0) {
+    return this.tokens[this.index + offset] ?? { type: "eof" as const, value: "" };
+  }
+  private take() {
+    const token = this.peek();
+    this.index += 1;
+    return token;
+  }
   private match(type: TokenType, value?: string) {
     const token = this.peek();
     if (token.type !== type || (value !== undefined && token.value !== value)) return false;
@@ -735,16 +898,29 @@ class FormulaParser {
 
   private parseComparison(): EvalValue {
     let left = this.parseConcat();
-    while (this.peek().type === "operator" && ["=", "==", "<>", "<", ">", "<=", ">="].includes(this.peek().value)) {
+    while (
+      this.peek().type === "operator" &&
+      ["=", "==", "<>", "<", ">", "<=", ">="].includes(this.peek().value)
+    ) {
       const operator = this.take().value;
       const right = this.parseConcat();
       if (isSpreadsheetError(left)) return left;
       if (isSpreadsheetError(right)) return right;
-      if ((typeof left === "object" && left !== null) || (typeof right === "object" && right !== null)) return "#VALUE!";
+      if (
+        (typeof left === "object" && left !== null) ||
+        (typeof right === "object" && right !== null)
+      )
+        return "#VALUE!";
       const numericLeft = typeof left === "number" ? left : Number(left);
       const numericRight = typeof right === "number" ? right : Number(right);
-      const comparableLeft = Number.isFinite(numericLeft) && Number.isFinite(numericRight) ? numericLeft : String(left ?? "").toLowerCase();
-      const comparableRight = Number.isFinite(numericLeft) && Number.isFinite(numericRight) ? numericRight : String(right ?? "").toLowerCase();
+      const comparableLeft =
+        Number.isFinite(numericLeft) && Number.isFinite(numericRight)
+          ? numericLeft
+          : String(left ?? "").toLowerCase();
+      const comparableRight =
+        Number.isFinite(numericLeft) && Number.isFinite(numericRight)
+          ? numericRight
+          : String(right ?? "").toLowerCase();
       if (operator === "=" || operator === "==") left = comparableLeft === comparableRight;
       else if (operator === "<>") left = comparableLeft !== comparableRight;
       else if (operator === "<") left = comparableLeft < comparableRight;
@@ -761,7 +937,11 @@ class FormulaParser {
       const right = this.parseAdditive();
       if (isSpreadsheetError(left)) return left;
       if (isSpreadsheetError(right)) return right;
-      if ((typeof left === "object" && left !== null) || (typeof right === "object" && right !== null)) return "#VALUE!";
+      if (
+        (typeof left === "object" && left !== null) ||
+        (typeof right === "object" && right !== null)
+      )
+        return "#VALUE!";
       left = `${left ?? ""}${right ?? ""}`;
     }
     return left;
@@ -772,7 +952,8 @@ class FormulaParser {
     while (this.peek().type === "operator" && ["+", "-"].includes(this.peek().value)) {
       const operator = this.take().value;
       const right = this.parseMultiplicative();
-      const a = toNumber(left); const b = toNumber(right);
+      const a = toNumber(left);
+      const b = toNumber(right);
       if (typeof a !== "number") return a;
       if (typeof b !== "number") return b;
       left = operator === "+" ? a + b : a - b;
@@ -785,7 +966,8 @@ class FormulaParser {
     while (this.peek().type === "operator" && ["*", "/", "%"].includes(this.peek().value)) {
       const operator = this.take().value;
       const right = this.parsePower();
-      const a = toNumber(left); const b = toNumber(right);
+      const a = toNumber(left);
+      const b = toNumber(right);
       if (typeof a !== "number") return a;
       if (typeof b !== "number") return b;
       if ((operator === "/" || operator === "%") && b === 0) return "#DIV/0!";
@@ -798,7 +980,8 @@ class FormulaParser {
     let left = this.parseUnary();
     if (this.match("operator", "^")) {
       const right = this.parsePower();
-      const a = toNumber(left); const b = toNumber(right);
+      const a = toNumber(left);
+      const b = toNumber(right);
       if (typeof a !== "number") return a;
       if (typeof b !== "number") return b;
       left = a ** b;
@@ -826,17 +1009,27 @@ class FormulaParser {
     }
     if (token.type !== "identifier" && token.type !== "sheet") return "#VALUE!";
 
-    if (token.type === "identifier" && this.peek().type === "lparen") return this.parseFunction(token.value);
+    if (token.type === "identifier" && this.peek().type === "lparen")
+      return this.parseFunction(token.value);
     if (token.type === "identifier" && /^true$/i.test(token.value)) return true;
     if (token.type === "identifier" && /^false$/i.test(token.value)) return false;
 
     let targetSheet = this.currentSheet;
     let referenceToken = token;
     if (this.match("bang")) {
-      targetSheet = this.workbook.sheets.find((sheet) => sheet.name.toLowerCase() === token.value.toLowerCase()) ?? targetSheet;
+      targetSheet =
+        this.workbook.sheets.find(
+          (sheet) => sheet.name.toLowerCase() === token.value.toLowerCase(),
+        ) ?? targetSheet;
       referenceToken = this.take();
       if (referenceToken.type !== "identifier") return "#REF!";
-      if (!this.workbook.sheets.some((sheet) => sheet.id === targetSheet.id && sheet.name.toLowerCase() === token.value.toLowerCase())) return "#REF!";
+      if (
+        !this.workbook.sheets.some(
+          (sheet) =>
+            sheet.id === targetSheet.id && sheet.name.toLowerCase() === token.value.toLowerCase(),
+        )
+      )
+        return "#REF!";
     }
 
     const startAddress = normalizeCellAddress(referenceToken.value);
@@ -847,7 +1040,12 @@ class FormulaParser {
       const endAddress = normalizeCellAddress(endToken.value);
       const range = endAddress ? parseRange(`${startAddress}:${endAddress}`) : null;
       if (!range) return "#REF!";
-      return { kind: "range", values: positionsInRange(range).map((position) => this.resolveCell(targetSheet.id, cellAddress(position.row, position.column))) };
+      return {
+        kind: "range",
+        values: positionsInRange(range).map((position) =>
+          this.resolveCell(targetSheet.id, cellAddress(position.row, position.column)),
+        ),
+      };
     }
     return this.resolveCell(targetSheet.id, startAddress);
   }
@@ -870,45 +1068,97 @@ function evaluateFunction(name: string, args: EvalValue[]): EvalValue {
   const values = flatten(args);
   const firstError = values.find(isSpreadsheetError);
   if (firstError) return firstError;
-  const numbers = values.map(toNumber).filter((value): value is number => typeof value === "number");
+  const numbers = values
+    .map(toNumber)
+    .filter((value): value is number => typeof value === "number");
   if (name === "SUM") return numbers.reduce((total, value) => total + value, 0);
-  if (name === "AVERAGE") return numbers.length ? numbers.reduce((total, value) => total + value, 0) / numbers.length : "#DIV/0!";
+  if (name === "AVERAGE")
+    return numbers.length
+      ? numbers.reduce((total, value) => total + value, 0) / numbers.length
+      : "#DIV/0!";
   if (name === "MIN") return numbers.length ? Math.min(...numbers) : 0;
   if (name === "MAX") return numbers.length ? Math.max(...numbers) : 0;
   if (name === "COUNT") return numbers.length;
   if (name === "COUNTA") return values.filter((value) => value !== null && value !== "").length;
-  if (name === "ABS") { const value = toNumber(args[0] ?? null); return typeof value === "number" ? Math.abs(value) : value; }
-  if (name === "INT") { const value = toNumber(args[0] ?? null); return typeof value === "number" ? Math.floor(value) : value; }
-  if (name === "SQRT") { const value = toNumber(args[0] ?? null); return typeof value === "number" && value >= 0 ? Math.sqrt(value) : "#VALUE!"; }
+  if (name === "ABS") {
+    const value = toNumber(args[0] ?? null);
+    return typeof value === "number" ? Math.abs(value) : value;
+  }
+  if (name === "INT") {
+    const value = toNumber(args[0] ?? null);
+    return typeof value === "number" ? Math.floor(value) : value;
+  }
+  if (name === "SQRT") {
+    const value = toNumber(args[0] ?? null);
+    return typeof value === "number" && value >= 0 ? Math.sqrt(value) : "#VALUE!";
+  }
   if (name === "ROUND" || name === "ROUNDUP" || name === "ROUNDDOWN") {
-    const value = toNumber(args[0] ?? null); const digits = toNumber(args[1] ?? 0);
+    const value = toNumber(args[0] ?? null);
+    const digits = toNumber(args[1] ?? 0);
     if (typeof value !== "number") return value;
     if (typeof digits !== "number") return digits;
     const factor = 10 ** Math.max(-10, Math.min(10, Math.trunc(digits)));
-    if (name === "ROUNDUP") return (value >= 0 ? Math.ceil(value * factor) : Math.floor(value * factor)) / factor;
-    if (name === "ROUNDDOWN") return (value >= 0 ? Math.floor(value * factor) : Math.ceil(value * factor)) / factor;
+    if (name === "ROUNDUP")
+      return (value >= 0 ? Math.ceil(value * factor) : Math.floor(value * factor)) / factor;
+    if (name === "ROUNDDOWN")
+      return (value >= 0 ? Math.floor(value * factor) : Math.ceil(value * factor)) / factor;
     return Math.round(value * factor) / factor;
   }
-  if (name === "POWER") { const left = toNumber(args[0] ?? null); const right = toNumber(args[1] ?? null); return typeof left === "number" && typeof right === "number" ? left ** right : typeof left !== "number" ? left : right; }
-  if (name === "MOD") { const left = toNumber(args[0] ?? null); const right = toNumber(args[1] ?? null); if (typeof left !== "number") return left; if (typeof right !== "number") return right; return right === 0 ? "#DIV/0!" : left % right; }
-  if (name === "IF") { const condition = toBoolean(args[0] ?? false); return typeof condition === "boolean" ? (condition ? args[1] ?? true : args[2] ?? false) : condition; }
+  if (name === "POWER") {
+    const left = toNumber(args[0] ?? null);
+    const right = toNumber(args[1] ?? null);
+    return typeof left === "number" && typeof right === "number"
+      ? left ** right
+      : typeof left !== "number"
+        ? left
+        : right;
+  }
+  if (name === "MOD") {
+    const left = toNumber(args[0] ?? null);
+    const right = toNumber(args[1] ?? null);
+    if (typeof left !== "number") return left;
+    if (typeof right !== "number") return right;
+    return right === 0 ? "#DIV/0!" : left % right;
+  }
+  if (name === "IF") {
+    const condition = toBoolean(args[0] ?? false);
+    return typeof condition === "boolean"
+      ? condition
+        ? (args[1] ?? true)
+        : (args[2] ?? false)
+      : condition;
+  }
   if (name === "AND" || name === "OR") {
     const booleans = values.map(toBoolean);
     const error = booleans.find((value) => typeof value !== "boolean");
     if (error && typeof error !== "boolean") return error;
-    return name === "AND" ? (booleans as boolean[]).every(Boolean) : (booleans as boolean[]).some(Boolean);
+    return name === "AND"
+      ? (booleans as boolean[]).every(Boolean)
+      : (booleans as boolean[]).some(Boolean);
   }
-  if (name === "NOT") { const value = toBoolean(args[0] ?? false); return typeof value === "boolean" ? !value : value; }
-  if (name === "LEN") { const value = args[0]; return isSpreadsheetError(value ?? null) ? value! : String(value ?? "").length; }
+  if (name === "NOT") {
+    const value = toBoolean(args[0] ?? false);
+    return typeof value === "boolean" ? !value : value;
+  }
+  if (name === "LEN") {
+    const value = args[0];
+    return isSpreadsheetError(value ?? null) ? value! : String(value ?? "").length;
+  }
   if (name === "UPPER") return String(args[0] ?? "").toUpperCase();
   if (name === "LOWER") return String(args[0] ?? "").toLowerCase();
-  if (name === "TRIM") return String(args[0] ?? "").trim().replace(/\s+/g, " ");
-  if (name === "CONCAT" || name === "CONCATENATE") return values.map((value) => String(value ?? "")).join("");
+  if (name === "TRIM")
+    return String(args[0] ?? "")
+      .trim()
+      .replace(/\s+/g, " ");
+  if (name === "CONCAT" || name === "CONCATENATE")
+    return values.map((value) => String(value ?? "")).join("");
   return "#NAME?";
 }
 
 export function evaluateWorkbook(workbook: WorkbookContent): EvaluatedWorkbook {
-  const bySheet: EvaluatedWorkbook["bySheet"] = Object.fromEntries(workbook.sheets.map((sheet) => [sheet.id, {}]));
+  const bySheet: EvaluatedWorkbook["bySheet"] = Object.fromEntries(
+    workbook.sheets.map((sheet) => [sheet.id, {}]),
+  );
   const cache = new Map<string, EvalValue>();
   const visiting = new Set<string>();
 
@@ -925,7 +1175,12 @@ export function evaluateWorkbook(workbook: WorkbookContent): EvaluatedWorkbook {
     let value: EvalValue = cell?.value ?? null;
     if (cell?.formula) {
       try {
-        value = new FormulaParser(tokenizeFormula(cell.formula), sheet, workbook, resolveCell).parse();
+        value = new FormulaParser(
+          tokenizeFormula(cell.formula),
+          sheet,
+          workbook,
+          resolveCell,
+        ).parse();
       } catch {
         value = "#VALUE!";
       }
@@ -936,28 +1191,57 @@ export function evaluateWorkbook(workbook: WorkbookContent): EvaluatedWorkbook {
     return value;
   };
 
-  for (const sheet of workbook.sheets) for (const address of Object.keys(sheet.cells)) resolveCell(sheet.id, address);
+  for (const sheet of workbook.sheets)
+    for (const address of Object.keys(sheet.cells)) resolveCell(sheet.id, address);
   return bySheet && { bySheet };
 }
 
-export function formatWorkbookValue(value: WorkbookValue | SpreadsheetError, format?: WorkbookCellFormat) {
+export function formatWorkbookValue(
+  value: WorkbookValue | SpreadsheetError,
+  format?: WorkbookCellFormat,
+) {
   if (value === null || value === undefined) return "";
   if (typeof value === "string" && value.startsWith("#")) return value;
   const type = format?.numberFormat ?? "general";
   if (type === "text") return String(value);
   if (type === "date") {
     const date = value instanceof Date ? value : new Date(String(value));
-    return Number.isNaN(date.getTime()) ? String(value) : new Intl.DateTimeFormat(undefined, { year: "numeric", month: "short", day: "2-digit" }).format(date);
+    return Number.isNaN(date.getTime())
+      ? String(value)
+      : new Intl.DateTimeFormat(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+        }).format(date);
   }
   if (typeof value !== "number") return String(value);
   const decimals = format?.decimals ?? 2;
-  if (type === "currency") return new Intl.NumberFormat(undefined, { style: "currency", currency: format?.currency || "USD", minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(value);
-  if (type === "percent") return new Intl.NumberFormat(undefined, { style: "percent", minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(value);
-  if (type === "number") return new Intl.NumberFormat(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(value);
+  if (type === "currency")
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: format?.currency || "USD",
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }).format(value);
+  if (type === "percent")
+    return new Intl.NumberFormat(undefined, {
+      style: "percent",
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }).format(value);
+  if (type === "number")
+    return new Intl.NumberFormat(undefined, {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }).format(value);
   return Number.isInteger(value) ? String(value) : String(Number(value.toPrecision(12)));
 }
 
-export function matrixFromSheet(sheet: WorkbookSheet, evaluated?: EvaluatedWorkbook, formulas = false) {
+export function matrixFromSheet(
+  sheet: WorkbookSheet,
+  evaluated?: EvaluatedWorkbook,
+  formulas = false,
+) {
   const used = sheetUsedRange(sheet);
   const matrix: Array<Array<string | number | boolean | null>> = [];
   for (let row = 1; row <= used.end.row; row += 1) {

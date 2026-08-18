@@ -131,7 +131,12 @@ function columnSegments(sheet: WorkbookSheet, range: CellRange, availableWidth: 
   return segments;
 }
 
-function pageRowGroups(sheet: WorkbookSheet, range: CellRange, availableHeight: number, scale: number) {
+function pageRowGroups(
+  sheet: WorkbookSheet,
+  range: CellRange,
+  availableHeight: number,
+  scale: number,
+) {
   const repeatCount = Math.min(sheet.print.repeatHeaderRows ?? 0, range.end.row);
   const headerRows = Array.from({ length: repeatCount }, (_, index) => index + 1).filter(
     (row) => row >= range.start.row && row <= range.end.row,
@@ -200,7 +205,10 @@ function drawTextInCell(
   const textWidth = font.widthOfTextAtSize(safeText, size);
   const align =
     cell?.format?.horizontalAlign ??
-    (typeof cell?.value === "number" || cell?.format?.numberFormat === "number" || cell?.format?.numberFormat === "currency" || cell?.format?.numberFormat === "percent"
+    (typeof cell?.value === "number" ||
+    cell?.format?.numberFormat === "number" ||
+    cell?.format?.numberFormat === "currency" ||
+    cell?.format?.numberFormat === "percent"
       ? "right"
       : "left");
   const textX =
@@ -264,7 +272,12 @@ function drawSheetPage(
       let mergedHeight = height;
       if (mergeInfo.range) {
         width = 0;
-        for (let mergeColumn = column; mergeColumn <= Math.min(mergeInfo.range.end.column, columnEnd); mergeColumn += 1) width += columnWidth(sheet, mergeColumn) * scale;
+        for (
+          let mergeColumn = column;
+          mergeColumn <= Math.min(mergeInfo.range.end.column, columnEnd);
+          mergeColumn += 1
+        )
+          width += columnWidth(sheet, mergeColumn) * scale;
         mergedHeight = 0;
         for (let mergeRow = row; mergeRow <= mergeInfo.range.end.row; mergeRow += 1) {
           if (rowSequence.includes(mergeRow)) mergedHeight += rowHeight(sheet, mergeRow) * scale;
@@ -273,7 +286,14 @@ function drawSheetPage(
       }
       const cellX = xByColumn.get(column) ?? left;
       const background = parseHex(cell?.format?.backgroundColor);
-      if (background) page.drawRectangle({ x: cellX, y: y - (mergedHeight - height), width, height: mergedHeight, color: background });
+      if (background)
+        page.drawRectangle({
+          x: cellX,
+          y: y - (mergedHeight - height),
+          width,
+          height: mergedHeight,
+          color: background,
+        });
       if (sheet.print.gridlines || cell?.format?.border) {
         page.drawRectangle({
           x: cellX,
@@ -286,13 +306,25 @@ function drawSheetPage(
       }
       const value = evaluated.bySheet[sheet.id]?.[address] ?? cell?.value ?? null;
       const text = formatWorkbookValue(value, cell?.format);
-      drawTextInCell(page, text, cell, fonts, cellX, y - (mergedHeight - height), width, mergedHeight, scale);
+      drawTextInCell(
+        page,
+        text,
+        cell,
+        fonts,
+        cellX,
+        y - (mergedHeight - height),
+        width,
+        mergedHeight,
+        scale,
+      );
     }
     yTop -= height;
   }
 }
 
-export async function buildSpreadsheetPdf(options: SpreadsheetPdfOptions): Promise<SpreadsheetPdfResult> {
+export async function buildSpreadsheetPdf(
+  options: SpreadsheetPdfOptions,
+): Promise<SpreadsheetPdfResult> {
   const workbook = normalizeWorkbookContent(options.content);
   const selectedSheets = options.sheetIds?.length
     ? workbook.sheets.filter((sheet) => options.sheetIds!.includes(sheet.id))
@@ -321,11 +353,14 @@ export async function buildSpreadsheetPdf(options: SpreadsheetPdfOptions): Promi
 
     for (const segment of segments) {
       const unscaledWidth = sumColumnWidths(sheet, segment.start, segment.end);
-      const fitScale = sheet.print.fitToWidth ? Math.min(1, availableWidth / Math.max(1, unscaledWidth)) : 1;
+      const fitScale = sheet.print.fitToWidth
+        ? Math.min(1, availableWidth / Math.max(1, unscaledWidth))
+        : 1;
       const scale = fitScale * Math.max(0.25, Math.min(2, sheet.print.scale / 100));
       const { headerRows, groups } = pageRowGroups(sheet, range, availableHeight, scale);
       for (const rows of groups) {
-        if (pdf.getPageCount() >= 500) throw new Error("Spreadsheet PDF exceeds the 500-page safety limit");
+        if (pdf.getPageCount() >= 500)
+          throw new Error("Spreadsheet PDF exceeds the 500-page safety limit");
         const page = pdf.addPage([width, height]);
         page.drawText(safeWinAnsi(`${options.title} — ${sheet.name}`), {
           x: left,

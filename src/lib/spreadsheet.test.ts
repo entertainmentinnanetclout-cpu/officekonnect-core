@@ -28,7 +28,16 @@ describe("OfficeKonnect workbook contract", () => {
     const workbook = normalizeWorkbookContent({
       kind: "workbook",
       schemaVersion: 1,
-      sheets: [{ id: "legacy", name: "Legacy", data: [["Name", "Total"], ["Office", 42]] }],
+      sheets: [
+        {
+          id: "legacy",
+          name: "Legacy",
+          data: [
+            ["Name", "Total"],
+            ["Office", 42],
+          ],
+        },
+      ],
     });
     expect(workbook.sheets).toHaveLength(1);
     expect(getCellInput(workbook.sheets[0]!, "A1")).toBe("Name");
@@ -53,7 +62,7 @@ describe("OfficeKonnect formula engine", () => {
     sheet = updateCellInput(sheet, "A1", "10");
     sheet = updateCellInput(sheet, "A2", "20");
     sheet = updateCellInput(sheet, "B1", "=SUM(A1:A2)");
-    sheet = updateCellInput(sheet, "B2", "=IF(B1>=30,\"ready\",\"wait\")");
+    sheet = updateCellInput(sheet, "B2", '=IF(B1>=30,"ready","wait")');
     sheet = updateCellInput(sheet, "C1", "=(A1+A2)*2");
     workbook = setWorkbookSheet(workbook, sheet);
 
@@ -91,7 +100,10 @@ describe("OfficeKonnect spreadsheet editing helpers", () => {
   test("pastes matrices and fills ranges", () => {
     let workbook = createEmptyWorkbook();
     let sheet = workbook.sheets[0]!;
-    sheet = pasteInputMatrix(sheet, { row: 1, column: 1 }, [["Name", "Value"], ["Alpha", "4"]]);
+    sheet = pasteInputMatrix(sheet, { row: 1, column: 1 }, [
+      ["Name", "Value"],
+      ["Alpha", "4"],
+    ]);
     const fill = parseRange("B2:B4")!;
     sheet = fillRange(sheet, fill, "down");
     workbook = setWorkbookSheet(workbook, sheet);
