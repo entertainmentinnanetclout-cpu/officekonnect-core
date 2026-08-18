@@ -4,9 +4,9 @@ Last audited: 2026-08-18
 
 ## Current phase
 
-Phase 2 — Documents, Native Editor and PDF Engine: **source implementation and validation complete**.
+Phase 3 — OfficeKonnect Sheets: **source implementation and validation complete**.
 
-Next implementation phase: Phase 3 — OfficeKonnect Sheets.
+Next implementation phase: Phase 4 — Files and Templates.
 
 ## Upgrade branch policy
 
@@ -23,7 +23,8 @@ The live Supabase project was treated as the authoritative description of alread
 - Public application tables: 43; RLS enabled on all 43 at Phase 0 audit time.
 - Private storage buckets include documents, document-versions, exports, letterheads, signatures and voice-notes.
 - Existing backend foundations: native documents, structured versions, spreadsheets, workflows/review/approval, secure e-signing, notifications, activity logs and workspace membership.
-- Canonical package manager for the upgrade branch: Bun 1.3.14 with committed `bun.lock` and frozen `bun ci` validation.
+- Canonical package manager: Bun 1.3.14 with committed `bun.lock` and frozen `bun ci` validation.
+- Spreadsheet office-file interoperability: locked `xlsx` dependency.
 
 ## Phase 0 reconciliation result
 
@@ -48,32 +49,41 @@ The live Supabase project was treated as the authoritative description of alread
 - Reframed existing auth routes in the canonical OfficeKonnect visual/identity system without changing auth semantics.
 - Added authenticated workspace discovery and workspace switching through `profiles.default_workspace_id`.
 - Added grouped canonical navigation for Workspace, Operations, Communication and Administration.
-- Existing routes remain live: Home, Documents, Mail Center, Contacts, Voice Notes and Settings.
-- Later-phase modules are visible but disabled until implemented, preventing broken/dead routes.
 - Added responsive mobile drawer and bottom navigation.
 - Added a production-safe unauthenticated workspace state and secure sign-in path.
-- Repaired historical ESLint blockers discovered by the stricter whole-repository validation gate without weakening lint rules.
-- Added `docs/PHASE1.md` with security invariants and the validation record.
+- Repaired historical ESLint blockers without weakening lint rules.
 
 ## Phase 2 result
 
 - Preserved the existing `documents` + `document_versions` + private Storage architecture rather than creating a competing document model.
 - Kept the real document library and its native creation, signed uploads, drag-and-drop, search/filter/sort, table/grid, rename, duplicate, archive, Trash/restore, native PDF export and uploaded-file download flows.
 - Hardened the native structured-document contract with persisted indentation and stable block identity.
-- Preserved the existing editor capabilities: rich text, headings, lists, links, quotes, tables, rules, page breaks, page setup, headers/footers/page numbers, letterheads, find/replace, zoom, autosave and version history/restore.
 - Prevented ordinary autosave refreshes from unnecessarily replacing editor `innerHTML` and disturbing the active cursor/selection.
-- Added a mandatory save barrier before PDF export, print preparation and static signing-copy generation so those operations cannot use stale editor state.
-- Upgraded the server-side `pdf-lib` renderer for A4/Letter, portrait/landscape, margins, multi-page layout, alignment, indentation, rich inline formatting, tables, letterheads/logos, headers/footers and page numbers.
-- Made PDF metadata deterministic from the persisted source update timestamp.
-- Added an immutable static signing-copy bridge that creates `<Original> — Signing Copy` as a normal PDF `documents` record plus version 1 in the existing `document_versions` table.
+- Added a mandatory save barrier before PDF export, print preparation and static signing-copy generation.
+- Upgraded the server-side native `pdf-lib` renderer for page setup, multi-page layout, rich inline formatting, tables, letterheads/logos, headers/footers and page numbers.
+- Added an immutable native-document PDF signing-copy bridge using the existing document/version/storage model.
 - Added real Bun regression tests for native-document normalization and actual `pdf-lib` output.
-- Added `bun test` to the permanent Upgrade Validation gate.
-- No new Phase 2 database table or migration was required in this completion pass; the live/reconciled Supabase schema already contained the required document/version/storage/signing-source foundations.
-- Full signing-request preparation, participant fields, external sessions, finalization, audit and certificates remain Phase 6 work.
+- No new Phase 2 database table or migration was required.
 
-## Latest validated Phase 2 source checkpoint
+## Phase 3 result
 
-Upgrade Validation run `32093695102` on clean source checkpoint `7d6a9e39df6003637e01746571378eaa1305cc27` completed successfully:
+- Activated **OfficeKonnect Sheets** as a real desktop/mobile navigation destination at `/dashboard/sheets`.
+- Added a dedicated workspace-scoped Sheets library with blank creation, search, sorting, archive, Trash/restore, duplicate and XLSX/XLS/CSV import.
+- Replaced the old spreadsheet placeholder with the production editor on both the canonical Sheets detail route and the shared document detail route.
+- Centralized the canonical `kind: "workbook"`, `schemaVersion: 1` workbook model in one spreadsheet module; legacy two-dimensional sheet data is normalized into that model instead of preserved as a second persistence format.
+- Added sparse A1-addressed cells, multi-sheet add/delete/rename/reorder, row/column sizing, persisted frozen panes, merges, formatting, selection, clipboard paste/copy, fill, sorting and active-column filtering.
+- Added a deterministic formula parser/evaluator without JavaScript `eval`, including ranges, cross-sheet references, arithmetic/comparison and the focused office-function set documented in `docs/PHASE3.md`.
+- Preserved `save_structured_document` and `restore_structured_document_version` as the authoritative save/restore RPCs; server functions recompute workbook metrics before save.
+- Added whole-workbook XLSX export and active-sheet CSV export through the locked `xlsx` dependency.
+- Added server-side spreadsheet PDF/Print with worksheet selection, print area, orientation, scale, fit-to-width, margins, repeated top rows, gridlines and deterministic metadata.
+- Added a spreadsheet static signing-copy bridge that writes `<Original> — Signing Copy` into the existing private PDF document/version architecture after a mandatory save barrier.
+- Added real Bun regression coverage for workbook normalization, formulas, cross-sheet calculation, cycle detection, editing helpers and actual `pdf-lib` spreadsheet output.
+- Regenerated and checked in the TanStack route tree so the new Sheets routes are first-class typed routes.
+- No new Phase 3 database migration was required during completion because the live/reconciled Phase 3 migrations already contain the workbook constraints, ACL hardening, metadata and structured-save/restore RPC contract.
+
+## Latest validated Phase 3 source checkpoint
+
+Upgrade Validation run `32101707386` completed successfully on the clean Phase 3 source after compiler/route-tree reconciliation:
 
 - Repository parity: **PASS**.
 - Deterministic dependency install (`bun ci`): **PASS**.
@@ -81,18 +91,19 @@ Upgrade Validation run `32093695102` on clean source checkpoint `7d6a9e39df60036
 - TypeScript (`tsc --noEmit`): **PASS**.
 - Bun regression tests: **PASS**.
 - Production build: **PASS**.
-- Vercel deployment status for the same checkpoint: **SUCCESS**.
 
-The final documentation/status head is revalidated after this record is updated so the PR carries one authoritative Phase 2 completion checkpoint.
+The final documentation/cleanup head is revalidated after this record is committed and becomes the authoritative Phase 3 completion SHA.
 
-## Known Phase 2 limitations carried forward
+## Known Phase 3 limitations carried forward
 
-- The native PDF renderer currently uses PDF Standard Fonts/WinAnsi; unsupported Unicode glyphs are safely replaced rather than crashing export. Broader embedded-font coverage remains future hardening work.
-- The current native structured-document contract does not claim arbitrary inline/native image blocks; letterhead/logo imagery is supported through the existing letterhead contract.
-- Folders, favourites and broader controlled sharing remain Phase 4.
-- Spreadsheet editing/import-export/PDF remains Phase 3.
-- Full production e-signature UX remains Phase 6.
+- The formula engine intentionally implements a focused office-function set rather than claiming full Excel parity.
+- Macros, pivot tables, charts, external workbook links and advanced Excel-only constructs are not native OfficeKonnect workbook features in Phase 3.
+- XLSX round-trip prioritizes values, formulas and core worksheet geometry rather than pixel-perfect preservation of every Excel-specific style/feature.
+- Spreadsheet PDF currently follows the existing PDF Standard Font/WinAnsi-safe fallback strategy.
+- Folders, favourites, controlled sharing and richer document/spreadsheet templates remain Phase 4.
+- Full workflow/approval submission remains Phase 5.
+- Full production signing request preparation, participants, fields, external sessions, finalization, audit and certificates remain Phase 6.
 
 ## Non-negotiable release rule
 
-Do not merge draft PR #2 after an individual phase. Continue Phases 3–11 on the same branch/PR. Merge to `main` only when the complete Phase 11 upgrade passes release-candidate validation.
+Do not merge Draft PR #2 after an individual phase. Continue Phases 4–11 on the same branch/PR. Merge to `main` only when the complete Phase 11 upgrade passes release-candidate validation.
