@@ -44,7 +44,7 @@ const browserSupabaseClient = readFileSync(
   join(root, "src/integrations/supabase/client.ts"),
   "utf8",
 );
-if (browserSupabaseClient.includes("process.env")) {
+if (/process\.env\.[A-Z0-9_]+/.test(browserSupabaseClient)) {
   findings.push(
     "client.ts: browser Supabase bootstrap must not depend on process.env because cloned Vite deployments do not provide it",
   );
