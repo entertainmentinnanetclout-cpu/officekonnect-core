@@ -14,7 +14,7 @@ Complete the document library, native editing, autosave/version history, printin
 
 ## Phase 3 — OfficeKonnect Sheets — **Completed**
 
-Expose the existing workbook backend through a production spreadsheet UI, deterministic formula engine, XLSX/CSV interoperability, print/PDF and static signing-copy conversion.
+Expose the workbook backend through a production spreadsheet UI, deterministic formula engine, XLSX/CSV interoperability, print/PDF and static signing-copy conversion.
 
 ## Phase 4 — Files and Templates — **Completed**
 
@@ -24,17 +24,17 @@ Add nested folders, personal favourites, workspace-internal controlled sharing, 
 
 Expose the existing workflow state machine through versioned workflow-template management, workflow launch, immutable submitted-version review, authenticated work queue, decisions, comments, reassignment, request-changes editing, optimistic-concurrency resubmission and audited cancellation.
 
-## Phase 6 — Production E-Signatures — **Next**
+## Phase 6 — Production E-Signatures — **Completed**
 
-Replace obsolete frontend signing mutations with the hardened signing request/participant/field/session/finalization system. Build signing dashboard/status buckets, preparation workspace, participant assignment/order, normalized fields, internal and external signer UX, finalization, audit timeline, final PDF and certificate access.
+Complete the hardened signing request/participant/field/session/finalization system: signing dashboard, PDF preparation workspace, internal and external signer UX, participant roles/order, normalized fields, consent, secure invitation exchange/session handling, finalization, audit timeline, final PDF and certificate access. Documents/Sheets now hand directly into the production signing workflow through immutable PDF signing copies.
 
-## Phase 7 — Tasks, Calendar and Global Search
+## Phase 7 — Tasks, Calendar and Global Search — **Completed**
 
-Add the minimal missing task/event persistence and aggregate workflow/signing/task deadlines. Implement command/search navigation.
+Add real RLS-protected task/manual-calendar persistence, production task management, an aggregate operational calendar derived from canonical task/workflow/signing dates, membership-checked server-side workspace search, `/dashboard/search` and Ctrl/Cmd+K command navigation.
 
-## Phase 8 — Notifications, Activity, Team, Workspace and Settings
+## Phase 8 — Notifications, Activity, Team, Workspace and Settings — **Next**
 
-Expose existing platform infrastructure through complete user-facing management surfaces.
+Expose existing platform infrastructure through complete user-facing management surfaces and persist remaining workspace/user preferences without introducing duplicate identity/role/notification systems.
 
 ## Phase 9 — Product-wide UX and Route Hardening
 
