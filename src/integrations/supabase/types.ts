@@ -1162,6 +1162,41 @@ export type Database = {
           },
         ];
       };
+      notification_receipts: {
+        Row: {
+          archived_at: string | null;
+          created_at: string;
+          notification_id: string;
+          read_at: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          archived_at?: string | null;
+          created_at?: string;
+          notification_id: string;
+          read_at?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          archived_at?: string | null;
+          created_at?: string;
+          notification_id?: string;
+          read_at?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notification_receipts_notification_id_fkey";
+            columns: ["notification_id"];
+            isOneToOne: false;
+            referencedRelation: "notifications";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       notifications: {
         Row: {
           body: string | null;
@@ -2806,6 +2841,59 @@ export type Database = {
           },
         ];
       };
+      workspace_invitations: {
+        Row: {
+          accepted_at: string | null;
+          accepted_by: string | null;
+          created_at: string;
+          email: string;
+          expires_at: string;
+          id: string;
+          invited_by: string;
+          revoked_at: string | null;
+          role: Database["public"]["Enums"]["workspace_role"];
+          token_hash: string;
+          updated_at: string;
+          workspace_id: string;
+        };
+        Insert: {
+          accepted_at?: string | null;
+          accepted_by?: string | null;
+          created_at?: string;
+          email: string;
+          expires_at: string;
+          id?: string;
+          invited_by: string;
+          revoked_at?: string | null;
+          role?: Database["public"]["Enums"]["workspace_role"];
+          token_hash: string;
+          updated_at?: string;
+          workspace_id: string;
+        };
+        Update: {
+          accepted_at?: string | null;
+          accepted_by?: string | null;
+          created_at?: string;
+          email?: string;
+          expires_at?: string;
+          id?: string;
+          invited_by?: string;
+          revoked_at?: string | null;
+          role?: Database["public"]["Enums"]["workspace_role"];
+          token_hash?: string;
+          updated_at?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "workspace_invitations_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       workspace_members: {
         Row: {
           created_at: string;
@@ -2946,6 +3034,133 @@ export type Database = {
       };
     };
     Functions: {
+      accept_workspace_invitation: {
+        Args: { p_token: string };
+        Returns: {
+          role: Database["public"]["Enums"]["workspace_role"];
+          workspace_id: string;
+          workspace_name: string;
+        }[];
+      };
+      accept_workspace_invitation_by_id: {
+        Args: { p_invitation_id: string };
+        Returns: {
+          role: Database["public"]["Enums"]["workspace_role"];
+          workspace_id: string;
+          workspace_name: string;
+        }[];
+      };
+      count_unread_workspace_notifications: {
+        Args: { p_workspace_id: string };
+        Returns: number;
+      };
+      create_workspace: {
+        Args: { p_name: string };
+        Returns: {
+          name: string;
+          slug: string;
+          workspace_id: string;
+        }[];
+      };
+      create_workspace_invitation: {
+        Args: {
+          p_email: string;
+          p_expires_in_days?: number;
+          p_role?: Database["public"]["Enums"]["workspace_role"];
+          p_workspace_id: string;
+        };
+        Returns: {
+          expires_at: string;
+          invitation_id: string;
+          raw_token: string;
+        }[];
+      };
+      list_my_workspace_invitations: {
+        Args: never;
+        Returns: {
+          created_at: string;
+          email: string;
+          expires_at: string;
+          invitation_id: string;
+          invited_by: string;
+          inviter_name: string;
+          role: Database["public"]["Enums"]["workspace_role"];
+          workspace_id: string;
+          workspace_name: string;
+        }[];
+      };
+      list_workspace_activity: {
+        Args: { p_limit?: number; p_offset?: number; p_workspace_id: string };
+        Returns: {
+          action: string;
+          actor_id: string;
+          actor_name: string;
+          entity_id: string;
+          entity_type: string;
+          event_id: string;
+          metadata: Json;
+          occurred_at: string;
+          route: string;
+          source: string;
+        }[];
+      };
+      list_workspace_invitations: {
+        Args: { p_workspace_id: string };
+        Returns: {
+          created_at: string;
+          email: string;
+          expires_at: string;
+          invitation_id: string;
+          invited_by: string;
+          inviter_name: string;
+          role: Database["public"]["Enums"]["workspace_role"];
+        }[];
+      };
+      list_workspace_notifications: {
+        Args: {
+          p_limit?: number;
+          p_offset?: number;
+          p_unread_only?: boolean;
+          p_workspace_id: string;
+        };
+        Returns: {
+          body: string;
+          created_at: string;
+          data: Json;
+          delivered_channels: Json;
+          effective_read_at: string;
+          entity_id: string;
+          entity_type: string;
+          id: string;
+          is_broadcast: boolean;
+          kind: string;
+          title: string;
+        }[];
+      };
+      mark_all_workspace_notifications_read: {
+        Args: { p_workspace_id: string };
+        Returns: number;
+      };
+      mark_notification_read: {
+        Args: { p_notification_id: string };
+        Returns: undefined;
+      };
+      remove_workspace_member: {
+        Args: { p_user_id: string; p_workspace_id: string };
+        Returns: undefined;
+      };
+      revoke_workspace_invitation: {
+        Args: { p_invitation_id: string };
+        Returns: undefined;
+      };
+      update_workspace_member_role: {
+        Args: {
+          p_role: Database["public"]["Enums"]["workspace_role"];
+          p_user_id: string;
+          p_workspace_id: string;
+        };
+        Returns: undefined;
+      };
       cancel_document_workflow: {
         Args: { p_reason: string; p_run_id: string };
         Returns: {
