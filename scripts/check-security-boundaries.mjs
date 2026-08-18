@@ -45,7 +45,9 @@ const serverAdminClient = readFileSync(
   "utf8",
 );
 if (!serverAdminClient.includes("SUPABASE_SERVICE_ROLE_KEY")) {
-  findings.push("client.server.ts: server-only admin client no longer resolves the service-role key");
+  findings.push(
+    "client.server.ts: server-only admin client no longer resolves the service-role key",
+  );
 }
 if (!serverAdminClient.includes("persistSession: false")) {
   findings.push("client.server.ts: server-only admin client must not persist an auth session");
