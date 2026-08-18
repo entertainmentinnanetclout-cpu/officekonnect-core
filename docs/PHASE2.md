@@ -1,124 +1,128 @@
 # Phase 2 — Documents, Native Editor and PDF Engine
 
-## Goal
+## Status
 
-Complete the OfficeKonnect document library, native structured-document editing, autosave/version history, printing, and canonical PDF export without creating a competing persistence or security model.
+Phase 2 source implementation and validation are complete on draft PR #2. Phase 3 — OfficeKonnect Sheets — is next. The upgrade PR remains draft and must not merge to `main` until the complete Phase 11 release-candidate gate passes.
 
-## Canonical backend contract
+## Canonical architecture
 
-Phase 2 uses the existing live Supabase document architecture:
+Phase 2 extends the existing OfficeKonnect document architecture. It does not introduce a competing document model.
 
-- `documents` is the canonical current-state row.
-- `document_versions` stores immutable structured snapshots and binary versions.
-- `save_structured_document` is the atomic save RPC with optimistic concurrency.
-- `restore_structured_document_version` restores a snapshot after first creating a pre-restore backup.
-- Workspace membership, `auth.uid()`, ownership and RLS remain authoritative.
-- Uploaded binaries remain in private Supabase Storage.
-
-No document table, version table, ownership model or bypass API was added for Phase 2.
-
-## Native document contract
-
-Native documents use `schemaVersion: 1` and a structured block model covering:
-
-- paragraphs;
-- headings 1–3;
-- quotes;
-- bullet and ordered lists;
-- tables;
-- horizontal rules;
-- explicit page breaks;
-- page size and orientation;
-- margins;
-- header/footer text;
-- page-number preference.
-
-Legacy structured blocks are normalized into this contract when opened so existing content is preserved rather than discarded.
-
-## Editor
-
-The native editor provides:
-
-- title rename;
-- autosave with visible saved/dirty/saving/error states;
-- Ctrl/Cmd+S;
-- optimistic-concurrency conflict detection;
-- undo/redo;
-- headings and paragraph formatting;
-- bold, italic, underline and strikethrough;
-- text and highlight color;
-- alignment and indentation;
-- links;
-- quotes;
-- bullet and numbered lists;
-- tables;
-- rules and page breaks;
-- find and replace;
-- zoom;
-- A4/Letter and portrait/landscape page setup;
-- margins, headers, footers and page numbers;
-- workspace letterhead selection;
-- immutable version snapshots and restore.
-
-## PDF engine
-
-PDF generation is server-side and deterministic using the same structured JSON that is persisted by autosave. It supports:
-
-- A4 and Letter;
-- portrait and landscape;
-- configured margins;
-- multi-page content;
-- headings, paragraphs, quotes and lists;
-- tables;
-- rules and explicit page breaks;
-- letterhead header/footer/company information;
-- optional letterhead logo;
-- page numbers;
-- OfficeKonnect PDF metadata.
-
-Generated exports are written to the private `exports` bucket under the active workspace and returned using an expiring signed URL.
+- `documents` remains the canonical current document/file record.
+- `document_versions` remains the canonical version history and immutable file-version record.
+- Native structured content continues to use the existing `documents.content` JSON contract.
+- `save_structured_document` and the existing editor-version contract remain the save/concurrency authority.
+- Existing workspace membership, `auth.uid()`, ownership and RLS remain authoritative.
+- Existing private document, document-version, export and letterhead storage contracts are reused.
+- No new Phase 2 table or security model was introduced. The required native-document/version schema was already present in the live Supabase project and reconciled migration ledger.
 
 ## Document library
 
-The Phase 2 library provides:
+The existing real document library is retained rather than rebuilt. It supports:
 
-- new native document creation;
-- private signed file uploads;
-- drag-and-drop upload;
-- title search;
-- kind filtering;
-- updated/created/title sorting;
+- native document creation;
+- private signed file uploads and drag-and-drop upload;
+- search, sort, kind and lifecycle-status filters;
 - table and grid views;
 - rename;
-- native-document duplication;
-- archive;
-- recoverable Trash;
-- restore to Documents;
-- uploaded-file download;
-- native PDF export.
+- native duplication;
+- archive, recoverable Trash and restore;
+- native PDF export;
+- uploaded-file download.
 
-Folders, favourites, advanced sharing and the production spreadsheet editor remain later-phase responsibilities and are not duplicated here.
+Folders, favourites and broader controlled-sharing surfaces remain Phase 4 work and are not claimed as Phase 2 completion.
 
-## Storage compatibility
+## Native document editor
 
-Document-file resolution checks the canonical `documents`, `document-versions`, and `exports` buckets so generated or flattened versions do not become unreadable when the stored path moves between approved private buckets.
+The editor retains the OfficeKonnect structured-document contract and supports:
 
-## Backend synchronization
+- paragraphs and H1/H2/H3 headings;
+- bold, italic, underline and strikethrough;
+- text colour and highlight colour;
+- left/centre/right/justify alignment;
+- bullet and ordered lists;
+- links;
+- block quotes;
+- tables;
+- horizontal rules and page breaks;
+- undo/redo;
+- find and replace;
+- A4 and Letter page sizes;
+- portrait and landscape orientation;
+- configurable margins;
+- headers, footers and page numbers;
+- workspace letterheads;
+- zoom;
+- autosave, explicit save, optimistic editor-version concurrency and version snapshots/history/restore.
 
-A new additive migration updates stale product-era comments to the generic OfficeKonnect document contract. It changes no rows, permissions, RLS policies, RPC behavior, or historical migration files.
+Phase 2 hardening additionally:
 
-## Validation checklist
+- persists block indentation in the canonical JSON instead of relying on transient browser-only formatting;
+- writes generated block IDs back into the editor DOM so block identity remains stable across saves;
+- prevents ordinary autosave prop refreshes from unnecessarily rehydrating `innerHTML` and disturbing the active cursor/selection;
+- forces the latest editor state through the save barrier before PDF export, print preparation or signing-copy generation;
+- disables export/signing-copy actions while the document is saving or in an edit conflict.
 
-- [x] Existing Supabase document/version architecture reused.
-- [x] No RLS or ownership weakening.
-- [x] Native editor implemented.
-- [x] Autosave uses optimistic concurrency.
-- [x] Immutable version snapshots and restore implemented.
-- [x] Deterministic server PDF renderer implemented.
-- [x] Document library lifecycle uses archive/trash/restore rather than destructive hard delete.
-- [x] Live backend comment migration applied and source migration recorded.
-- [ ] Repository parity, frozen install, ESLint, TypeScript and production build green on the final Phase 2 head.
-- [ ] Vercel deployment status green on the final Phase 2 head.
+## Deterministic PDF engine
+
+The server-side `pdf-lib` renderer consumes the same normalized structured content used by the editor and supports:
+
+- A4 and Letter output;
+- portrait and landscape orientation;
+- document margins;
+- multi-page layout and explicit page breaks;
+- paragraph, heading, quote, list, table and rule rendering;
+- alignment and persisted indentation;
+- bold, italic, underline and strikethrough;
+- text colour and highlight backgrounds;
+- letterhead/logo/header/footer regions;
+- page numbering;
+- deterministic PDF metadata using the persisted source update timestamp rather than a fresh render-time timestamp.
+
+PDF export updates `page_count`, writes the generated PDF to the existing private `exports` bucket and returns a short-lived signed URL.
+
+## Static signing-copy preparation
+
+Phase 2 adds `createNativeDocumentSigningCopy` as the document-to-static-PDF bridge required by the later production signing phase.
+
+For a native document it:
+
+1. resolves the authenticated user's active workspace;
+2. verifies that the source belongs to that workspace and is not deleted;
+3. renders the current saved structured document through the canonical PDF engine;
+4. stores the PDF under the existing private document storage contract;
+5. creates a normal derived `documents` row named `<Original> — Signing Copy` with `document_kind = file` and `file_type = application/pdf`;
+6. creates version 1 in the existing `document_versions` table;
+7. rolls back the stored asset/document record if the derived document/version write fails.
+
+This does **not** claim Phase 6 e-signature completion. Signing-request preparation, participant/field UX, external sessions, finalization, audit and certificates remain Phase 6 and continue to use the existing hardened signing architecture.
+
+## Regression validation
+
+Phase 2 adds Bun regression tests for the native document normalization contract and real PDF generation. The PDF tests load actual `pdf-lib` output and verify multi-page output, deterministic metadata and Letter landscape dimensions.
+
+The permanent Upgrade Validation gate now runs:
+
+- repository parity;
+- frozen `bun ci` dependency installation;
+- ESLint;
+- TypeScript;
+- Bun tests;
+- production build.
+
+The clean Phase 2 source checkpoint `7d6a9e39df6003637e01746571378eaa1305cc27` passed Upgrade Validation run `32093695102`, and Vercel reported a successful deployment for the same checkpoint.
+
+## Known limitations carried forward
+
+- The native PDF renderer currently uses PDF Standard Fonts/WinAnsi. Unsupported Unicode glyphs are safely replaced rather than crashing export; arbitrary embedded-font coverage remains future hardening work.
+- The current native structured-document schema does not claim arbitrary inline/native image blocks. Letterhead/logo imagery is supported through the existing letterhead contract.
+- Folder/favourite/general sharing completion is Phase 4.
+- Spreadsheet editing/export is Phase 3.
+- Full production e-signature request and signing UX is Phase 6.
+
+## Database change record
+
+No new database migration was required for this Phase 2 completion pass. The live Supabase project already contained the canonical native-document, document-version, storage and signing-source-version foundations required here, including the previously reconciled generic OfficeKonnect document-contract migration.
 
 ## PR strategy
 
