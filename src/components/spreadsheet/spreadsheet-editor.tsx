@@ -17,7 +17,7 @@ import {
   ArrowDownAZ,
   ArrowUpAZ,
   Bold,
-  BorderAll,
+  Grid2X2,
   ChevronDown,
   Columns3,
   FileDown,
@@ -784,7 +784,7 @@ function SpreadsheetEditor({ document, onDocumentUpdated }: SpreadsheetEditorPro
             title="Borders"
             onClick={() => applyFormat({ border: !selectedCellStyle.border })}
           >
-            <BorderAll className="h-4 w-4" />
+            <Grid2X2 className="h-4 w-4" />
           </Button>
           <label
             className="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-md hover:bg-accent"

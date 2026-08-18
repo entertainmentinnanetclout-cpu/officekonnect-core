@@ -18,10 +18,12 @@ import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-password'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as DashboardVoiceIndexRouteImport } from './routes/dashboard/voice/index'
+import { Route as DashboardSheetsIndexRouteImport } from './routes/dashboard/sheets/index'
 import { Route as DashboardSettingsIndexRouteImport } from './routes/dashboard/settings/index'
 import { Route as DashboardMailIndexRouteImport } from './routes/dashboard/mail/index'
 import { Route as DashboardDocumentsIndexRouteImport } from './routes/dashboard/documents/index'
 import { Route as DashboardContactsIndexRouteImport } from './routes/dashboard/contacts/index'
+import { Route as DashboardSheetsDocumentIdRouteImport } from './routes/dashboard/sheets/$documentId'
 import { Route as DashboardDocumentsDocumentIdRouteImport } from './routes/dashboard/documents/$documentId'
 import { Route as ApiPublicJobsTickRouteImport } from './routes/api/public/jobs-tick'
 import { Route as ApiPublicBrevoWebhookRouteImport } from './routes/api/public/brevo-webhook'
@@ -71,6 +73,11 @@ const DashboardVoiceIndexRoute = DashboardVoiceIndexRouteImport.update({
   path: '/voice/',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardSheetsIndexRoute = DashboardSheetsIndexRouteImport.update({
+  id: '/sheets/',
+  path: '/sheets/',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardSettingsIndexRoute = DashboardSettingsIndexRouteImport.update({
   id: '/settings/',
   path: '/settings/',
@@ -91,6 +98,12 @@ const DashboardContactsIndexRoute = DashboardContactsIndexRouteImport.update({
   path: '/contacts/',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardSheetsDocumentIdRoute =
+  DashboardSheetsDocumentIdRouteImport.update({
+    id: '/sheets/$documentId',
+    path: '/sheets/$documentId',
+    getParentRoute: () => DashboardRoute,
+  } as any)
 const DashboardDocumentsDocumentIdRoute =
   DashboardDocumentsDocumentIdRouteImport.update({
     id: '/documents/$documentId',
@@ -120,10 +133,12 @@ export interface FileRoutesByFullPath {
   '/api/public/brevo-webhook': typeof ApiPublicBrevoWebhookRoute
   '/api/public/jobs-tick': typeof ApiPublicJobsTickRoute
   '/dashboard/documents/$documentId': typeof DashboardDocumentsDocumentIdRoute
+  '/dashboard/sheets/$documentId': typeof DashboardSheetsDocumentIdRoute
   '/dashboard/contacts/': typeof DashboardContactsIndexRoute
   '/dashboard/documents/': typeof DashboardDocumentsIndexRoute
   '/dashboard/mail/': typeof DashboardMailIndexRoute
   '/dashboard/settings/': typeof DashboardSettingsIndexRoute
+  '/dashboard/sheets/': typeof DashboardSheetsIndexRoute
   '/dashboard/voice/': typeof DashboardVoiceIndexRoute
 }
 export interface FileRoutesByTo {
@@ -137,10 +152,12 @@ export interface FileRoutesByTo {
   '/api/public/brevo-webhook': typeof ApiPublicBrevoWebhookRoute
   '/api/public/jobs-tick': typeof ApiPublicJobsTickRoute
   '/dashboard/documents/$documentId': typeof DashboardDocumentsDocumentIdRoute
+  '/dashboard/sheets/$documentId': typeof DashboardSheetsDocumentIdRoute
   '/dashboard/contacts': typeof DashboardContactsIndexRoute
   '/dashboard/documents': typeof DashboardDocumentsIndexRoute
   '/dashboard/mail': typeof DashboardMailIndexRoute
   '/dashboard/settings': typeof DashboardSettingsIndexRoute
+  '/dashboard/sheets': typeof DashboardSheetsIndexRoute
   '/dashboard/voice': typeof DashboardVoiceIndexRoute
 }
 export interface FileRoutesById {
@@ -156,10 +173,12 @@ export interface FileRoutesById {
   '/api/public/brevo-webhook': typeof ApiPublicBrevoWebhookRoute
   '/api/public/jobs-tick': typeof ApiPublicJobsTickRoute
   '/dashboard/documents/$documentId': typeof DashboardDocumentsDocumentIdRoute
+  '/dashboard/sheets/$documentId': typeof DashboardSheetsDocumentIdRoute
   '/dashboard/contacts/': typeof DashboardContactsIndexRoute
   '/dashboard/documents/': typeof DashboardDocumentsIndexRoute
   '/dashboard/mail/': typeof DashboardMailIndexRoute
   '/dashboard/settings/': typeof DashboardSettingsIndexRoute
+  '/dashboard/sheets/': typeof DashboardSheetsIndexRoute
   '/dashboard/voice/': typeof DashboardVoiceIndexRoute
 }
 export interface FileRouteTypes {
@@ -176,10 +195,12 @@ export interface FileRouteTypes {
     | '/api/public/brevo-webhook'
     | '/api/public/jobs-tick'
     | '/dashboard/documents/$documentId'
+    | '/dashboard/sheets/$documentId'
     | '/dashboard/contacts/'
     | '/dashboard/documents/'
     | '/dashboard/mail/'
     | '/dashboard/settings/'
+    | '/dashboard/sheets/'
     | '/dashboard/voice/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -193,10 +214,12 @@ export interface FileRouteTypes {
     | '/api/public/brevo-webhook'
     | '/api/public/jobs-tick'
     | '/dashboard/documents/$documentId'
+    | '/dashboard/sheets/$documentId'
     | '/dashboard/contacts'
     | '/dashboard/documents'
     | '/dashboard/mail'
     | '/dashboard/settings'
+    | '/dashboard/sheets'
     | '/dashboard/voice'
   id:
     | '__root__'
@@ -211,10 +234,12 @@ export interface FileRouteTypes {
     | '/api/public/brevo-webhook'
     | '/api/public/jobs-tick'
     | '/dashboard/documents/$documentId'
+    | '/dashboard/sheets/$documentId'
     | '/dashboard/contacts/'
     | '/dashboard/documents/'
     | '/dashboard/mail/'
     | '/dashboard/settings/'
+    | '/dashboard/sheets/'
     | '/dashboard/voice/'
   fileRoutesById: FileRoutesById
 }
@@ -291,6 +316,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardVoiceIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/sheets/': {
+      id: '/dashboard/sheets/'
+      path: '/sheets'
+      fullPath: '/dashboard/sheets/'
+      preLoaderRoute: typeof DashboardSheetsIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/settings/': {
       id: '/dashboard/settings/'
       path: '/settings'
@@ -317,6 +349,13 @@ declare module '@tanstack/react-router' {
       path: '/contacts'
       fullPath: '/dashboard/contacts/'
       preLoaderRoute: typeof DashboardContactsIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/sheets/$documentId': {
+      id: '/dashboard/sheets/$documentId'
+      path: '/sheets/$documentId'
+      fullPath: '/dashboard/sheets/$documentId'
+      preLoaderRoute: typeof DashboardSheetsDocumentIdRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/documents/$documentId': {
@@ -362,20 +401,24 @@ const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 interface DashboardRouteChildren {
   DashboardIndexRoute: typeof DashboardIndexRoute
   DashboardDocumentsDocumentIdRoute: typeof DashboardDocumentsDocumentIdRoute
+  DashboardSheetsDocumentIdRoute: typeof DashboardSheetsDocumentIdRoute
   DashboardContactsIndexRoute: typeof DashboardContactsIndexRoute
   DashboardDocumentsIndexRoute: typeof DashboardDocumentsIndexRoute
   DashboardMailIndexRoute: typeof DashboardMailIndexRoute
   DashboardSettingsIndexRoute: typeof DashboardSettingsIndexRoute
+  DashboardSheetsIndexRoute: typeof DashboardSheetsIndexRoute
   DashboardVoiceIndexRoute: typeof DashboardVoiceIndexRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardIndexRoute: DashboardIndexRoute,
   DashboardDocumentsDocumentIdRoute: DashboardDocumentsDocumentIdRoute,
+  DashboardSheetsDocumentIdRoute: DashboardSheetsDocumentIdRoute,
   DashboardContactsIndexRoute: DashboardContactsIndexRoute,
   DashboardDocumentsIndexRoute: DashboardDocumentsIndexRoute,
   DashboardMailIndexRoute: DashboardMailIndexRoute,
   DashboardSettingsIndexRoute: DashboardSettingsIndexRoute,
+  DashboardSheetsIndexRoute: DashboardSheetsIndexRoute,
   DashboardVoiceIndexRoute: DashboardVoiceIndexRoute,
 }
 
@@ -393,3 +436,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

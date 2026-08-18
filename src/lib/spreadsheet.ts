@@ -1205,7 +1205,7 @@ export function formatWorkbookValue(
   const type = format?.numberFormat ?? "general";
   if (type === "text") return String(value);
   if (type === "date") {
-    const date = value instanceof Date ? value : new Date(String(value));
+    const date = new Date(String(value));
     return Number.isNaN(date.getTime())
       ? String(value)
       : new Intl.DateTimeFormat(undefined, {
