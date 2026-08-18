@@ -28,7 +28,6 @@ interface Props {
   onOpenChange: (v: boolean) => void;
   documentId: string;
   defaultTitle: string;
-  /** Legacy callback name retained until the Phase 6 signing workspace is routed. */
   onSent?: () => void;
 }
 
@@ -47,30 +46,37 @@ export function SendDocumentDialog({
   const mut = useMutation({
     mutationFn: async () => {
       const cleaned = recipients
-        .map((r) => ({ ...r, email: r.email.trim() }))
-        .filter((r) => /.+@.+\..+/.test(r.email));
+        .map((recipient) => ({
+          email: recipient.email.trim().toLowerCase(),
+          fullName: recipient.fullName.trim(),
+        }))
+        .filter((recipient) => /.+@.+\..+/.test(recipient.email));
       if (cleaned.length === 0) throw new Error("Add at least one recipient email");
       return createDraftFn({
         data: {
           documentId,
           title,
           message,
-          recipients: cleaned.map((r) => ({
-            email: r.email,
-            fullName: r.fullName || undefined,
-            isGuest: true,
+          signingOrder: "parallel",
+          participants: cleaned.map((recipient, index) => ({
+            email: recipient.email,
+            fullName: recipient.fullName || null,
+            userId: null,
+            role: "signer" as const,
+            orderIndex: index,
           })),
         },
       });
     },
-    onSuccess: () => {
-      toast.success("Signing draft created. Required fields must be prepared before sending.");
+    onSuccess: (result) => {
+      toast.success("Signing draft created. Continue in the preparation workspace to place required fields.");
       onSent?.();
       onOpenChange(false);
       setRecipients([{ email: "", fullName: "" }]);
       setMessage("");
+      window.location.assign(`/dashboard/signing/${result.request.id}/prepare`);
     },
-    onError: (e) => toastError(e, "Failed to create signing draft"),
+    onError: (error) => toastError(error, "Failed to create signing draft"),
   });
 
   return (
@@ -79,27 +85,29 @@ export function SendDocumentDialog({
         <DialogHeader>
           <DialogTitle>Create signing request</DialogTitle>
           <DialogDescription>
-            Create the recipient draft first. Signature and initial fields must be assigned before
-            the secure request can be sent.
+            Create the participant draft first. Signature and initial fields must be assigned in the
+            preparation workspace before the secure request can be sent.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           <div className="space-y-1">
             <Label>Title</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+            <Input value={title} onChange={(event) => setTitle(event.target.value)} />
           </div>
 
           <div className="space-y-2">
-            <Label>Recipients</Label>
-            {recipients.map((r, i) => (
-              <div key={i} className="flex gap-2">
+            <Label>Signers</Label>
+            {recipients.map((recipient, index) => (
+              <div key={index} className="flex gap-2">
                 <Input
                   placeholder="Name (optional)"
-                  value={r.fullName}
-                  onChange={(e) =>
-                    setRecipients((arr) =>
-                      arr.map((x, idx) => (idx === i ? { ...x, fullName: e.target.value } : x)),
+                  value={recipient.fullName}
+                  onChange={(event) =>
+                    setRecipients((current) =>
+                      current.map((item, itemIndex) =>
+                        itemIndex === index ? { ...item, fullName: event.target.value } : item,
+                      ),
                     )
                   }
                   className="w-40"
@@ -107,29 +115,38 @@ export function SendDocumentDialog({
                 <Input
                   type="email"
                   placeholder="email@example.com"
-                  value={r.email}
-                  onChange={(e) =>
-                    setRecipients((arr) =>
-                      arr.map((x, idx) => (idx === i ? { ...x, email: e.target.value } : x)),
+                  value={recipient.email}
+                  onChange={(event) =>
+                    setRecipients((current) =>
+                      current.map((item, itemIndex) =>
+                        itemIndex === index ? { ...item, email: event.target.value } : item,
+                      ),
                     )
                   }
                 />
                 <Button
+                  type="button"
                   variant="ghost"
                   size="icon"
-                  onClick={() => setRecipients((arr) => arr.filter((_, idx) => idx !== i))}
+                  onClick={() =>
+                    setRecipients((current) => current.filter((_, itemIndex) => itemIndex !== index))
+                  }
                   disabled={recipients.length === 1}
+                  aria-label={`Remove signer ${index + 1}`}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             ))}
             <Button
+              type="button"
               variant="outline"
               size="sm"
-              onClick={() => setRecipients((arr) => [...arr, { email: "", fullName: "" }])}
+              onClick={() =>
+                setRecipients((current) => [...current, { email: "", fullName: "" }])
+              }
             >
-              <Plus className="mr-2 h-4 w-4" /> Add recipient
+              <Plus className="mr-2 h-4 w-4" /> Add signer
             </Button>
           </div>
 
@@ -138,7 +155,7 @@ export function SendDocumentDialog({
             <Textarea
               rows={3}
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={(event) => setMessage(event.target.value)}
               placeholder="Please review and sign at your earliest convenience."
             />
           </div>
@@ -154,7 +171,7 @@ export function SendDocumentDialog({
             ) : (
               <FileSignature className="mr-2 h-4 w-4" />
             )}
-            Create signing draft
+            Create & prepare
           </Button>
         </DialogFooter>
       </DialogContent>
