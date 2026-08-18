@@ -46,6 +46,7 @@ import { useWorkspaceShell } from "@/hooks/use-workspace-shell";
 export type OfficeKonnectRoute =
   | "/dashboard"
   | "/dashboard/documents"
+  | "/dashboard/sheets"
   | "/dashboard/mail"
   | "/dashboard/voice"
   | "/dashboard/contacts"
@@ -69,7 +70,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: "Home", href: "/dashboard", icon: LayoutDashboard },
       { label: "Documents", href: "/dashboard/documents", icon: FileText },
-      { label: "Sheets", href: null, icon: FileSpreadsheet, phase: 3 },
+      { label: "Sheets", href: "/dashboard/sheets", icon: FileSpreadsheet },
       { label: "Files", href: null, icon: Files, phase: 4 },
       { label: "Templates", href: null, icon: FolderKanban, phase: 4 },
     ],
@@ -102,6 +103,7 @@ const navGroups: NavGroup[] = [
 ];
 
 const pageTitles: Array<[string, string]> = [
+  ["/dashboard/sheets", "Sheets"],
   ["/dashboard/documents", "Documents"],
   ["/dashboard/mail", "Mail Center"],
   ["/dashboard/voice", "Voice Notes"],
@@ -368,7 +370,7 @@ export function OfficeKonnectShell({
           {[
             { label: "Home", href: "/dashboard" as const, icon: LayoutDashboard },
             { label: "Docs", href: "/dashboard/documents" as const, icon: FileText },
-            { label: "Mail", href: "/dashboard/mail" as const, icon: Mail },
+            { label: "Sheets", href: "/dashboard/sheets" as const, icon: FileSpreadsheet },
           ].map((item) => {
             const Icon = item.icon;
             return (
