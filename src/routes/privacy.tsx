@@ -38,7 +38,9 @@ function PrivacyPage() {
 
         <div className="space-y-8 text-sm leading-7 text-muted-foreground sm:text-base">
           <section>
-            <h2 className="text-lg font-semibold text-foreground">How OfficeKonnect handles access</h2>
+            <h2 className="text-lg font-semibold text-foreground">
+              How OfficeKonnect handles access
+            </h2>
             <p className="mt-2">
               OfficeKonnect uses authenticated user identities and workspace membership to control
               access to workspace data. Application records remain subject to the product's
@@ -75,7 +77,9 @@ function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-foreground">Account and workspace controls</h2>
+            <h2 className="text-lg font-semibold text-foreground">
+              Account and workspace controls
+            </h2>
             <p className="mt-2">
               Profile, workspace, team, notification, signature and other available controls can be
               reviewed from the authenticated OfficeKonnect settings and workspace administration
