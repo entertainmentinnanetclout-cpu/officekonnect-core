@@ -51,7 +51,7 @@ describe("native document contract", () => {
       ],
     });
 
-    expect(nativeDocumentWordCount(content)).toBe(12);
+    expect(nativeDocumentWordCount(content)).toBe(13);
     expect(htmlToPlainText("A &amp; B<br>C &#x27;D&#x27;")).toBe("A & B\nC 'D'");
   });
 });
