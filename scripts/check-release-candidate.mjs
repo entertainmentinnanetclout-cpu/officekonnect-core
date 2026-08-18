@@ -62,12 +62,12 @@ requirePath("src/routes/privacy.tsx");
 requirePath("src/routes/terms.tsx");
 
 requireText("src/routeTree.gen.ts", [
-  '"/privacy"',
-  '"/terms"',
-  '"/dashboard/documents"',
-  '"/dashboard/workflows"',
-  '"/dashboard/signing"',
-  '"/dashboard/settings"',
+  "'/privacy'",
+  "'/terms'",
+  "'/dashboard/documents'",
+  "'/dashboard/workflows'",
+  "'/dashboard/signing'",
+  "'/dashboard/settings'",
 ]);
 
 requireText("src/lib/workflows.functions.ts", [
