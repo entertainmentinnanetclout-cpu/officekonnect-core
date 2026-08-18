@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Json } from "@/integrations/supabase/types";
-import { buildNativeDocumentPdf } from "@/lib/native-document-pdf.server";
 import { getActiveWorkspaceId } from "@/lib/workspace.server";
 
 function safeBaseName(title: string) {
@@ -66,6 +65,7 @@ export const saveNativeDocumentAsPdf = createServerFn({ method: "POST" })
       }
     }
 
+    const { buildNativeDocumentPdf } = await import("@/lib/native-document-pdf.server");
     const rendered = await buildNativeDocumentPdf({
       title: source.title,
       content: source.content,
