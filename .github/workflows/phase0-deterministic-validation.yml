@@ -7,9 +7,63 @@ on:
     branches: [phase-0-canonical-reconciliation]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
+  phase5-finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SUPABASE_URL: https://ci-placeholder.supabase.co
+      SUPABASE_PUBLISHABLE_KEY: ci-placeholder-key
+      VITE_SUPABASE_URL: https://ci-placeholder.supabase.co
+      VITE_SUPABASE_PUBLISHABLE_KEY: ci-placeholder-key
+    steps:
+      - name: Checkout upgrade branch
+        uses: actions/checkout@v5
+        with:
+          ref: phase-0-canonical-reconciliation
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install dependencies
+        run: bun ci
+
+      - name: Activate Phase 5 routes
+        run: python3 scripts/phase5-finalize.py
+
+      - name: Format Phase 5 source
+        run: bunx prettier --write src/components/officekonnect-shell.tsx src/components/workflow/workflow-snapshot.tsx src/lib/workflows.ts src/lib/workflows.functions.ts src/lib/workflows.test.ts src/routes/dashboard/workflows/index.tsx 'src/routes/dashboard/workflows/$runId.tsx' src/routes/dashboard/approvals/index.tsx
+
+      - name: Generate typed route tree
+        run: bun run build
+
+      - name: Lint reconciled source
+        run: bun run lint
+
+      - name: TypeScript reconciled source
+        run: bun run typecheck
+
+      - name: Tests reconciled source
+        run: bun run test
+
+      - name: Production build reconciled source
+        run: bun run build
+
+      - name: Commit validated Phase 5 reconciliation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/officekonnect-shell.tsx src/components/workflow/workflow-snapshot.tsx src/lib/workflows.ts src/lib/workflows.functions.ts src/lib/workflows.test.ts src/routes/dashboard/workflows/index.tsx 'src/routes/dashboard/workflows/$runId.tsx' src/routes/dashboard/approvals/index.tsx src/routeTree.gen.ts
+          git commit -m "feat(phase5): complete workflows and approvals application layer"
+          git fetch origin phase-0-canonical-reconciliation
+          git rebase origin/phase-0-canonical-reconciliation
+          git push origin HEAD:phase-0-canonical-reconciliation
+
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 15
