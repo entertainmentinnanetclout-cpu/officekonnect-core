@@ -40,6 +40,30 @@ for (const absolute of walk(srcRoot)) {
   }
 }
 
+const browserSupabaseClient = readFileSync(
+  join(root, "src/integrations/supabase/client.ts"),
+  "utf8",
+);
+if (/process\.env\.[A-Z0-9_]+/.test(browserSupabaseClient)) {
+  findings.push(
+    "client.ts: browser Supabase bootstrap must not depend on process.env because cloned Vite deployments do not provide it",
+  );
+}
+
+const publicSupabaseDefaults = readFileSync(
+  join(root, "src/integrations/supabase/defaults.ts"),
+  "utf8",
+);
+if (!publicSupabaseDefaults.includes("DEFAULT_SUPABASE_URL")) {
+  findings.push("defaults.ts: canonical public Supabase URL fallback is missing");
+}
+if (!publicSupabaseDefaults.includes("DEFAULT_SUPABASE_PUBLISHABLE_KEY")) {
+  findings.push("defaults.ts: canonical public Supabase publishable-key fallback is missing");
+}
+if (/SERVICE_ROLE|service_role/i.test(publicSupabaseDefaults)) {
+  findings.push("defaults.ts: service-role material must never appear in browser-safe defaults");
+}
+
 const serverAdminClient = readFileSync(
   join(root, "src/integrations/supabase/client.server.ts"),
   "utf8",
