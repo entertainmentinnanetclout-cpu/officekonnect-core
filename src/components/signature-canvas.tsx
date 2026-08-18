@@ -14,15 +14,7 @@ type SignatureCanvasProps = {
 };
 
 /**
- * Small, dependency-free signature canvas used by OfficeKonnect.
- *
- * The previous react-signature-canvas dependency is a legacy wrapper whose
- * CommonJS/TypeScript helper chain can fail while TanStack Start evaluates the
- * SSR graph. Keeping the drawing primitive local means signature routes are
- * safe to import on the server while drawing remains a browser-only action.
- *
- * This class intentionally mirrors the subset of react-signature-canvas used
- * throughout the app: clear(), isEmpty() and getCanvas().
+ * SSR-safe subset of react-signature-canvas used by OfficeKonnect.
  */
 export default class SignatureCanvas extends Component<SignatureCanvasProps> {
   private readonly canvasRef = createRef<HTMLCanvasElement>();
@@ -38,13 +30,11 @@ export default class SignatureCanvas extends Component<SignatureCanvasProps> {
         if (this.props.clearOnResize === false) return;
         this.resizeCanvas();
       });
-      if (this.canvasRef.current) this.resizeObserver.observe(this.canvasRef.current);
-    }
-  }
 
-  componentWillUnmount() {
-    this.resizeObserver?.disconnect();
-    this.resizeObserver = null;
+      if (this.canvasRef.current) {
+        this.resizeObserver.observe(this.canvasRef.current);
+      }
+    }
   }
 
   componentDidUpdate(previousProps: SignatureCanvasProps) {
@@ -56,9 +46,15 @@ export default class SignatureCanvas extends Component<SignatureCanvasProps> {
     }
   }
 
+  componentWillUnmount() {
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = null;
+  }
+
   public clear = () => {
     const canvas = this.canvasRef.current;
     if (!canvas) return;
+
     const context = canvas.getContext("2d");
     if (!context) return;
 
@@ -87,7 +83,8 @@ export default class SignatureCanvas extends Component<SignatureCanvasProps> {
   };
 
   private pixelRatio() {
-    return typeof window === "undefined" ? 1 : Math.max(window.devicePixelRatio || 1, 1);
+    if (typeof window === "undefined") return 1;
+    return Math.max(window.devicePixelRatio || 1, 1);
   }
 
   private resizeCanvas = () => {
@@ -104,8 +101,10 @@ export default class SignatureCanvas extends Component<SignatureCanvasProps> {
 
     canvas.width = width;
     canvas.height = height;
+
     const context = canvas.getContext("2d");
     if (!context) return;
+
     context.setTransform(ratio, 0, 0, ratio, 0, 0);
     this.configureContext(context);
 
@@ -113,6 +112,7 @@ export default class SignatureCanvas extends Component<SignatureCanvasProps> {
       context.fillStyle = this.props.backgroundColor;
       context.fillRect(0, 0, rect.width, rect.height);
     }
+
     this.empty = true;
   };
 
@@ -125,7 +125,10 @@ export default class SignatureCanvas extends Component<SignatureCanvasProps> {
 
   private point(event: ReactPointerEvent<HTMLCanvasElement>) {
     const rect = event.currentTarget.getBoundingClientRect();
-    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    };
   }
 
   private handlePointerDown = (event: ReactPointerEvent<HTMLCanvasElement>) => {
@@ -134,12 +137,14 @@ export default class SignatureCanvas extends Component<SignatureCanvasProps> {
 
     const context = event.currentTarget.getContext("2d");
     if (!context) return;
+
     this.configureContext(context);
     const { x, y } = this.point(event);
     context.beginPath();
     context.moveTo(x, y);
     context.lineTo(x + 0.01, y + 0.01);
     context.stroke();
+
     this.drawing = true;
     this.empty = false;
     event.currentTarget.setPointerCapture?.(event.pointerId);
@@ -152,6 +157,7 @@ export default class SignatureCanvas extends Component<SignatureCanvasProps> {
 
     const context = event.currentTarget.getContext("2d");
     if (!context) return;
+
     const { x, y } = this.point(event);
     context.lineTo(x, y);
     context.stroke();
@@ -159,6 +165,7 @@ export default class SignatureCanvas extends Component<SignatureCanvasProps> {
 
   private finishStroke = (event: ReactPointerEvent<HTMLCanvasElement>) => {
     if (!this.drawing) return;
+
     this.drawing = false;
     event.currentTarget.releasePointerCapture?.(event.pointerId);
     this.props.onEnd?.();
@@ -176,6 +183,7 @@ export default class SignatureCanvas extends Component<SignatureCanvasProps> {
 
   render() {
     const { canvasProps } = this.props;
+
     return (
       <canvas
         {...canvasProps}
