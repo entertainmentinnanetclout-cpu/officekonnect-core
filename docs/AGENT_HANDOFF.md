@@ -38,6 +38,7 @@ Vercel/deployment-platform validation is intentionally deferred until Phase 11. 
 - Do not retain the raw external invitation token after successful exchange.
 - Do not persist task/workflow/signing source dates into `calendar_events`; derive them from canonical modules.
 - Do not build a second search-copy database/index merely to power the command palette.
+- Do not grant anonymous execution to the membership-directory or global-search SECURITY DEFINER RPCs.
 
 ## Live backend
 
@@ -50,9 +51,10 @@ Private resource Storage remains workspace-first.
 - `20260818051912_phase_4_files_templates_workspace_organization`
 - `20260818052526_phase_4_folder_hierarchy_cycle_guard`
 
-### Applied Phase 7 migration
+### Applied Phase 7 migrations
 
 - `20260818062157_phase_7_tasks_calendar_search`
+- `20260818080155_phase_7_rpc_execute_acl_hardening`
 
 ### Live signing Edge Functions
 
@@ -170,6 +172,13 @@ Surface: `/dashboard/calendar`.
 
 `search_workspace_objects` is the membership-checked server-side workspace search RPC. Current search coverage: documents/Sheets, templates, workflows, signing requests, tasks and members.
 
+Execution boundary:
+
+- anonymous `EXECUTE` is revoked;
+- authenticated application execution is retained;
+- workspace membership is still checked inside the function;
+- `list_workspace_member_directory` follows the same authenticated-only execution boundary.
+
 Surfaces:
 
 - `/dashboard/search`;
@@ -188,6 +197,7 @@ See `docs/PHASE7.md`.
 - `signing_fields`: RLS enabled, 2 policies.
 - `signing_events`: RLS enabled, 1 policy.
 - `signing_certificates`: RLS enabled, 1 policy.
+- Anonymous SECURITY DEFINER execution is revoked for `search_workspace_objects` and `list_workspace_member_directory`.
 
 No fake rows were seeded during Phase 6/7 completion:
 
@@ -200,11 +210,7 @@ No fake rows were seeded during Phase 6/7 completion:
 
 ## Validation checkpoint
 
-Clean read-only Phase 6/7 source checkpoint before documentation:
-
-`35c9c948c727b206feab21f994bba5ecc085786a`
-
-Upgrade Validation run `32108717386` passed:
+Phase 6/7 product source, migration parity and ACL hardening pass the permanent read-only gate:
 
 - repository parity;
 - frozen `bun ci`;
@@ -213,7 +219,7 @@ Upgrade Validation run `32108717386` passed:
 - **33 Bun tests / 0 failures**;
 - production build.
 
-The final documentation branch head receives the same read-only validation gate before Phase 6/7 is formally closed.
+The final documentation branch head receives the same read-only validation gate and becomes the authoritative Phase 6/7 completion checkpoint.
 
 ## Phase 8 focus
 
