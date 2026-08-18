@@ -7,50 +7,9 @@ on:
     branches: [phase-0-canonical-reconciliation]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  phase3-finalize:
-    if: github.actor != 'github-actions[bot]'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout upgrade branch
-        uses: actions/checkout@v5
-        with:
-          ref: phase-0-canonical-reconciliation
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.3.14
-
-      - name: Install locked dependencies
-        run: bun ci
-
-      - name: Add XLSX dependency
-        run: bun add xlsx
-
-      - name: Apply Phase 3 final editor hardening
-        run: python3 scripts/phase3-finalize.py
-
-      - name: Format Phase 3 source
-        run: bunx prettier --write src/components/spreadsheet/spreadsheet-editor.tsx src/lib/spreadsheet.ts src/lib/spreadsheet-pdf.server.ts src/lib/spreadsheets.functions.ts src/lib/spreadsheet.test.ts src/lib/spreadsheet-pdf.server.test.ts src/routes/dashboard/sheets/index.tsx src/routes/dashboard/sheets/'$documentId'.tsx src/routes/dashboard/documents/'$documentId'.tsx src/components/officekonnect-shell.tsx package.json
-
-      - name: Commit Phase 3 finalization
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json bun.lock src/components/spreadsheet/spreadsheet-editor.tsx src/lib/spreadsheet.ts src/lib/spreadsheet-pdf.server.ts src/lib/spreadsheets.functions.ts src/lib/spreadsheet.test.ts src/lib/spreadsheet-pdf.server.test.ts src/routes/dashboard/sheets/index.tsx src/routes/dashboard/sheets/'$documentId'.tsx src/routes/dashboard/documents/'$documentId'.tsx src/components/officekonnect-shell.tsx
-          if git diff --cached --quiet; then
-            echo "No Phase 3 finalization changes to commit"
-            exit 0
-          fi
-          git commit -m "feat(phase3): finalize OfficeKonnect Sheets"
-          git fetch origin phase-0-canonical-reconciliation
-          git rebase origin/phase-0-canonical-reconciliation
-          git push origin HEAD:phase-0-canonical-reconciliation
-
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 15
