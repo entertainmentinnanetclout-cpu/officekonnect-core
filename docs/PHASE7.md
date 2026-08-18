@@ -10,15 +10,19 @@ Complete the operational coordination layer with real workspace persistence and 
 
 Phase 7 does not use fake browser state, duplicate workflow/signing dates into another database, or introduce a second search index.
 
-## Live migration
+## Live migrations
 
-Applied to Supabase and checked into GitHub under its exact live version:
+Applied to Supabase and checked into GitHub under their exact live versions:
 
-`20260818062157_phase_7_tasks_calendar_search`
+- `20260818062157_phase_7_tasks_calendar_search`
+- `20260818080155_phase_7_rpc_execute_acl_hardening`
 
-Migration file:
+Migration files:
 
-`supabase/migrations/20260818062157_phase_7_tasks_calendar_search.sql`
+- `supabase/migrations/20260818062157_phase_7_tasks_calendar_search.sql`
+- `supabase/migrations/20260818080155_phase_7_rpc_execute_acl_hardening.sql`
+
+The ACL-hardening migration revokes anonymous `EXECUTE` from both `search_workspace_objects` and `list_workspace_member_directory` while retaining the authenticated application contract. This closes the unnecessary public execution surface without weakening the membership checks or changing application semantics.
 
 ## Tasks
 
@@ -130,7 +134,7 @@ Production Calendar includes:
 
 ### Backend contract
 
-New RPC:
+RPC:
 
 `search_workspace_objects(p_workspace_id, p_query, p_limit)`
 
@@ -138,7 +142,8 @@ Properties:
 
 - `security definer` with restricted `search_path`;
 - explicitly verifies current-user workspace membership;
-- executable only by authenticated users;
+- anonymous `EXECUTE` revoked;
+- executable by authenticated application users only;
 - no public search table/index containing copied application data.
 
 Current search coverage:
@@ -157,6 +162,8 @@ Results return a common navigable contract:
 - application route;
 - relevant timestamp;
 - typed JSON metadata.
+
+The existing `list_workspace_member_directory` security-definer RPC is hardened to the same authenticated-only execution boundary.
 
 ### Global command palette
 
@@ -186,17 +193,20 @@ Phase 7 activates Tasks and Calendar in the canonical desktop/mobile shell and a
 
 ## Live security and data verification
 
-After Phase 7 implementation:
+After Phase 7 implementation and ACL hardening:
 
-- `tasks`: RLS enabled, 4 policies, 0 rows.
-- `calendar_events`: RLS enabled, 4 policies, 0 rows.
-- `search_workspace_objects`: exists and remains membership checked.
+- `tasks`: RLS enabled, 4 policies, 0 fabricated rows.
+- `calendar_events`: RLS enabled, 4 policies, 0 fabricated rows.
+- `search_workspace_objects`: membership checked; anonymous `EXECUTE` revoked; authenticated execution retained.
+- `list_workspace_member_directory`: membership checked; anonymous `EXECUTE` revoked; authenticated execution retained.
+
+Supabase's anonymous SECURITY DEFINER execution warnings for these two RPCs are cleared. The remaining authenticated SECURITY DEFINER advisor notices are intentional because the application calls these membership-checked RPCs as signed-in users.
 
 No sample tasks or calendar events were inserted into production.
 
 ## Regression coverage
 
-Phase 7 adds four migration-contract tests that ensure:
+Phase 7 adds migration-contract tests that ensure:
 
 - task and calendar persistence remains present;
 - both operational tables keep RLS;
@@ -205,7 +215,7 @@ Phase 7 adds four migration-contract tests that ensure:
 
 ## Validation
 
-The clean read-only combined Phase 6/7 checkpoint passed:
+The completed Phase 6/7 implementation passed the canonical read-only gate with:
 
 - repository parity;
 - frozen `bun ci`;
@@ -213,6 +223,8 @@ The clean read-only combined Phase 6/7 checkpoint passed:
 - TypeScript;
 - **33 Bun tests / 0 failures**;
 - production build.
+
+The final ACL-hardening/documentation head is revalidated with the same read-only gate before Phase 7 is closed.
 
 Vercel/deployment-platform validation remains intentionally deferred until Phase 11.
 
