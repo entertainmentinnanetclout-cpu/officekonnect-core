@@ -16,11 +16,16 @@ for (const absolute of walk(srcRoot)) {
   if (!/\.(?:ts|tsx|js|jsx)$/.test(absolute)) continue;
   const file = relative(root, absolute).replaceAll("\\", "/");
   const text = readFileSync(absolute, "utf8");
+  const isServerOnly = /\.server\.(?:ts|tsx|js|jsx)$/.test(file);
   const checks = [
-    [
-      /(?:SUPABASE_SERVICE_ROLE_KEY|service_role\s*:|serviceRoleKey)/i,
-      "service-role credential reference in application source",
-    ],
+    ...(!isServerOnly
+      ? [
+          [
+            /(?:SUPABASE_SERVICE_ROLE_KEY|service_role\s*:|serviceRoleKey)/i,
+            "service-role credential reference in browser-capable application source",
+          ],
+        ]
+      : []),
     [
       /(?:VITE_|PUBLIC_)[A-Z0-9_]*(?:SECRET|SERVICE_ROLE|PRIVATE_KEY|PASSWORD)/,
       "secret-shaped public/browser environment variable",
@@ -33,6 +38,17 @@ for (const absolute of walk(srcRoot)) {
   for (const [pattern, label] of checks) {
     if (pattern.test(text)) findings.push(`${file}: ${label}`);
   }
+}
+
+const serverAdminClient = readFileSync(
+  join(root, "src/integrations/supabase/client.server.ts"),
+  "utf8",
+);
+if (!serverAdminClient.includes("SUPABASE_SERVICE_ROLE_KEY")) {
+  findings.push("client.server.ts: server-only admin client no longer resolves the service-role key");
+}
+if (!serverAdminClient.includes("persistSession: false")) {
+  findings.push("client.server.ts: server-only admin client must not persist an auth session");
 }
 
 const gitignore = readFileSync(join(root, ".gitignore"), "utf8");
@@ -67,8 +83,15 @@ const externalSigning = readFileSync(
   join(root, "supabase/functions/signing-external/index.ts"),
   "utf8",
 );
-for (const required of ["session_hash", "invitation", "HMAC", "signing_sessions"]) {
-  if (!externalSigning.toLowerCase().includes(required.toLowerCase())) {
+for (const required of [
+  'action === "exchange"',
+  "exchange_signing_token",
+  "get_signing_session_payload",
+  "complete_external_signing_session",
+  "p_session_hash",
+  "HMAC",
+]) {
+  if (!externalSigning.includes(required)) {
     findings.push(`signing-external: expected custom authentication contract marker '${required}'`);
   }
 }
