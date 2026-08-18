@@ -4,155 +4,169 @@ Last audited: 2026-08-18
 
 ## Current phase
 
-Phases 0–8 are **fully implemented, live-backend reconciled and validated**.
+**Phases 0–10 are fully implemented. Phases 8–10 are closed as validated product/backend checkpoints.**
 
-Next implementation phase: **Phase 9 — Product-wide UX and Route Hardening**.
+Next phase: **Phase 11 — Release Candidate and Documentation**.
 
 ## Upgrade branch policy
 
-Draft PR #2 is the single long-running upgrade PR for Phases 0–11. All phase work remains on `phase-0-canonical-reconciliation`. The PR must remain Draft and must not merge to `main` until the complete Phase 11 release-candidate gate passes.
+Draft PR #2 remains the single long-running upgrade PR for Phases 0–11. All work remains on `phase-0-canonical-reconciliation`; `main` must remain unchanged until the complete Phase 11 release-candidate gate passes.
 
-Vercel/deployment-platform validation is intentionally deferred until Phase 11. Phases 8–10 are accepted on repository parity, live Supabase verification, lint, TypeScript, regression tests and production build.
+Vercel/deployment-platform validation remains intentionally deferred until Phase 11.
 
-## Source-of-truth policy
+## Canonical product layers completed
 
-The live Supabase project is authoritative for deployed database behavior. GitHub carries applied migration history, deployed Edge Function source, generated database types and application integrations. Existing engines are extended rather than replaced.
-
-## Completed product layers
-
-- Phase 0 — canonical repository/live-backend reconciliation.
-- Phase 1 — real development identity and canonical responsive application shell.
-- Phase 2 — native Documents, autosave/versioning and deterministic PDF.
-- Phase 3 — OfficeKonnect Sheets, formula/workbook engine and XLSX/CSV/PDF interoperability.
+- Phase 0 — repository/live Supabase reconciliation.
+- Phase 1 — real development identity and canonical responsive shell.
+- Phase 2 — native Documents, versions and deterministic PDF.
+- Phase 3 — OfficeKonnect Sheets and XLSX/CSV/PDF interoperability.
 - Phase 4 — Files organization and native document/spreadsheet Templates.
 - Phase 5 — server-authoritative Workflows and Approvals over immutable submitted versions.
-- Phase 6 — production internal/external E-Signatures, secure sessions, final PDF and audit certificate.
+- Phase 6 — production internal/external E-Signatures, secure sessions, completed PDF and certificate.
 - Phase 7 — Tasks, operational Calendar and permission-scoped Global Search.
 - Phase 8 — Notifications, Activity, Team, Workspace administration and comprehensive Settings.
+- Phase 9 — product-wide UX/route/action hardening.
+- Phase 10 — security/performance audits, deterministic signing-PDF integration, browser E2E and permanent CI.
 
-## Phase 8 completed
+## Phase 8 closure
 
-### Notifications
+Phase 8 preserved the existing identity/tenancy/notification systems and added only narrowly required operational state:
 
-- `notifications` remains canonical.
-- Added `notification_receipts` solely for per-user read state on workspace-broadcast notifications.
-- Activated live header bell and `/dashboard/notifications`.
-- Added unread counts, mark-one/mark-all read and entity navigation.
-- Added real task-assignment notification production.
+- `notification_receipts` for per-user read state on workspace broadcasts;
+- `workspace_invitations` with SHA-256 token hashes, expiry/revoke/accept state and no raw-token persistence;
+- consolidated Activity reads over `activity_logs`, `workflow_events` and `signing_events` rather than a duplicate activity ledger;
+- authenticated Team/workspace administration RPCs with owner/admin hierarchy checks;
+- real workspace/profile/signature/template/integration/subscription-backed Settings.
 
-### Activity
+Raw workspace-invitation tokens remain browser-session scoped through `sessionStorage` only.
 
-- Activated `/dashboard/activity` over `activity_logs`, `workflow_events` and `signing_events`.
-- Added audit triggers for tasks, calendar events, templates, memberships, workspaces and invitations.
-- Hardened `log_activity()` so workspace-row changes retain the correct workspace/tenant identity.
-- No duplicate workspace-activity ledger was created.
+Final Phase 8 baseline: `ca6802edcd11533276c6df597b004dfcbade2615` — Upgrade Validation `32119440424`.
 
-### Team
+## Phase 9 completed
 
-- `workspace_members` and `workspace_role` remain canonical.
-- Added secure expiring `workspace_invitations` with SHA-256 token hashes only.
-- Raw invitation bearer tokens are returned once, never stored in Postgres and retained only in browser `sessionStorage` across authentication.
-- Added authenticated invite creation/list/accept/revoke and member role/removal RPCs.
-- Preserved owner/admin hierarchy constraints.
-- Activated `/dashboard/team` and `/invite/$token`.
+Phase 9 hardened the complete product horizontally:
 
-### Workspace
+- dashboard statistics are active-workspace scoped and derived from real records;
+- fabricated trend/open-rate/transcription labels and dead History/Quick Create controls were removed;
+- recent Dashboard activity uses the canonical Phase 8 activity aggregate;
+- production shell no longer exposes internal PR/upgrade-programme wording;
+- internal Settings/Workspace/Global Search links use application routing rather than hard reloads;
+- user-visible implementation/debug language was replaced by product-facing copy;
+- stale `Base V1` positioning was removed;
+- icon-only shell controls received accessible names and Settings interaction controls have explicit button semantics;
+- `scripts/check-product-hardening.mjs` is now a permanent release gate.
 
-- Activated `/dashboard/workspace` for workspace identity, plan, switching and Team handoff.
-- Added atomic authenticated `create_workspace` RPC creating workspace + owner membership + free subscription + default workspace.
-- Existing `workspaces`, `workspace_members`, `profiles.default_workspace_id` and `subscriptions` remain canonical.
+Phase 9 code checkpoint: `42c4dbd3e4c66f0570ec19c5ad6246bc39e3bb64` — Upgrade Validation `32125480383`.
 
-### Settings
+See `docs/PHASE9.md`.
 
-Replaced placeholder/dead settings with actual behavior:
+## Phase 10 completed
 
-- profile/avatar;
-- workspace summary/routes;
-- document and PDF behavior grounded in canonical modules;
-- notification state;
-- reusable signatures;
-- templates;
-- password/session security;
-- persisted light/dark/system theme;
-- actual connected integrations with disconnect;
-- actual subscription/billing record without fake checkout;
-- non-secret developer identifiers;
-- authenticated personal-data export.
+### Security and CI
 
-The disabled account-delete control was removed rather than advertising a destructive workflow without ownership, retention and audit semantics.
+Permanent `scripts/check-security-boundaries.mjs` verifies browser/server secret boundaries, `.env` hygiene, development-session production guards, session-scoped invitation tokens, external-signing exchange/session markers and absence of the obsolete privileged signing bypass.
 
-## Phase 8 live migrations
+The permanent Upgrade Validation workflow is read-only and runs:
 
-- `20260818082337_phase_8_notifications_team_workspace_activity`
-- `20260818082454_phase_8_workspace_invitation_directory`
-- `20260818084738_phase_8_activity_workspace_identity_hardening`
+1. repository parity;
+2. frozen `bun ci`;
+3. ESLint;
+4. product-hardening audit;
+5. security-boundary audit;
+6. TypeScript;
+7. unit/integration tests;
+8. production client/SSR/Nitro build;
+9. per-asset production budget;
+10. pinned Playwright 1.62.1 setup;
+11. Chromium E2E.
 
-## Phase 8 live security state
+All temporary/write-capable reconciliation workflows were removed.
 
-RLS remains enabled on the Phase 8 operational tables, including:
+### Automated tests
 
-- `notification_receipts`;
-- `workspace_invitations`;
-- existing `notifications`;
-- `activity_logs`;
-- `workspace_members`;
-- `workspaces`;
-- `user_integrations`;
-- `subscriptions`.
+The source suite now has **42/42 passing unit/integration tests**.
 
-All new public application RPCs have anonymous `EXECUTE` revoked and authenticated execution explicitly granted. The authenticated `SECURITY DEFINER` advisor warnings for these RPCs are intentional because these functions are the controlled application boundary; each performs the required authentication, workspace membership, role or invited-email checks internally.
+Phase 10 adds a real deterministic three-page signing-PDF integration using the same `supabase/functions/_shared/signing-pdf.ts` renderer consumed by production finalization. It verifies multi-page signature/text/date rendering, SHA determinism and invalid geometry/page rejection.
 
-The existing `signing_tokens` no-direct-policy notice remains intentional because direct browser token access is prohibited. Leaked-password protection and inherited planner/performance advisor warnings remain Phase 10 hardening candidates.
+Chromium E2E has **4/4 passing tests** covering the current landing page, real login controls, mobile auth usability and real Privacy/Terms routes without browser runtime errors.
 
-No low-traffic `unused_index` notice is being used to remove integrity/relationship indexes prematurely.
+### Performance
 
-## Production-data integrity
+Live migration:
 
-Phase 8 inserted no fake production content. At verification:
+- `20260818101750_phase_10_files_fk_covering_indexes`
 
-- `notification_receipts`: 0 rows;
-- `workspace_invitations`: 0 rows;
-- `notifications`: 0 rows.
+It adds covering indexes for Phase 4 composite foreign keys. After application, the Supabase performance advisor no longer reports unindexed foreign keys.
 
-## Generated types and repository parity
+CI also enforces per-asset budgets:
 
-Supabase TypeScript generation was re-run against the live project after the Phase 8 migrations and the repository generated types include:
+- JavaScript <= 640 KiB;
+- CSS <= 150 KiB.
 
-- `notification_receipts`;
-- `workspace_invitations`;
-- all Phase 8 application RPC signatures.
+### Live signing finalizer
 
-Temporary one-shot route-tree, formatter and type-reconciliation workflows were removed after use.
+`signing-finalize` is now **ACTIVE version 3, JWT required**, deployed with the exact shared renderer exercised by the three-page integration tests.
 
-## Final Phase 8 validation record
+Other signing functions remain:
 
-Latest fully validated Phase 8 repository head before this status-only ledger update:
+- `signing-actions` — ACTIVE, JWT required;
+- `signing-external` — ACTIVE, JWT intentionally disabled because it implements the custom invitation/session protocol in-function.
 
-`ad7e4b83eaad0206590f46a2e7c7db75c3730f3e`
+The finalizer remains the only completed-PDF/certificate generator and preserves the existing claim/complete/fail state machine, immutable hashes and `OfficeKonnect Signing Certificate`.
 
-Upgrade Validation run:
+### Phase 10 validation
 
-`32118847402`
+Validated source checkpoint: `ddb2edf65ef07da6d4ae5bcaa2a6129966a46c3d`
 
-Results:
+Upgrade Validation: `32129565222`
 
-- Repository parity: **PASS**.
-- Frozen dependency install (`bun ci`): **PASS**.
-- ESLint: **PASS — 0 errors, 7 inherited Fast Refresh warnings**.
-- TypeScript (`tsc --noEmit`): **PASS**.
-- Bun regression tests: **39 passed / 0 failed**.
-- Production client build: **PASS**.
-- Production SSR build: **PASS**.
-- Production Nitro build: **PASS**.
+Passed:
 
-Non-blocking build warnings remain the existing Vite tsconfig-paths migration notice and >500 kB chunk warning; performance/code-splitting review belongs to Phase 9/10.
+- repository parity;
+- frozen `bun ci`;
+- ESLint — 0 errors, 7 inherited Fast Refresh warnings;
+- product-hardening audit;
+- security-boundary audit;
+- TypeScript;
+- **42/42 unit/integration tests**;
+- production client/SSR/Nitro build;
+- asset budget;
+- pinned Playwright/Chromium setup;
+- **4/4 Chromium E2E tests**.
 
-## Known items carried forward
+A final documentation-head run of the same read-only gate becomes the authoritative Phase 9/10 closure checkpoint.
 
-- Phase 9 owns product-wide dead-action, route, responsive, accessibility and cross-module UX hardening.
-- Phase 10 owns deeper security/performance/E2E/CI hardening, including inherited RLS planner warnings and leaked-password protection review.
-- Vercel is intentionally not an acceptance gate until Phase 11.
+See `docs/PHASE10.md`.
+
+## Reviewed Supabase advisor residuals
+
+Phase 10 does not claim a zero-warning advisor state.
+
+Security:
+
+- `signing_tokens` RLS/no-policy notice is intentional because direct browser access is prohibited;
+- authenticated `SECURITY DEFINER` warnings remain for controlled application RPCs that perform authentication/membership/role/invited-email checks internally;
+- Supabase Auth leaked-password protection remains disabled and requires a safe Auth-configuration mutation not exposed by the current project-management tooling.
+
+Performance:
+
+- inherited RLS init-plan warnings remain on older policies;
+- multiple-permissive SELECT warnings remain on a small number of older tables;
+- unused-index INFO notices remain and are not used to justify premature deletion of integrity/relationship/future-scale indexes.
+
+These residuals are carried explicitly into Phase 11 release review/future targeted optimization.
+
+## Phase 11 focus
+
+Phase 11 must perform final release-candidate and handoff work without changing the completed architecture casually:
+
+- Vercel/deployment-platform validation;
+- canonical create → review → changes → resubmit → approve → sign → finalize QA;
+- final live/backend/repository parity verification;
+- final security/advisor review;
+- release documentation/handoff;
+- final Draft PR #2 readiness decision.
 
 ## Non-negotiable release rule
 
-Do not merge Draft PR #2 after Phase 8. Continue Phases 9–11 on the same branch/PR. Merge to `main` only when the complete Phase 11 upgrade passes release-candidate validation.
+**Do not merge Draft PR #2 yet.** Keep it Draft/open through Phase 11. Merge to `main` only after the complete release candidate passes deployment-platform, security and end-to-end QA.
