@@ -88,14 +88,16 @@ requireText("src/lib/signing.functions.ts", [
   "createSigningDraft",
   "sendSigningRequest",
   "completeSigningParticipant",
-  'functions.invoke("signing-actions"',
+  "functions.invoke(",
+  '"signing-actions"',
 ]);
 requireText("supabase/functions/signing-external/index.ts", [
   'action === "exchange"',
   'rpc("exchange_signing_token"',
   'rpc("get_signing_session_payload"',
   'rpc("complete_external_signing_session"',
-  'functions.invoke("signing-finalize"',
+  "functions.invoke(",
+  '"signing-finalize"',
 ]);
 requireText("supabase/functions/signing-finalize/index.ts", [
   'from "../_shared/signing-pdf.ts"',
