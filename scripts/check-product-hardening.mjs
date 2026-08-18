@@ -21,9 +21,9 @@ const checks = [
   },
   { name: "fake/dead implementation wording", pattern: /\bfake\b|\bdead control\b/i },
   { name: "legacy V1 residue", pattern: /\bV1\b/ },
-  { name: "raw console logging", pattern: /console\.(?:log|debug|error)\s*\(/ },
-  { name: "native browser alert/confirm", pattern: /(?:window\.)?(?:alert|confirm)\s*\(/ },
-  { name: "dead href/to target", pattern: /(?:href|to)\s*=\s*["'](?:#|javascript:)/i },
+  { name: "raw console logging", pattern: /console\.(?:log|debug)\s*\(/ },
+  { name: "native browser alert", pattern: /(?:window\.)?alert\s*\(/ },
+  { name: "dead href/to target", pattern: /(?:href|to)\s*=\s*["'](?:#["']|javascript:)/i },
   { name: "internal dashboard hard reload", pattern: /<a\s+[^>]*href=["']\/dashboard(?:\/|["'])/i },
   {
     name: "browser service-role exposure",

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2, Check, Loader2, Plus, Save, Users } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -252,9 +252,9 @@ function WorkspacePage() {
                 Invite people, update roles and review pending invitations from Team.
               </p>
               <Button asChild variant="outline" className="mt-4 w-full">
-                <a href="/dashboard/team">
+                <Link to="/dashboard/team">
                   <Users className="mr-2 h-4 w-4" /> Manage team
-                </a>
+                </Link>
               </Button>
             </CardContent>
           </Card>

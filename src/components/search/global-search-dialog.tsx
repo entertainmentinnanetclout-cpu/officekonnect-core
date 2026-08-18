@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
   CheckSquare2,
@@ -42,6 +43,7 @@ function groupLabel(type: string) {
 
 export function GlobalSearchDialog({ open, onOpenChange }: GlobalSearchDialogProps) {
   const searchFn = useServerFn(searchWorkspace);
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
 
@@ -77,7 +79,7 @@ export function GlobalSearchDialog({ open, onOpenChange }: GlobalSearchDialogPro
 
   const openResult = (result: WorkspaceSearchResult) => {
     onOpenChange(false);
-    window.location.assign(result.route);
+    router.history.push(result.route);
   };
 
   return (
@@ -164,9 +166,16 @@ export function GlobalSearchDialog({ open, onOpenChange }: GlobalSearchDialogPro
           <span>
             Enter opens the selected result by click · Results come from live workspace data
           </span>
-          <a href="/dashboard/search" className="font-medium text-foreground hover:underline">
+          <button
+            type="button"
+            className="font-medium text-foreground hover:underline"
+            onClick={() => {
+              onOpenChange(false);
+              router.history.push("/dashboard/search");
+            }}
+          >
             Full search
-          </a>
+          </button>
         </div>
       </DialogContent>
     </Dialog>

@@ -102,7 +102,6 @@ function VoiceNotesIndex() {
       setRecordingTime(0);
       timerRef.current = setInterval(() => setRecordingTime((p) => p + 1), 1000);
     } catch (err) {
-      console.error(err);
       toast.error("Microphone permission denied or unavailable");
     }
   };

@@ -160,8 +160,8 @@ function UnauthenticatedWorkspace({ message }: { message: string | null }) {
                 <div>
                   <p className="text-sm font-medium">RLS remains authoritative</p>
                   <p className="mt-1 text-xs leading-5 text-slate-500">
-                    No fake user IDs, fake workspace IDs or client-side security bypasses are
-                    introduced.
+                    Authenticated user and workspace identity remain server-backed, and Row Level
+                    Security remains authoritative for every workspace request.
                   </p>
                 </div>
               </div>

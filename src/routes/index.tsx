@@ -113,14 +113,14 @@ function LandingPage() {
           <div className="space-y-7">
             <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground">
               <Sparkles className="h-3.5 w-3.5 text-primary" />
-              Base V1 — now in early access
+              Connected office workspace
             </div>
             <h1 className="text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
               One workspace for every <span className="text-primary">office task</span>.
             </h1>
             <p className="max-w-xl text-lg leading-relaxed text-muted-foreground">
-              Documents, signatures, letterheads, bulk email, contacts and voice notes — unified in
-              a single, secure workspace. Built for productive offices, freelancers and growing
+              Documents, Sheets, files, workflows, approvals, e-signatures, tasks, calendar, search,
+              notifications and office communication — unified in one secure workspace for modern
               teams.
             </p>
             <div className="flex flex-wrap items-center gap-3">

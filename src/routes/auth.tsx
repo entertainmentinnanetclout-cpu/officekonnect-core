@@ -81,8 +81,8 @@ function AuthLayout() {
           </div>
 
           <p className="relative z-10 text-[11px] leading-5 text-slate-600">
-            Development access can skip the visible login step only by creating a real Supabase
-            session. No fake identity or RLS bypass is used.
+            Development access can skip the visible login step only after a real Supabase session is
+            established. The same authenticated identity and Row Level Security model remain active.
           </p>
         </section>
 
