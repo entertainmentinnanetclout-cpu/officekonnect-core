@@ -2,7 +2,7 @@
 
 ## Architectural rule
 
-Preserve and extend the existing Supabase data model and state machines. Do not create parallel workflow, signing, document-version, spreadsheet, role or storage systems unless a demonstrated gap requires an additive model.
+Preserve and extend the existing Supabase data model and server-authoritative state machines. Do not create parallel document-version, spreadsheet, file, template, workflow, signing, role, notification or storage systems unless a demonstrated gap requires a narrowly additive model.
 
 ## Runtime layers
 
@@ -13,12 +13,14 @@ Preserve and extend the existing Supabase data model and state machines. Do not 
 - TanStack Query
 - Tailwind/Radix component system
 - PDF.js/react-pdf for viewing
-- pdf-lib for deterministic PDF manipulation where appropriate
+- `react-rnd` for normalized PDF field preparation
+- `react-signature-canvas` for signature capture
+- pdf-lib for deterministic PDF manipulation/finalization where appropriate
 - xlsx for XLSX/XLS/CSV interoperability at the application boundary
 
 ### Server application layer
 
-TanStack Start server functions provide authenticated application operations. They use the active workspace resolved from the authenticated Supabase identity and must not bypass live RLS/state-machine contracts.
+TanStack Start server functions provide authenticated application operations. They resolve the active workspace from the authenticated Supabase identity and do not bypass live RLS or server state-machine contracts.
 
 ### Supabase
 
@@ -27,8 +29,8 @@ TanStack Start server functions provide authenticated application operations. Th
 - Row Level Security
 - private helper schema for privileged state-machine internals
 - Storage buckets partitioned by workspace
-- RPCs for sensitive transitions
-- Edge Functions for external signing and PDF finalization
+- RPCs for sensitive transitions/search
+- Edge Functions for signing actions, external signing sessions and PDF finalization
 
 ## Workspace isolation
 
@@ -44,48 +46,40 @@ The first path segment remains the workspace id because live Storage RLS resolve
 
 `documents` is the canonical current-state record for uploaded files, native documents and spreadsheets. Structured content is stored in JSONB and guarded by `editor_version` optimistic concurrency. `document_versions` stores immutable snapshots.
 
-Do not create a second native-document or spreadsheet table.
+No second native-document or spreadsheet persistence table exists.
 
 ## OfficeKonnect Sheets
 
-Spreadsheet documents remain normal rows in `documents` with `document_kind = 'spreadsheet'`. The authoritative workbook is `documents.content` using `kind: "workbook"` and `schemaVersion: 1`.
+Spreadsheet documents remain normal `documents` rows with `document_kind = 'spreadsheet'`. The authoritative workbook is `documents.content` using `kind: "workbook"` and `schemaVersion: 1`.
 
-`src/lib/spreadsheet.ts` is the canonical application workbook model and calculation engine. Imported XLSX/CSV structures are normalized into this model; the application does not keep a second XLSX-native persistence format.
+`src/lib/spreadsheet.ts` is the canonical workbook model/calculation engine. Imported Office files are normalized into this model; XLSX is an interoperability format, not persistence.
 
-Spreadsheet saves use `save_structured_document` and restores use `restore_structured_document_version`. Server functions recompute workbook metrics before save rather than trusting browser-provided metadata.
+Spreadsheet saves use `save_structured_document`; restores use `restore_structured_document_version`. The server recomputes workbook metrics before save.
 
-`src/lib/spreadsheet-pdf.server.ts` is the spreadsheet PDF renderer. Static spreadsheet signing copies create a private PDF `documents` row plus version 1 without bypassing the signing request state machine.
+`src/lib/spreadsheet-pdf.server.ts` is the spreadsheet PDF renderer. Static signing copies become normal private PDF `documents` rows plus version 1 and now feed directly into the Phase 6 signing workflow.
 
 ## Files organization
 
-Phase 4 adds an organizational layer over `documents`; it does not create a second file store.
+The Files layer organizes `documents`; it does not create a second file store.
 
-- `workspace_folders` stores nested workspace folders.
-- `document_folder_items` stores a document's current folder assignment.
-- `document_favorites` stores user-specific favourites.
-- `document_shares` stores explicit workspace-internal, view-only share markers.
+- `workspace_folders` — nested folders.
+- `document_folder_items` — current folder assignment.
+- `document_favorites` — user-specific favourites.
+- `document_shares` — workspace-internal view-share markers.
 
-Moving a document between folders updates relational organization metadata only. Existing private Storage paths remain stable. Uploaded-file duplication is the one Files operation that creates a new binary: it copies the actual private object to a fresh document-owned path and creates a fresh document plus version 1.
+Folder moves change relational organization only and keep private Storage paths stable. Uploaded-file duplication copies the actual private binary to a fresh document-owned path and creates a new document/version identity.
 
-Folder hierarchy integrity is enforced in PostgreSQL as well as in the application. Self-parenting and descendant cycles are rejected.
+Folder hierarchy cycles are rejected in PostgreSQL.
 
-### Controlled sharing
+## Templates
 
-`document_shares.permission` is restricted to `view`, and recipients must already be members of the same workspace. `list_workspace_member_directory` is a membership-checked security-definer RPC used by controlled pickers.
-
-The pre-existing document SELECT policy already grants workspace members access to workspace documents. Explicit shares power the **Shared with me** organizational surface and do not claim to replace the existing workspace visibility boundary.
-
-## Document and spreadsheet templates
-
-`document_templates` remains the canonical reusable-template table. Template content stores the same native-document or canonical workbook JSON used by the source editor. Creating from a template produces a normal new `documents` row and records `template_id`.
-
-Mail Center email templates remain separate.
+`document_templates` remains the canonical document/spreadsheet template system. Template content uses the same native-document/workbook JSON as the source editor. Mail Center email templates remain separate.
 
 ## Workflows and approvals
 
-Phase 5 exposes the existing server-authoritative workflow state machine rather than creating a new approval engine.
+The workflow state machine remains server-authoritative.
 
-Canonical workflow relations:
+Canonical relations:
 
 - `workflow_templates`
 - `workflow_template_steps`
@@ -107,94 +101,201 @@ Canonical lifecycle/comment RPCs:
 - `resolve_workflow_comment`
 - `update_workflow_comment`
 
-### Template definitions and revisions
+Starting a workflow creates an immutable `document_versions` submission. Review always renders that version, not mutable working content. Request Changes edits the working document separately and re-enters review only through controlled optimistic-concurrency resubmission.
 
-Workflow templates are managed by workspace owners/admins. Steps are ordered and may be review, approval or acknowledgement actions. Assignment resolution is delegated to the existing backend contract: specific user, workspace role, document creator or workflow starter.
+`workflow_work_queue` is already scoped to the current authenticated pending assignment and is consumed directly by `/dashboard/approvals`.
 
-A design change creates a **new versioned template revision** rather than mutating the definition already referenced by historical/running workflows. The previous revision is retired only after the new template row and ordered step set are successfully created.
+## Production E-Signatures
 
-### Immutable submission contract
+### Canonical data model
 
-Starting a workflow is performed through `start_document_workflow`. The RPC creates an immutable `document_versions` snapshot and stores its id on `workflow_runs.document_version_id` together with the editor version at submission.
+Signing uses the existing hardened backend:
 
-The workflow review UI must always render this submitted version. The normal `documents` row remains the mutable working document and is opened separately only when changes are requested.
-
-For workflow review:
-
-- native documents render the submitted structured content;
-- Sheets render the submitted canonical workbook as read-only;
-- PDFs render the exact submitted private Storage binary via a short-lived signed URL;
-- other uploaded file types remain downloadable as the exact submitted binary.
-
-### Decisions and state transitions
-
-The browser must not directly update lifecycle columns on runs, steps or assignments.
-
-An authenticated user gets decision controls only for their pending assignment on the active step. The action set is derived from the step configuration and submitted through `submit_workflow_decision`:
-
-- approve;
-- changes requested;
-- reject; or
-- acknowledge.
-
-The RPC validates assignment ownership, active step status, action eligibility, required-decision counts and progression/termination.
-
-### Request changes and resubmission
-
-A `changes_requested` workflow keeps the current submitted version immutable. The authorised user edits the canonical working document or spreadsheet, then calls `resubmit_document_workflow` with the current expected `documents.editor_version`.
-
-The backend creates the next immutable document version, increments `workflow_revision` and reopens the workflow sequence. This preserves optimistic concurrency and a complete revision/decision audit trail.
-
-### Work queue
-
-`workflow_work_queue` is already scoped to `auth.uid()`, pending assignments and the active step. `/dashboard/approvals` consumes the view directly instead of rebuilding access filtering client-side.
-
-Pending work is grouped by due date as Overdue, Due soon, Upcoming or No deadline. Completed user history comes from immutable `workflow_decisions`, not from a fabricated queue state.
-
-### Comments, reassignment and cancellation
-
-Workflow comments remain RLS-protected rows. Update/resolve operations use the existing RPCs. Active assignment reassignment and workflow cancellation also use their existing auditable RPCs and require reasons in the OfficeKonnect UX.
-
-## E-signatures
-
-Canonical signing tables include:
-
-- signing_requests
-- signing_participants
-- signing_fields
-- signing_tokens
-- signing_events
-- signing_certificates
+- `signing_requests`
+- `signing_participants`
+- `signing_fields`
+- `signing_tokens`
+- `signing_events`
+- `signing_certificates`
 - private signing sessions
 
-The signing state machine is server-authoritative. Frontend code must not directly force request/participant lifecycle states controlled by hardened RPCs.
+Request/participant lifecycle transitions are server-authoritative. Browser code may configure unlocked drafts under RLS but does not directly force sent/completed/declined/cancelled/finalized states.
+
+### Request creation and preparation
+
+Native Documents and Sheets use this canonical bridge:
+
+```text
+flush save
+→ deterministic PDF signing copy
+→ normal private PDF document/version
+→ signing draft
+→ participant configuration
+→ normalized PDF field preparation
+→ secure send
+```
+
+Preparation persists `signing_fields` using normalized 0..1 page geometry. `src/lib/signing.ts` provides application-side normalization/config validation, while the backend remains authoritative on send.
+
+Participant roles:
+
+- signer;
+- approver;
+- CC.
+
+Signing order:
+
+- parallel;
+- sequential.
+
+Required signing fields:
+
+- signature;
+- initial;
+- text;
+- date.
+
+CC recipients cannot own signable fields.
+
+### Sending and immutable lock
+
+`send_signing_request` locks:
+
+- immutable source document version;
+- participant configuration/hash;
+- field configuration/hash;
+- expiry;
+- signing order/current turn.
+
+The UI sends through `signing-actions`, never by writing request lifecycle state directly.
+
+### Authenticated/internal signing
+
+Internal participants complete through `complete_signing_participant` via `signing-actions`.
+
+The backend validates:
+
+- authenticated user ↔ participant identity;
+- request/participant eligibility;
+- sequential turn;
+- locked configuration hashes;
+- required values/signatures;
+- consent text version.
+
+Saved, drawn and typed signatures are stored under the authenticated workspace/user identity and referenced by ID during completion.
 
 ### External signing
 
-A raw invitation token is exchanged once for a short-lived session. The raw token must not remain the long-lived browser session identifier. External signing uses the deployed `signing-external` Edge Function and server-side hashed token/session material.
+The raw invitation token is **exchange-only**.
+
+`/sign/$token`:
+
+1. sends the raw 64-hex token to `signing-external` action `exchange`;
+2. backend hashes/verifies the invitation and creates a short-lived private session;
+3. browser stores only the returned session token in `sessionStorage`;
+4. browser immediately moves to `/sign/active`.
+
+`/sign/active` uses only the short-lived session token for payload, signature upload, completion and decline.
+
+The deployed `signing-external` function remains `verify_jwt = false` intentionally because it implements custom token/session authentication, HMAC fingerprints and server-side session verification. This exception must not be generalized to other functions.
+
+The obsolete admin-backed `signing-public.functions.ts` path was removed and must not be restored.
+
+### Audit and integrity
+
+`signing_events` is an append-only audit surface with event-chain hashes. Requests retain source/final hashes, participant/field hashes, finalization state and certificate references.
 
 ### Finalization
 
-`signing-finalize` is the canonical server-side PDF finalizer. It embeds completed fields into the immutable source PDF, calculates hashes, stores the completed PDF and certificate in private exports, and completes the database finalization contract.
+`signing-finalize` is the only final PDF generator. Live version 2 remains JWT-protected.
+
+It:
+
+- loads the immutable source PDF;
+- embeds completed field values/signature images;
+- computes source/final SHA-256 hashes;
+- stores completed PDF in private `exports`;
+- creates an `OfficeKonnect Signing Certificate` PDF;
+- hashes/stores the certificate;
+- completes/fails finalization through the canonical database RPC contract.
+
+`signing-actions` remains JWT-protected. Service-role credentials remain Edge Function/server only.
+
+## Tasks
+
+`tasks` is the canonical lightweight task table added in migration `20260818062157_phase_7_tasks_calendar_search`.
+
+It stores status, priority, assignment, creator, start/due/completed dates and optional links to existing operational objects.
+
+RLS rules:
+
+- workspace members read;
+- members create under their own identity;
+- creator/assignee/admin update;
+- creator/admin delete;
+- assignees must already belong to the workspace.
+
+Tasks deliberately do not become a second workflow engine.
+
+## Calendar
+
+`calendar_events` stores only **manual office events**.
+
+The operational Calendar derives the following read-only dates directly from canonical source tables:
+
+- task starts/due dates;
+- workflow-run deadlines;
+- workflow-step deadlines;
+- active signing-request expiries.
+
+These dates are not copied into `calendar_events`, preventing state drift.
+
+Manual events remain workspace scoped with RLS; creator/admin can edit/delete them.
+
+## Global Search and Command Navigation
+
+`search_workspace_objects(p_workspace_id, p_query, p_limit)` is the canonical Phase 7 search boundary.
+
+It is:
+
+- server-side;
+- membership checked;
+- `security definer` with restricted `search_path`;
+- executable only by authenticated users;
+- scoped to the active workspace.
+
+Current coverage:
+
+- Documents and Sheets;
+- document/spreadsheet templates;
+- workflow runs;
+- e-signature requests;
+- tasks;
+- workspace members.
+
+No second search-copy table/index exists. `/dashboard/search` and the Ctrl/Cmd+K dialog consume the same RPC contract.
 
 ## Security boundaries
 
 - Browser uses publishable Supabase credentials only.
 - Service-role credentials are server/Edge Function only.
-- RLS remains enabled.
-- State-machine tables are mutated through approved RPCs/Edge Functions where structural locks require it.
-- No development-mode work may replace `auth.uid()` or workspace RLS with fake client identity.
-- Spreadsheet imports/exports do not weaken document ownership or create public workbook storage.
-- Files organization metadata remains workspace-scoped and does not move binaries outside private Storage.
-- Explicit file shares are workspace-internal and view-only.
-- Workflow submissions are immutable versions; workflow status is never a browser-authored source of truth.
-- `workflow_work_queue` is consumed as an auth-scoped database view, not broadened in client code.
+- RLS remains enabled on application tables.
+- State-machine lifecycle transitions use approved RPC/Edge Function paths.
+- No development mode replaces `auth.uid()` or workspace RLS with fake client identity.
+- Workflow reviews use immutable submitted versions.
+- Signing sends/completions/finalization are server-authoritative.
+- Raw external signing invitation tokens are never retained as the post-exchange browser session identifier.
+- Signing session tokens are short lived and held only in `sessionStorage`.
+- Calendar derives operational deadlines instead of duplicating them.
+- Global search checks active-workspace membership server-side.
+- Files organization never makes private binary storage public.
 
-## Phase 0 repository parity
+## Repository parity
 
-The repository must contain:
+The repository must continue to contain:
 
 1. Every applied migration required to reproduce the live schema.
 2. Source for every deployed Edge Function.
-3. Generated database types matching the live schema.
-4. Application helpers matching the current RLS/storage/RPC contracts.
+3. Database types matching the live schema.
+4. Application helpers matching current RLS/storage/RPC contracts.
+5. Phase documentation recording source-of-truth and release boundaries.
