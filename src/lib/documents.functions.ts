@@ -8,7 +8,6 @@ import {
   nativeDocumentToJson,
   type NativeDocumentContent,
 } from "@/lib/native-document";
-import { buildNativeDocumentPdf } from "@/lib/native-document-pdf.server";
 
 function workspaceStoragePath(workspaceId: string, userId: string, requestedPath: string) {
   const normalized = requestedPath.replace(/^\/+/, "");
@@ -253,6 +252,7 @@ export const exportNativeDocumentPdf = createServerFn({ method: "POST" })
       }
     }
 
+    const { buildNativeDocumentPdf } = await import("@/lib/native-document-pdf.server");
     const rendered = await buildNativeDocumentPdf({
       title: document.title,
       content: document.content,
