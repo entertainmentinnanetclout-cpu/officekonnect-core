@@ -1,113 +1,103 @@
 # OfficeKonnect Changelog
 
-## 2026-08-18 — Phase 8 completed
+## 2026-08-18 — Phase 10 completed
 
-### Notifications
+### Security / CI
 
-- Added RLS-protected `notification_receipts` so workspace-broadcast notifications have independent per-user read state.
-- Added authenticated notification list/unread-count/mark-read/mark-all-read RPCs.
-- Activated the live shell notification bell and `/dashboard/notifications` notification center.
-- Added task-assignment notification production.
+- Added permanent `scripts/check-security-boundaries.mjs` browser/server credential and token-boundary audit.
+- Kept Phase 9 `scripts/check-product-hardening.mjs` as a permanent gate.
+- Permanent Upgrade Validation is read-only and now gates parity, frozen install, lint, product audit, security audit, TypeScript, unit/integration tests, production build, asset budget and Chromium E2E.
+- Removed all temporary/write-capable reconciliation workflows after use.
 
-### Activity
+### Signing-PDF integration
 
-- Activated `/dashboard/activity` over canonical `activity_logs`, `workflow_events` and `signing_events`.
-- Added audit triggers for tasks, manual calendar events, document templates, workspace members, workspaces and workspace invitations.
-- Hardened inherited `log_activity()` so `workspaces` rows use their own id as tenant/workspace scope.
-- Preserved signing audit hashes and avoided a duplicate consolidated activity table.
+- Extracted production field rendering into `supabase/functions/_shared/signing-pdf.ts`.
+- Added deterministic real three-page PDF integration coverage for signature, text and date fields plus invalid geometry/page rejection.
+- Production `signing-finalize` consumes the same tested renderer.
+- Deployed `signing-finalize` **version 3 — ACTIVE, JWT required**.
+- Preserved the existing finalization RPC state machine, hashes, private exports and generic `OfficeKonnect Signing Certificate`.
 
-### Team
+### Performance
 
-- Added RLS-protected `workspace_invitations` pending-invitation model.
-- Invitation bearer tokens are generated server-side, stored only as SHA-256 hashes and expire/revoke/accept terminally.
-- Browser continuation uses `sessionStorage`; raw invite tokens are removed after acceptance.
-- Added authenticated invitation create/list/accept/revoke RPCs.
-- Added controlled member-role update and member-removal RPCs with owner/admin hierarchy protections.
-- Activated `/dashboard/team` and public-auth-boundary `/invite/$token`.
+- Applied live migration `20260818101750_phase_10_files_fk_covering_indexes`.
+- Added covering indexes for Phase 4 composite foreign keys.
+- Cleared Supabase's unindexed-foreign-key advisor category.
+- Added production asset budgets: JS <= 640 KiB and CSS <= 150 KiB per asset.
+- Did not remove low-traffic indexes merely because the advisor reports them unused.
 
-### Workspace
+### Browser E2E / route hardening
 
-- Activated `/dashboard/workspace` for identity, plan/subscription view, workspace switching and Team handoff.
-- Added atomic authenticated `create_workspace` RPC: workspace + owner membership + free subscription + default workspace.
-- Existing `workspaces`, `workspace_members`, `profiles.default_workspace_id` and `subscriptions` remain canonical.
-
-### Settings
-
-- Replaced Phase 8 placeholders with production General, Workspace, Documents, PDF & Printing, Notifications, Signatures, Templates, Security, Appearance, Integrations, Billing, Developer and Account surfaces.
-- Appearance persists `profiles.preferences.theme`.
-- Integrations show only real `user_integrations` records and real disconnect; no fake Connect action.
-- Billing reflects the actual `subscriptions` record and exposes no fake checkout/upgrade action.
-- Account provides authenticated RLS-scoped personal-data export.
-- Removed the disabled account-deletion control until a real ownership/retention/audit deletion contract exists.
-
-### Shell / route integration
-
-- Activated Notifications, Team, Activity and Workspace administration navigation.
-- Replaced disabled notification bell with live unread-count UI.
-- Preserved dashboard development-session and external-signing auth boundaries while allowing secure workspace invite continuation through sign-in.
-
-### Live migrations
-
-- `20260818082337_phase_8_notifications_team_workspace_activity`
-- `20260818082454_phase_8_workspace_invitation_directory`
-- `20260818084738_phase_8_activity_workspace_identity_hardening`
-
-### Generated types / parity
-
-- Regenerated live Supabase TypeScript contract after Phase 8.
-- Reconciled `notification_receipts`, `workspace_invitations` and Phase 8 RPC signatures into repository types.
-- Removed all temporary route-tree, formatting and generated-type write workflows after one-shot use.
-
-### Security / architecture
-
-- No duplicate identity, membership, notification, audit or tenancy engine was created.
-- New public application RPCs revoke anonymous execution and explicitly grant authenticated execution.
-- Authenticated SECURITY DEFINER application RPCs retain explicit `auth.uid()`, membership, role and/or invited-email checks.
-- `notification_receipts` and `workspace_invitations` retain RLS.
-- No fake Phase 8 rows were inserted; verification showed zero notifications, invitation rows and notification receipts.
-- Low-traffic unused-index advisor output is retained for later evidence-based Phase 10 performance work rather than used for premature index deletion.
-
-### Regression coverage
-
-- Added six Phase 8 operational/security contract tests.
-- Combined substantive checkpoint: **39 tests / 0 failures**.
+- Added Playwright configuration and Chromium E2E.
+- Added real public `/privacy` and `/terms` routes after browser QA exposed missing routes already treated as public by the auth boundary.
+- Updated landing title/metadata to current OfficeKonnect positioning.
+- Synchronized TanStack generated route registry.
+- Browser suite: **4/4 passing**.
 
 ### Validation
 
-The substantive Phase 8 implementation checkpoint passed:
+Validated source checkpoint `ddb2edf65ef07da6d4ae5bcaa2a6129966a46c3d` — Upgrade Validation `32129565222`:
 
-- Repository parity ✅
-- Frozen `bun ci` ✅
+- repository parity ✅
+- frozen `bun ci` ✅
 - ESLint ✅ — 0 errors
+- product-hardening audit ✅
+- security-boundary audit ✅
 - TypeScript ✅
-- **39 tests / 0 failures** ✅
-- Production client/SSR/Nitro build ✅
-
-The final hardening/documentation head receives the same read-only gate before Phase 8 is formally closed.
+- **42/42 unit/integration tests** ✅
+- production client/SSR/Nitro build ✅
+- production asset budget ✅
+- Playwright/Chromium installation ✅
+- **4/4 Chromium E2E tests** ✅
 
 Vercel/deployment-platform validation remains intentionally deferred until Phase 11.
+
+## 2026-08-18 — Phase 9 completed
+
+### Product-wide hardening
+
+- Replaced fabricated dashboard trend/open-rate/transcription labels with real active-workspace metrics.
+- Removed dead History and Quick Create controls.
+- Routed recent Dashboard activity through the canonical Phase 8 aggregate.
+- Removed internal PR/upgrade-programme wording from the production shell.
+- Converted internal Settings, Workspace and Global Search navigation away from hard reloads.
+- Removed stale V1/debug/implementation wording from user-facing surfaces.
+- Added accessible labels to icon-only shell controls and explicit Settings button semantics.
+- Added permanent `scripts/check-product-hardening.mjs` release gate.
+
+Validated Phase 9 code checkpoint `42c4dbd3e4c66f0570ec19c5ad6246bc39e3bb64` — Upgrade Validation `32125480383`.
+
+## 2026-08-18 — Phase 8 completed
+
+- Added receipt-aware Notifications while keeping `notifications` canonical.
+- Added cross-module Activity over existing audit/workflow/signing ledgers.
+- Added secure hash-only expiring workspace invitations and controlled role/member administration.
+- Activated Workspace administration and comprehensive real Settings.
+- Hardened workspace audit tenant scope.
+- Applied Phase 8 migrations:
+  - `20260818082337_phase_8_notifications_team_workspace_activity`
+  - `20260818082454_phase_8_workspace_invitation_directory`
+  - `20260818084738_phase_8_activity_workspace_identity_hardening`
+- No duplicate identity/role/notification/activity engine and no fake Phase 8 production rows.
+
+Final Phase 8 baseline `ca6802edcd11533276c6df597b004dfcbade2615` — Upgrade Validation `32119440424`.
 
 ## 2026-08-18 — Phases 6 and 7 completed
 
 ### Phase 6 — Production E-Signatures
 
-- Added production signing dashboard, PDF preparation workspace, authenticated internal signing and external short-lived-session signing.
-- Added participant roles/order, normalized signing fields, consent, cancellation, invitation rotation, finalization retry, audit timeline, final PDF and certificate access.
-- Native Documents and Sheets now use **Send for signature** through deterministic immutable PDF signing copies.
+- Activated signing dashboard, PDF preparation, authenticated internal signing and external short-lived-session signing.
+- Added participant roles/order, normalized fields, consent, cancellation, invitation rotation, finalization retry, audit timeline, final PDF and certificate access.
+- Native Documents and Sheets use immutable PDF signing copies.
 - Removed obsolete privileged `signing-public.functions.ts`.
-- Live `signing-finalize` is version 2 with generic `OfficeKonnect Signing Certificate` branding and JWT enforcement.
 
 ### Phase 7 — Tasks, Calendar and Global Search
 
 - Applied `20260818062157_phase_7_tasks_calendar_search` and `20260818080155_phase_7_rpc_execute_acl_hardening`.
-- Added RLS-protected Tasks and manual Calendar persistence.
+- Added RLS-protected Tasks/manual Calendar persistence.
 - Activated aggregate Calendar using derived task/workflow/signing dates.
-- Added membership-checked global search, `/dashboard/search` and Ctrl/Cmd+K command search.
-- Revoked anonymous execution from `search_workspace_objects` and `list_workspace_member_directory`.
+- Added membership-checked Global Search and Ctrl/Cmd+K command search.
 
-### Validation
-
-Final Phase 6/7 checkpoint passed repository parity, frozen install, ESLint, TypeScript, **33 tests / 0 failures**, and production build.
+Final Phase 6/7 validation passed parity, frozen install, ESLint, TypeScript, **33 tests / 0 failures**, and production build.
 
 ## 2026-08-18 — Phase 5 completed
 
@@ -127,7 +117,7 @@ Final Phase 6/7 checkpoint passed repository parity, frozen install, ESLint, Typ
 - Activated production OfficeKonnect Sheets over the canonical workbook JSON model.
 - Added deterministic formulas, multi-sheet editing, XLSX/XLS/CSV interoperability, PDF/Print and signing-copy integration.
 
-## 2026-08-17 — Phase 0 started
+## 2026-08-17 — Upgrade workstream started
 
-- Created the canonical upgrade branch, architecture/status/roadmap/handoff documentation and live-backend reconciliation workstream.
-- Identified/recovered missing migrations, deployed signing sources, generated types, Storage path mismatch and stale signing helper contracts.
+- Created the canonical long-running upgrade branch/PR and architecture/status/roadmap/handoff documentation.
+- Reconciled missing migrations, signing Edge Function source, generated types, Storage path contracts and hardened signing helpers.
