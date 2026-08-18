@@ -40,7 +40,7 @@
 ### Validation
 
 - Clean source Upgrade Validation run `32105437719` passed repository parity, frozen install, ESLint, TypeScript, **24 tests / 0 failures**, 83 expectations across 6 files, and production build.
-- Vercel deployment validation is intentionally deferred until Phase 11.
+- Deployment-platform validation is intentionally deferred until Phase 11.
 
 ## 2026-08-18 — Phase 4 completed
 
