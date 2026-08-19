@@ -35,7 +35,9 @@ export function PdfViewer({ url, zoom, page, onLoadPages, onDownload, overlay }:
       })
       .catch((loadError: unknown) => {
         if (!active) return;
-        setError(loadError instanceof Error ? loadError.message : "Failed to load PDF preview engine");
+        setError(
+          loadError instanceof Error ? loadError.message : "Failed to load PDF preview engine",
+        );
       });
 
     return () => {
@@ -59,7 +61,9 @@ export function PdfViewer({ url, zoom, page, onLoadPages, onDownload, overlay }:
           {error ? (
             <>
               <AlertTriangle className="h-10 w-10 text-amber-500" />
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Preview unavailable</p>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                Preview unavailable
+              </p>
               <p className="max-w-md text-xs text-slate-500">{error}</p>
               {onDownload && (
                 <Button size="sm" variant="outline" onClick={onDownload}>
