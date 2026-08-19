@@ -59,6 +59,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import {
@@ -326,6 +327,10 @@ export function NativeDocumentEditor({ document, onDocumentUpdated }: NativeDocu
     normalizeNativeDocumentContent(document.content),
   );
   const latestEditorVersionRef = useRef(document.editor_version);
+  const guestNoticeShownRef = useRef(false);
+
+  const { user } = useAuth();
+  const isGuest = !!user && (user.is_anonymous === true || !user.email);
 
   const [content, setContent] = useState(() => normalizeNativeDocumentContent(document.content));
   const [title, setTitle] = useState(document.title);
@@ -442,6 +447,15 @@ export function NativeDocumentEditor({ document, onDocumentUpdated }: NativeDocu
       changeSummary?: string;
     }) => {
       if (savingRef.current || saveState === "conflict") return null;
+      if (isGuest) {
+        // Guest sessions are not persisted server-side; keep edits local instead of erroring.
+        setSaveState("saved");
+        if (!guestNoticeShownRef.current) {
+          guestNoticeShownRef.current = true;
+          toast.info("Guest session — edits stay on this device. Sign in to save your work.");
+        }
+        return null;
+      }
       savingRef.current = true;
       setSaveState("saving");
       const snapshot = latestContentRef.current;
@@ -479,7 +493,7 @@ export function NativeDocumentEditor({ document, onDocumentUpdated }: NativeDocu
         savingRef.current = false;
       }
     },
-    [document.id, onDocumentUpdated, refetchVersions, saveFn, saveState],
+    [document.id, isGuest, onDocumentUpdated, refetchVersions, saveFn, saveState],
   );
 
   useEffect(() => {
