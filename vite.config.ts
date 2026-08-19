@@ -14,6 +14,11 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    optimizeDeps: {
+      // Never pre-bundle the legacy CommonJS drag/resize chain. Its tslib default
+      // interop can evaluate to undefined in Vite dev even when resolve aliases are present.
+      exclude: ["react-rnd", "re-resizable"],
+    },
     resolve: {
       alias: {
         // Keep legacy browser-only interaction packages out of the TanStack Start SSR graph.
