@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, useCallback, ReactNode } from "react";
-import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import {
@@ -19,7 +18,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+type ReactPdfModule = typeof import("react-pdf");
+type ReactPdfPage = ReactPdfModule["Page"];
 
 export type PageRect = { width: number; height: number };
 
@@ -41,6 +41,7 @@ export function PdfWorkspace({
   onPageClick,
   pageCursor,
 }: PdfWorkspaceProps) {
+  const [pdfModule, setPdfModule] = useState<ReactPdfModule | null>(null);
   const [numPages, setNumPages] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [zoom, setZoom] = useState(100);
@@ -55,6 +56,27 @@ export function PdfWorkspace({
   const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const [containerWidth, setContainerWidth] = useState(800);
   const [containerHeight, setContainerHeight] = useState(1000);
+
+  // react-pdf/pdfjs-dist must never be evaluated by the TanStack Start SSR graph.
+  // Load it only after browser mount so uploaded previews and signing routes share
+  // the same SSR-safe PDF boundary.
+  useEffect(() => {
+    let active = true;
+
+    void import("react-pdf")
+      .then((module) => {
+        module.pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${module.pdfjs.version}/build/pdf.worker.min.mjs`;
+        if (active) setPdfModule(module);
+      })
+      .catch((loadError: unknown) => {
+        if (!active) return;
+        setError(loadError instanceof Error ? loadError.message : "Failed to load PDF preview engine");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Track container dims
   useEffect(() => {
@@ -127,6 +149,10 @@ export function PdfWorkspace({
     setFitMode("custom");
     setZoom(Math.max(50, Math.min(300, next)));
   };
+
+  const moduleLoading = !pdfModule && !error;
+  const Document = pdfModule?.Document;
+  const Page = pdfModule?.Page;
 
   return (
     <div
@@ -242,90 +268,115 @@ export function PdfWorkspace({
 
       {/* Body */}
       <div className="flex min-h-0 flex-1">
-        {/* Thumbnails */}
-        {showThumbs && (
-          <div className="hidden w-40 shrink-0 overflow-auto border-r border-slate-200 bg-white/60 p-2 backdrop-blur dark:border-slate-800 dark:bg-slate-900/60 md:block">
-            <Document
-              file={url}
-              loading={<div className="p-2 text-xs text-slate-500">…</div>}
-              error={<div className="p-2 text-xs text-red-500">Failed</div>}
-            >
-              {numPages !== null &&
-                Array.from({ length: numPages }, (_, i) => i + 1).map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => jumpToPage(p)}
-                    className={cn(
-                      "mb-2 block w-full overflow-hidden rounded-md border-2 bg-white text-xs shadow-sm transition dark:bg-slate-800",
-                      activePage === p
-                        ? "border-primary"
-                        : "border-transparent hover:border-primary/50",
-                    )}
-                  >
-                    <Page
-                      pageNumber={p}
-                      width={128}
-                      renderAnnotationLayer={false}
-                      renderTextLayer={false}
-                      rotate={rotation}
-                    />
-                    <div className="py-0.5 text-center text-[10px] text-slate-500">Page {p}</div>
-                  </button>
-                ))}
-            </Document>
+        {moduleLoading && (
+          <div className="flex min-h-96 flex-1 items-center justify-center text-slate-500">
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading document preview…
           </div>
         )}
 
-        {/* Pages scroll area */}
-        <div ref={scrollRef} className="min-h-0 flex-1 overflow-auto p-3">
-          <Document
-            file={url}
-            onLoadSuccess={({ numPages }) => setNumPages(numPages)}
-            onLoadError={(e) =>
-              setError(e.message || "Failed to load PDF. The file may be corrupt or missing.")
-            }
-            loading={
-              <div className="flex h-96 items-center justify-center text-slate-500">
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading document…
+        {!moduleLoading && error && !pdfModule && (
+          <div className="flex min-h-96 flex-1 flex-col items-center justify-center gap-3 text-center">
+            <AlertTriangle className="h-10 w-10 text-amber-500" />
+            <p className="text-sm font-medium">Preview unavailable</p>
+            <p className="max-w-md text-xs text-slate-500">{error}</p>
+            {onDownload && (
+              <Button size="sm" variant="outline" onClick={onDownload}>
+                <Download className="mr-2 h-4 w-4" /> Download instead
+              </Button>
+            )}
+          </div>
+        )}
+
+        {Document && Page && (
+          <>
+            {/* Thumbnails */}
+            {showThumbs && (
+              <div className="hidden w-40 shrink-0 overflow-auto border-r border-slate-200 bg-white/60 p-2 backdrop-blur dark:border-slate-800 dark:bg-slate-900/60 md:block">
+                <Document
+                  file={url}
+                  loading={<div className="p-2 text-xs text-slate-500">…</div>}
+                  error={<div className="p-2 text-xs text-red-500">Failed</div>}
+                >
+                  {numPages !== null &&
+                    Array.from({ length: numPages }, (_, i) => i + 1).map((p) => (
+                      <button
+                        key={p}
+                        onClick={() => jumpToPage(p)}
+                        className={cn(
+                          "mb-2 block w-full overflow-hidden rounded-md border-2 bg-white text-xs shadow-sm transition dark:bg-slate-800",
+                          activePage === p
+                            ? "border-primary"
+                            : "border-transparent hover:border-primary/50",
+                        )}
+                      >
+                        <Page
+                          pageNumber={p}
+                          width={128}
+                          renderAnnotationLayer={false}
+                          renderTextLayer={false}
+                          rotate={rotation}
+                        />
+                        <div className="py-0.5 text-center text-[10px] text-slate-500">Page {p}</div>
+                      </button>
+                    ))}
+                </Document>
               </div>
-            }
-            error={
-              <div className="flex h-96 flex-col items-center justify-center gap-3 text-center">
-                <AlertTriangle className="h-10 w-10 text-amber-500" />
-                <p className="text-sm font-medium">Preview unavailable</p>
-                {error && <p className="max-w-md text-xs text-slate-500">{error}</p>}
-                {onDownload && (
-                  <Button size="sm" variant="outline" onClick={onDownload}>
-                    <Download className="mr-2 h-4 w-4" /> Download instead
-                  </Button>
-                )}
-              </div>
-            }
-          >
-            {numPages !== null &&
-              Array.from({ length: numPages }, (_, i) => i + 1).map((p) => (
-                <PageWrapper
-                  key={p}
-                  pageNumber={p}
-                  width={pageWidth}
-                  rotation={rotation}
-                  cursor={pageCursor}
-                  onClick={onPageClick}
-                  overlay={renderPageOverlay}
-                  onMount={(node) => {
-                    if (node) pageRefs.current.set(p, node);
-                    else pageRefs.current.delete(p);
-                  }}
-                />
-              ))}
-          </Document>
-        </div>
+            )}
+
+            {/* Pages scroll area */}
+            <div ref={scrollRef} className="min-h-0 flex-1 overflow-auto p-3">
+              <Document
+                file={url}
+                onLoadSuccess={({ numPages: loadedPages }) => setNumPages(loadedPages)}
+                onLoadError={(loadError) =>
+                  setError(loadError.message || "Failed to load PDF. The file may be corrupt or missing.")
+                }
+                loading={
+                  <div className="flex h-96 items-center justify-center text-slate-500">
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading document…
+                  </div>
+                }
+                error={
+                  <div className="flex h-96 flex-col items-center justify-center gap-3 text-center">
+                    <AlertTriangle className="h-10 w-10 text-amber-500" />
+                    <p className="text-sm font-medium">Preview unavailable</p>
+                    {error && <p className="max-w-md text-xs text-slate-500">{error}</p>}
+                    {onDownload && (
+                      <Button size="sm" variant="outline" onClick={onDownload}>
+                        <Download className="mr-2 h-4 w-4" /> Download instead
+                      </Button>
+                    )}
+                  </div>
+                }
+              >
+                {numPages !== null &&
+                  Array.from({ length: numPages }, (_, i) => i + 1).map((p) => (
+                    <PageWrapper
+                      key={p}
+                      PageComponent={Page}
+                      pageNumber={p}
+                      width={pageWidth}
+                      rotation={rotation}
+                      cursor={pageCursor}
+                      onClick={onPageClick}
+                      overlay={renderPageOverlay}
+                      onMount={(node) => {
+                        if (node) pageRefs.current.set(p, node);
+                        else pageRefs.current.delete(p);
+                      }}
+                    />
+                  ))}
+              </Document>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
 }
 
 function PageWrapper({
+  PageComponent,
   pageNumber,
   width,
   rotation,
@@ -334,6 +385,7 @@ function PageWrapper({
   overlay,
   onMount,
 }: {
+  PageComponent: ReactPdfPage;
   pageNumber: number;
   width: number;
   rotation: number;
@@ -367,16 +419,14 @@ function PageWrapper({
       onClick={handleClick}
       data-page={pageNumber}
     >
-      <Page
+      <PageComponent
         pageNumber={pageNumber}
         width={width}
         rotate={rotation}
         renderAnnotationLayer={false}
         renderTextLayer
-        onRenderSuccess={(p) => {
-          const w = p.width;
-          const h = p.height;
-          setRect({ width: w, height: h });
+        onRenderSuccess={(pageProxy) => {
+          setRect({ width: pageProxy.width, height: pageProxy.height });
         }}
       />
       {rect && overlay && (
