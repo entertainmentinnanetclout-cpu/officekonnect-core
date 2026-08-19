@@ -1,8 +1,19 @@
-import { readdirSync, statSync } from "node:fs";
+import { existsSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const root = process.cwd();
-const assets = join(root, ".output/public/assets");
+// The client bundle directory moved from Nitro's `.output/public` to `dist/client`.
+// Support both so the budget keeps working across build-output layouts.
+const candidates = [join(root, "dist/client/assets"), join(root, ".output/public/assets")];
+const assets = candidates.find((candidate) => existsSync(candidate));
+
+if (!assets) {
+  console.error(
+    "Phase 10 production asset budget failed: no client asset directory found. Run `bun run build` first.\nLooked in:\n" +
+      candidates.map((candidate) => `- ${relative(root, candidate)}`).join("\n"),
+  );
+  process.exit(1);
+}
 const limits = {
   ".js": 640 * 1024,
   ".css": 150 * 1024,
