@@ -326,6 +326,10 @@ export function NativeDocumentEditor({ document, onDocumentUpdated }: NativeDocu
     normalizeNativeDocumentContent(document.content),
   );
   const latestEditorVersionRef = useRef(document.editor_version);
+  const guestNoticeShownRef = useRef(false);
+
+  const { user } = useAuth();
+  const isGuest = !!user && (user.is_anonymous === true || !user.email);
 
   const [content, setContent] = useState(() => normalizeNativeDocumentContent(document.content));
   const [title, setTitle] = useState(document.title);
