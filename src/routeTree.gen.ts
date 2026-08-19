@@ -47,6 +47,7 @@ import { Route as ApiPublicJobsTickRouteImport } from './routes/api/public/jobs-
 import { Route as ApiPublicBrevoWebhookRouteImport } from './routes/api/public/brevo-webhook'
 import { Route as DashboardSigningRequestIdIndexRouteImport } from './routes/dashboard/signing/$requestId/index'
 import { Route as DashboardSigningRequestIdPrepareRouteImport } from './routes/dashboard/signing/$requestId/prepare'
+import { Route as DashboardSigningRequestIdPreSignRouteImport } from './routes/dashboard/signing/$requestId/pre-sign'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -243,6 +244,12 @@ const DashboardSigningRequestIdPrepareRoute =
     path: '/signing/$requestId/prepare',
     getParentRoute: () => DashboardRoute,
   } as any)
+const DashboardSigningRequestIdPreSignRoute =
+  DashboardSigningRequestIdPreSignRouteImport.update({
+    id: '/signing/$requestId/pre-sign',
+    path: '/signing/$requestId/pre-sign',
+    getParentRoute: () => DashboardRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -281,6 +288,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/voice/': typeof DashboardVoiceIndexRoute
   '/dashboard/workflows/': typeof DashboardWorkflowsIndexRoute
   '/dashboard/workspace/': typeof DashboardWorkspaceIndexRoute
+  '/dashboard/signing/$requestId/pre-sign': typeof DashboardSigningRequestIdPreSignRoute
   '/dashboard/signing/$requestId/prepare': typeof DashboardSigningRequestIdPrepareRoute
   '/dashboard/signing/$requestId/': typeof DashboardSigningRequestIdIndexRoute
 }
@@ -320,6 +328,7 @@ export interface FileRoutesByTo {
   '/dashboard/voice': typeof DashboardVoiceIndexRoute
   '/dashboard/workflows': typeof DashboardWorkflowsIndexRoute
   '/dashboard/workspace': typeof DashboardWorkspaceIndexRoute
+  '/dashboard/signing/$requestId/pre-sign': typeof DashboardSigningRequestIdPreSignRoute
   '/dashboard/signing/$requestId/prepare': typeof DashboardSigningRequestIdPrepareRoute
   '/dashboard/signing/$requestId': typeof DashboardSigningRequestIdIndexRoute
 }
@@ -361,6 +370,7 @@ export interface FileRoutesById {
   '/dashboard/voice/': typeof DashboardVoiceIndexRoute
   '/dashboard/workflows/': typeof DashboardWorkflowsIndexRoute
   '/dashboard/workspace/': typeof DashboardWorkspaceIndexRoute
+  '/dashboard/signing/$requestId/pre-sign': typeof DashboardSigningRequestIdPreSignRoute
   '/dashboard/signing/$requestId/prepare': typeof DashboardSigningRequestIdPrepareRoute
   '/dashboard/signing/$requestId/': typeof DashboardSigningRequestIdIndexRoute
 }
@@ -403,6 +413,7 @@ export interface FileRouteTypes {
     | '/dashboard/voice/'
     | '/dashboard/workflows/'
     | '/dashboard/workspace/'
+    | '/dashboard/signing/$requestId/pre-sign'
     | '/dashboard/signing/$requestId/prepare'
     | '/dashboard/signing/$requestId/'
   fileRoutesByTo: FileRoutesByTo
@@ -442,6 +453,7 @@ export interface FileRouteTypes {
     | '/dashboard/voice'
     | '/dashboard/workflows'
     | '/dashboard/workspace'
+    | '/dashboard/signing/$requestId/pre-sign'
     | '/dashboard/signing/$requestId/prepare'
     | '/dashboard/signing/$requestId'
   id:
@@ -482,6 +494,7 @@ export interface FileRouteTypes {
     | '/dashboard/voice/'
     | '/dashboard/workflows/'
     | '/dashboard/workspace/'
+    | '/dashboard/signing/$requestId/pre-sign'
     | '/dashboard/signing/$requestId/prepare'
     | '/dashboard/signing/$requestId/'
   fileRoutesById: FileRoutesById
@@ -767,6 +780,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardSigningRequestIdPrepareRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/signing/$requestId/pre-sign': {
+      id: '/dashboard/signing/$requestId/pre-sign'
+      path: '/signing/$requestId/pre-sign'
+      fullPath: '/dashboard/signing/$requestId/pre-sign'
+      preLoaderRoute: typeof DashboardSigningRequestIdPreSignRouteImport
+      parentRoute: typeof DashboardRoute
+    }
   }
 }
 
@@ -809,6 +829,7 @@ interface DashboardRouteChildren {
   DashboardVoiceIndexRoute: typeof DashboardVoiceIndexRoute
   DashboardWorkflowsIndexRoute: typeof DashboardWorkflowsIndexRoute
   DashboardWorkspaceIndexRoute: typeof DashboardWorkspaceIndexRoute
+  DashboardSigningRequestIdPreSignRoute: typeof DashboardSigningRequestIdPreSignRoute
   DashboardSigningRequestIdPrepareRoute: typeof DashboardSigningRequestIdPrepareRoute
   DashboardSigningRequestIdIndexRoute: typeof DashboardSigningRequestIdIndexRoute
 }
@@ -836,6 +857,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardVoiceIndexRoute: DashboardVoiceIndexRoute,
   DashboardWorkflowsIndexRoute: DashboardWorkflowsIndexRoute,
   DashboardWorkspaceIndexRoute: DashboardWorkspaceIndexRoute,
+  DashboardSigningRequestIdPreSignRoute: DashboardSigningRequestIdPreSignRoute,
   DashboardSigningRequestIdPrepareRoute: DashboardSigningRequestIdPrepareRoute,
   DashboardSigningRequestIdIndexRoute: DashboardSigningRequestIdIndexRoute,
 }

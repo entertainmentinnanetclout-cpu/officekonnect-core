@@ -1310,6 +1310,7 @@ export type Database = {
           phone: string | null
           preferences: Json
           updated_at: string
+          username: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -1325,6 +1326,7 @@ export type Database = {
           phone?: string | null
           preferences?: Json
           updated_at?: string
+          username?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -1340,6 +1342,7 @@ export type Database = {
           phone?: string | null
           preferences?: Json
           updated_at?: string
+          username?: string | null
         }
         Relationships: [
           {
@@ -3174,6 +3177,14 @@ export type Database = {
         Args: { p_request_id: string }
         Returns: Json
       }
+      complete_draft_sender_participant: {
+        Args: {
+          p_consent_text_version: string
+          p_field_values: Json
+          p_participant_id: string
+        }
+        Returns: Json
+      }
       complete_external_signing_session: {
         Args: {
           p_consent_text_version: string
@@ -3709,6 +3720,16 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      search_officekonnect_directory: {
+        Args: { p_limit?: number; p_query?: string }
+        Returns: {
+          avatar_url: string
+          email: string
+          full_name: string
+          user_id: string
+          username: string
+        }[]
       }
       search_workspace_objects: {
         Args: { p_limit?: number; p_query: string; p_workspace_id: string }
