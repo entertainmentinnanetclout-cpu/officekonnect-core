@@ -30,6 +30,8 @@ export const searchOfficeKonnectDirectory = createServerFn({ method: "POST" })
     return rows ?? [];
   });
 
+export type DraftSenderSigningResult = Record<string, unknown> | null;
+
 export const completeDraftSenderSigning = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
