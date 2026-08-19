@@ -20,7 +20,10 @@ export const searchOfficeKonnectDirectory = createServerFn({ method: "POST" })
       rpc: (
         name: string,
         args: Record<string, unknown>,
-      ) => Promise<{ data: OfficeKonnectDirectoryEntry[] | null; error: { message: string } | null }>;
+      ) => Promise<{
+        data: OfficeKonnectDirectoryEntry[] | null;
+        error: { message: string } | null;
+      }>;
     };
     const { data: rows, error } = await rpcClient.rpc("search_officekonnect_directory", {
       p_query: query,

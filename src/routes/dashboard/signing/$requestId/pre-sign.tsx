@@ -249,7 +249,9 @@ function SenderPreSign() {
       });
     },
     onSuccess: async () => {
-      toast.success("Your signature is locked into the draft. You can now send it to the remaining recipients.");
+      toast.success(
+        "Your signature is locked into the draft. You can now send it to the remaining recipients.",
+      );
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["signing-request", requestId] }),
         queryClient.invalidateQueries({ queryKey: ["signing-participants", requestId] }),
@@ -294,8 +296,8 @@ function SenderPreSign() {
       <div className="mx-auto max-w-xl rounded-xl border p-6 text-center">
         <h1 className="text-xl font-semibold">Add yourself as a signer first</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Return to Prepare, search your OfficeKonnect profile, add it as a signer and place at least
-          one signature or initial field for yourself.
+          Return to Prepare, search your OfficeKonnect profile, add it as a signer and place at
+          least one signature or initial field for yourself.
         </p>
         <Button className="mt-5" asChild>
           <Link to="/dashboard/signing/$requestId/prepare" params={{ requestId }}>
@@ -312,7 +314,8 @@ function SenderPreSign() {
         <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600" />
         <h1 className="mt-3 text-xl font-semibold">You already signed this draft</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Your completed fields are immutable. Continue to Prepare and send the document to the remaining accounts.
+          Your completed fields are immutable. Continue to Prepare and send the document to the
+          remaining accounts.
         </p>
         <Button className="mt-5" asChild>
           <Link to="/dashboard/signing/$requestId/prepare" params={{ requestId }}>
@@ -351,7 +354,8 @@ function SenderPreSign() {
         <h1 className="text-2xl font-semibold">Sign before sending</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Complete your own fields now. OfficeKonnect snapshots the source PDF when you finish, then
-          keeps your completed fields immutable while you send the same document to the remaining signers.
+          keeps your completed fields immutable while you send the same document to the remaining
+          signers.
         </p>
       </div>
 
@@ -362,18 +366,34 @@ function SenderPreSign() {
           </CardHeader>
           <CardContent>
             <div className="mb-3 flex flex-wrap items-center justify-center gap-2">
-              <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={page <= 1}
+                onClick={() => setPage((value) => value - 1)}
+              >
                 Previous
               </Button>
-              <span className="text-xs">Page {page} / {pages}</span>
-              <Button size="sm" variant="outline" disabled={page >= pages} onClick={() => setPage((value) => value + 1)}>
+              <span className="text-xs">
+                Page {page} / {pages}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={page >= pages}
+                onClick={() => setPage((value) => value + 1)}
+              >
                 Next
               </Button>
               <Select value={String(zoom)} onValueChange={(value) => setZoom(Number(value))}>
-                <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-24">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {[60, 75, 85, 100, 125].map((value) => (
-                    <SelectItem key={value} value={String(value)}>{value}%</SelectItem>
+                    <SelectItem key={value} value={String(value)}>
+                      {value}%
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -453,7 +473,11 @@ function SenderPreSign() {
               </span>
             </label>
 
-            <Button className="w-full" onClick={() => complete.mutate()} disabled={!consent || complete.isPending}>
+            <Button
+              className="w-full"
+              onClick={() => complete.mutate()}
+              disabled={!consent || complete.isPending}
+            >
               {complete.isPending ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
@@ -474,7 +498,10 @@ function SenderPreSign() {
               are stored under your registered OfficeKonnect identity.
             </DialogDescription>
           </DialogHeader>
-          <Tabs value={signatureMode} onValueChange={(value) => setSignatureMode(value as typeof signatureMode)}>
+          <Tabs
+            value={signatureMode}
+            onValueChange={(value) => setSignatureMode(value as typeof signatureMode)}
+          >
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="saved">Saved</TabsTrigger>
               <TabsTrigger value="draw">Draw</TabsTrigger>
@@ -482,17 +509,22 @@ function SenderPreSign() {
             </TabsList>
             <TabsContent value="saved" className="space-y-2 pt-3">
               <Select value={selectedSavedSignature} onValueChange={setSelectedSavedSignature}>
-                <SelectTrigger><SelectValue placeholder="Choose a saved signature" /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a saved signature" />
+                </SelectTrigger>
                 <SelectContent>
                   {savedSignatures.map((signature) => (
                     <SelectItem key={signature.id} value={signature.id}>
-                      {signature.name}{signature.is_default ? " · Default" : ""}
+                      {signature.name}
+                      {signature.is_default ? " · Default" : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               {savedSignatures.length === 0 && (
-                <p className="text-sm text-muted-foreground">No saved signatures yet. Use Draw or Type.</p>
+                <p className="text-sm text-muted-foreground">
+                  No saved signatures yet. Use Draw or Type.
+                </p>
               )}
             </TabsContent>
             <TabsContent value="draw" className="pt-3">
@@ -503,12 +535,21 @@ function SenderPreSign() {
                   canvasProps={{ className: "h-56 w-full cursor-crosshair rounded-lg" }}
                 />
               </div>
-              <Button className="mt-2" size="sm" variant="outline" onClick={() => signatureCanvas.current?.clear()}>
+              <Button
+                className="mt-2"
+                size="sm"
+                variant="outline"
+                onClick={() => signatureCanvas.current?.clear()}
+              >
                 Clear
               </Button>
             </TabsContent>
             <TabsContent value="type" className="space-y-3 pt-3">
-              <Input value={typedName} onChange={(event) => setTypedName(event.target.value)} placeholder="Your full signing name" />
+              <Input
+                value={typedName}
+                onChange={(event) => setTypedName(event.target.value)}
+                placeholder="Your full signing name"
+              />
               <div
                 className="flex h-28 items-center justify-center rounded-lg border bg-white text-4xl italic text-black"
                 style={{ fontFamily: "'Brush Script MT', cursive" }}
@@ -518,8 +559,13 @@ function SenderPreSign() {
             </TabsContent>
           </Tabs>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setSignatureOpen(false)}>Cancel</Button>
-            <Button onClick={() => signatureMutation.mutate()} disabled={signatureMutation.isPending}>
+            <Button variant="outline" onClick={() => setSignatureOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => signatureMutation.mutate()}
+              disabled={signatureMutation.isPending}
+            >
               {signatureMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Use signature
             </Button>

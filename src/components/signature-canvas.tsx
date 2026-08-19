@@ -1,8 +1,5 @@
 import { Component, createRef } from "react";
-import type {
-  CanvasHTMLAttributes,
-  PointerEvent as ReactPointerEvent,
-} from "react";
+import type { CanvasHTMLAttributes, PointerEvent as ReactPointerEvent } from "react";
 
 type SignatureCanvasProps = {
   penColor?: string;
@@ -38,10 +35,7 @@ export default class SignatureCanvas extends Component<SignatureCanvasProps> {
   }
 
   componentDidUpdate(previousProps: SignatureCanvasProps) {
-    if (
-      previousProps.backgroundColor !== this.props.backgroundColor &&
-      this.empty
-    ) {
+    if (previousProps.backgroundColor !== this.props.backgroundColor && this.empty) {
       this.clear();
     }
   }
@@ -176,9 +170,7 @@ export default class SignatureCanvas extends Component<SignatureCanvasProps> {
     this.finishStroke(event);
   };
 
-  private handlePointerCancel = (
-    event: ReactPointerEvent<HTMLCanvasElement>,
-  ) => {
+  private handlePointerCancel = (event: ReactPointerEvent<HTMLCanvasElement>) => {
     this.props.canvasProps?.onPointerCancel?.(event);
     this.finishStroke(event);
   };

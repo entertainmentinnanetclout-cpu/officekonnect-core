@@ -61,11 +61,15 @@ async function responseError(response: Response) {
     try {
       const parsed = JSON.parse(body) as { error?: unknown; message?: unknown };
       if (typeof parsed.error === "string" && parsed.error.trim()) return new Error(parsed.error);
-      if (typeof parsed.message === "string" && parsed.message.trim()) return new Error(parsed.message);
+      if (typeof parsed.message === "string" && parsed.message.trim())
+        return new Error(parsed.message);
     } catch {
       const title = body.match(/<title>(.*?)<\/title>/is)?.[1]?.trim();
       if (title) return new Error(title);
-      const heading = body.match(/<h1[^>]*>(.*?)<\/h1>/is)?.[1]?.replace(/<[^>]+>/g, "").trim();
+      const heading = body
+        .match(/<h1[^>]*>(.*?)<\/h1>/is)?.[1]
+        ?.replace(/<[^>]+>/g, "")
+        .trim();
       if (heading) return new Error(heading);
     }
   }

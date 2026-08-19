@@ -139,16 +139,16 @@ A separate **Recently completed by you** section reads immutable `workflow_decis
 
 RLS remains enabled on all eight workflow state tables. Phase 5 verified the live policy surface:
 
-| Relation | RLS | Policies |
-|---|---:|---:|
-| `workflow_templates` | enabled | 4 |
-| `workflow_template_steps` | enabled | 4 |
-| `workflow_runs` | enabled | 1 |
-| `workflow_steps` | enabled | 1 |
-| `workflow_step_assignees` | enabled | 1 |
-| `workflow_decisions` | enabled | 1 |
-| `workflow_comments` | enabled | 2 |
-| `workflow_events` | enabled | 1 |
+| Relation                  |     RLS | Policies |
+| ------------------------- | ------: | -------: |
+| `workflow_templates`      | enabled |        4 |
+| `workflow_template_steps` | enabled |        4 |
+| `workflow_runs`           | enabled |        1 |
+| `workflow_steps`          | enabled |        1 |
+| `workflow_step_assignees` | enabled |        1 |
+| `workflow_decisions`      | enabled |        1 |
+| `workflow_comments`       | enabled |        2 |
+| `workflow_events`         | enabled |        1 |
 
 No RLS rule was weakened for Phase 5.
 
