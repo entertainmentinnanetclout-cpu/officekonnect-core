@@ -133,7 +133,9 @@ describe("OfficeKonnect Phase 6 signing contract", () => {
     const signer = participant();
     const cc = participant({
       id: "00000000-0000-0000-0000-000000000012",
-      user_id: null,
+      // Every participant must be a registered OfficeKonnect account; this case
+      // isolates the CC-cannot-own-fields rule, not the account requirement.
+      user_id: "00000000-0000-0000-0000-000000000112",
       email: "copy@example.com",
       full_name: "Copy Recipient",
       role: "cc",

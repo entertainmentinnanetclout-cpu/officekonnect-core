@@ -24,7 +24,6 @@ export function errorMessage(err: unknown, fallback = "Something went wrong"): s
   return fallback;
 }
 
-
 export function toastError(err: unknown, fallback = "Something went wrong"): string {
   const msg = errorMessage(err, fallback);
 

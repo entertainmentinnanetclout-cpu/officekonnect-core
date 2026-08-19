@@ -70,7 +70,9 @@ export function PdfWorkspace({
       })
       .catch((loadError: unknown) => {
         if (!active) return;
-        setError(loadError instanceof Error ? loadError.message : "Failed to load PDF preview engine");
+        setError(
+          loadError instanceof Error ? loadError.message : "Failed to load PDF preview engine",
+        );
       });
 
     return () => {
@@ -316,7 +318,9 @@ export function PdfWorkspace({
                           renderTextLayer={false}
                           rotate={rotation}
                         />
-                        <div className="py-0.5 text-center text-[10px] text-slate-500">Page {p}</div>
+                        <div className="py-0.5 text-center text-[10px] text-slate-500">
+                          Page {p}
+                        </div>
                       </button>
                     ))}
                 </Document>
@@ -329,7 +333,9 @@ export function PdfWorkspace({
                 file={url}
                 onLoadSuccess={({ numPages: loadedPages }) => setNumPages(loadedPages)}
                 onLoadError={(loadError) =>
-                  setError(loadError.message || "Failed to load PDF. The file may be corrupt or missing.")
+                  setError(
+                    loadError.message || "Failed to load PDF. The file may be corrupt or missing.",
+                  )
                 }
                 loading={
                   <div className="flex h-96 items-center justify-center text-slate-500">

@@ -20,7 +20,10 @@ export const searchOfficeKonnectDirectory = createServerFn({ method: "POST" })
       rpc: (
         name: string,
         args: Record<string, unknown>,
-      ) => Promise<{ data: OfficeKonnectDirectoryEntry[] | null; error: { message: string } | null }>;
+      ) => Promise<{
+        data: OfficeKonnectDirectoryEntry[] | null;
+        error: { message: string } | null;
+      }>;
     };
     const { data: rows, error } = await rpcClient.rpc("search_officekonnect_directory", {
       p_query: query,
@@ -29,6 +32,15 @@ export const searchOfficeKonnectDirectory = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return rows ?? [];
   });
+
+type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+
+/** Payload returned by the `complete_draft_sender_participant` RPC (a jsonb object). */
+export type DraftSenderSigningResult = {
+  request: JsonValue;
+  participant: JsonValue;
+  sourceDocumentVersionId: string | null;
+} | null;
 
 export const completeDraftSenderSigning = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -39,21 +51,18 @@ export const completeDraftSenderSigning = createServerFn({ method: "POST" })
       consentTextVersion: string;
     }) => data,
   )
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }): Promise<DraftSenderSigningResult> => {
     const rpcClient = context.supabase as typeof context.supabase & {
       rpc: (
         name: string,
         args: Record<string, unknown>,
-      ) => Promise<{ data: unknown; error: { message: string } | null }>;
+      ) => Promise<{ data: DraftSenderSigningResult; error: { message: string } | null }>;
     };
-    const { data: completion, error } = await rpcClient.rpc(
-      "complete_draft_sender_participant",
-      {
-        p_participant_id: data.participantId,
-        p_field_values: data.fieldValues,
-        p_consent_text_version: data.consentTextVersion.trim(),
-      },
-    );
+    const { data: completion, error } = await rpcClient.rpc("complete_draft_sender_participant", {
+      p_participant_id: data.participantId,
+      p_field_values: data.fieldValues,
+      p_consent_text_version: data.consentTextVersion.trim(),
+    });
     if (error) throw new Error(error.message);
-    return completion;
+    return completion ?? null;
   });

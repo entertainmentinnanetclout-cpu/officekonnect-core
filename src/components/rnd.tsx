@@ -74,7 +74,8 @@ export function Rnd({
 
   useEffect(() => setLivePosition(position), [position.x, position.y]);
   useEffect(
-    () => setLiveSize({ width: numberValue(size.width, 100), height: numberValue(size.height, 60) }),
+    () =>
+      setLiveSize({ width: numberValue(size.width, 100), height: numberValue(size.height, 60) }),
     [size.width, size.height],
   );
 
@@ -94,8 +95,12 @@ export function Rnd({
 
     const move = (moveEvent: PointerEvent) => {
       const limits = bounds === "parent" ? parentBounds(rootRef.current) : undefined;
-      const maxX = limits ? Math.max(0, limits.width - currentSize.width) : Number.POSITIVE_INFINITY;
-      const maxY = limits ? Math.max(0, limits.height - currentSize.height) : Number.POSITIVE_INFINITY;
+      const maxX = limits
+        ? Math.max(0, limits.width - currentSize.width)
+        : Number.POSITIVE_INFINITY;
+      const maxY = limits
+        ? Math.max(0, limits.height - currentSize.height)
+        : Number.POSITIVE_INFINITY;
       setLivePosition({
         x: Math.max(0, Math.min(maxX, startPosition.x + moveEvent.clientX - startPointer.x)),
         y: Math.max(0, Math.min(maxY, startPosition.y + moveEvent.clientY - startPointer.y)),
@@ -106,8 +111,12 @@ export function Rnd({
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", stop);
       const limits = bounds === "parent" ? parentBounds(rootRef.current) : undefined;
-      const maxX = limits ? Math.max(0, limits.width - currentSize.width) : Number.POSITIVE_INFINITY;
-      const maxY = limits ? Math.max(0, limits.height - currentSize.height) : Number.POSITIVE_INFINITY;
+      const maxX = limits
+        ? Math.max(0, limits.width - currentSize.width)
+        : Number.POSITIVE_INFINITY;
+      const maxY = limits
+        ? Math.max(0, limits.height - currentSize.height)
+        : Number.POSITIVE_INFINITY;
       const next = {
         x: Math.max(0, Math.min(maxX, startPosition.x + stopEvent.clientX - startPointer.x)),
         y: Math.max(0, Math.min(maxY, startPosition.y + stopEvent.clientY - startPointer.y)),
@@ -152,7 +161,8 @@ export function Rnd({
       };
     };
 
-    const move = (moveEvent: PointerEvent) => setLiveSize(resizeTo(moveEvent.clientX, moveEvent.clientY));
+    const move = (moveEvent: PointerEvent) =>
+      setLiveSize(resizeTo(moveEvent.clientX, moveEvent.clientY));
     const stop = (stopEvent: PointerEvent) => {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", stop);

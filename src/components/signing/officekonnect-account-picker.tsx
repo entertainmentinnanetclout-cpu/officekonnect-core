@@ -31,7 +31,11 @@ export function OfficeKonnectAccountPicker({
 }) {
   const searchFn = useServerFn(searchOfficeKonnectDirectory);
   const [query, setQuery] = useState("");
-  const { data = [], isFetching, error } = useQuery({
+  const {
+    data = [],
+    isFetching,
+    error,
+  } = useQuery({
     queryKey: ["officekonnect-directory", query],
     enabled: open,
     queryFn: () => searchFn({ data: { query, limit: 30 } }),
@@ -68,7 +72,9 @@ export function OfficeKonnectAccountPicker({
           <div className="mt-3 max-h-[360px] overflow-y-auto rounded-lg border">
             {error ? (
               <p className="p-4 text-sm text-destructive">
-                {error instanceof Error ? error.message : "Could not search OfficeKonnect accounts."}
+                {error instanceof Error
+                  ? error.message
+                  : "Could not search OfficeKonnect accounts."}
               </p>
             ) : visible.length === 0 && !isFetching ? (
               <div className="p-6 text-center text-sm text-muted-foreground">
@@ -95,11 +101,7 @@ export function OfficeKonnectAccountPicker({
                   >
                     <div className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-muted text-xs font-semibold">
                       {entry.avatar_url ? (
-                        <img
-                          src={entry.avatar_url}
-                          alt=""
-                          className="h-full w-full object-cover"
-                        />
+                        <img src={entry.avatar_url} alt="" className="h-full w-full object-cover" />
                       ) : initials ? (
                         initials
                       ) : (

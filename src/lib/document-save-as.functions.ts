@@ -65,9 +65,7 @@ export const saveNativeDocumentAsPdf = createServerFn({ method: "POST" })
       }
     }
 
-    const { buildNativeDocumentPdf } = await import(
-      "@/lib/native-document-pdf.server"
-    );
+    const { buildNativeDocumentPdf } = await import("@/lib/native-document-pdf.server");
     const rendered = await buildNativeDocumentPdf({
       title: source.title,
       content: source.content,
