@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Rnd } from "react-rnd";
+import { Rnd } from "@/components/resizable-draggable";
 import { PdfViewer } from "@/components/document/pdf-viewer";
 import type { SigningField } from "@/lib/signing";
 import { fieldTypeLabel } from "@/lib/signing";

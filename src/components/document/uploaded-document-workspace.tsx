@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Download, Loader2, PenTool, Save, Check, X } from "lucide-react";
-import { Rnd } from "react-rnd";
+import { Download, Loader2, PenTool, Save, Check, X, AlertTriangle } from "lucide-react";
+import { Rnd } from "@/components/resizable-draggable";
 import { Button } from "@/components/ui/button";
 import { PdfWorkspace } from "@/components/document/pdf-workspace";
 import { SignatureToolbox, type ToolboxSignature } from "@/components/document/signature-toolbox";
@@ -28,6 +28,12 @@ type Placement = {
   height: number;
 };
 
+type PreviewFile = {
+  bucket: string;
+  blob: Blob;
+  contentType: string;
+};
+
 export function UploadedDocumentWorkspace({
   document,
   onDocumentUpdated,
@@ -36,19 +42,59 @@ export function UploadedDocumentWorkspace({
   const [toolboxOpen, setToolboxOpen] = useState(false);
   const [activeSig, setActiveSig] = useState<ToolboxSignature | null>(null);
   const [placements, setPlacements] = useState<Placement[]>([]);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const applyFn = useServerFn(applySignatureToDocument);
 
-  const { data: resolvedFile, isLoading: resolvingFile } = useQuery({
-    queryKey: ["document-file-url", document.id, document.storage_path],
-    queryFn: () => getDocumentSignedUrl(document.storage_path!, 60 * 60),
+  const {
+    data: resolvedFile,
+    isLoading: resolvingFile,
+    error: previewError,
+  } = useQuery<PreviewFile>({
+    queryKey: ["document-file-preview", document.id, document.storage_path],
+    queryFn: async () => {
+      if (!document.storage_path) throw new Error("Document has no stored file path");
+
+      const signedFile = await getDocumentSignedUrl(document.storage_path, 60 * 60);
+      const response = await fetch(signedFile.url);
+      if (!response.ok) {
+        throw new Error(`Preview fetch failed (${response.status})`);
+      }
+
+      const blob = await response.blob();
+      return {
+        bucket: signedFile.bucket,
+        blob,
+        contentType: blob.type || document.file_type || "application/octet-stream",
+      };
+    },
     enabled: Boolean(document.storage_path),
-    refetchInterval: 45 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
 
+  useEffect(() => {
+    if (!resolvedFile?.blob) {
+      setPreviewUrl(null);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(resolvedFile.blob);
+    setPreviewUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [resolvedFile?.blob]);
+
+  const previewType = (resolvedFile?.contentType || document.file_type || "").toLowerCase();
+
   const isPdf = useMemo(() => {
-    const type = (document.file_type ?? "").toLowerCase();
-    return type.includes("pdf") || document.title.toLowerCase().endsWith(".pdf");
-  }, [document.file_type, document.title]);
+    return previewType.includes("pdf") || document.title.toLowerCase().endsWith(".pdf");
+  }, [document.title, previewType]);
+
+  const isImage = useMemo(() => {
+    return (
+      previewType.startsWith("image/") ||
+      /\.(avif|bmp|gif|jpe?g|png|svg|webp)$/i.test(document.title)
+    );
+  }, [document.title, previewType]);
 
   const handleDownload = async () => {
     if (!document.storage_path) return;
@@ -101,7 +147,7 @@ export function UploadedDocumentWorkspace({
       setToolboxOpen(false);
       window.setTimeout(() => {
         void queryClient.invalidateQueries({ queryKey: ["document", document.id] });
-        void queryClient.invalidateQueries({ queryKey: ["document-file-url", document.id] });
+        void queryClient.invalidateQueries({ queryKey: ["document-file-preview", document.id] });
         onDocumentUpdated?.();
       }, 3500);
     },
@@ -173,9 +219,25 @@ export function UploadedDocumentWorkspace({
             <div className="flex h-full items-center justify-center">
               <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
             </div>
-          ) : resolvedFile?.url && isPdf ? (
+          ) : previewError ? (
+            <div className="mx-auto mt-12 flex max-w-xl flex-col items-center gap-4 rounded-xl border bg-background p-10 text-center shadow-sm">
+              <AlertTriangle className="h-8 w-8 text-amber-500" />
+              <div>
+                <p className="text-sm font-medium">Preview unavailable</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {previewError instanceof Error
+                    ? previewError.message
+                    : "The stored file could not be loaded for preview."}
+                </p>
+              </div>
+              <Button onClick={() => void handleDownload()} disabled={!document.storage_path}>
+                <Download className="mr-2 h-4 w-4" /> Download file
+              </Button>
+            </div>
+          ) : previewUrl && isPdf ? (
             <PdfWorkspace
-              url={resolvedFile.url}
+              key={previewUrl}
+              url={previewUrl}
               onDownload={() => void handleDownload()}
               pageCursor={activeSig ? "crosshair" : undefined}
               onPageClick={handlePageClick}
@@ -247,14 +309,24 @@ export function UploadedDocumentWorkspace({
                 </>
               )}
             />
-          ) : resolvedFile?.url ? (
+          ) : previewUrl && isImage ? (
+            <div className="flex h-full min-h-0 items-center justify-center overflow-auto p-6">
+              <img
+                src={previewUrl}
+                alt={document.title}
+                className="max-h-full max-w-full rounded-md bg-background object-contain shadow-sm"
+              />
+            </div>
+          ) : previewUrl ? (
             <div className="mx-auto mt-12 flex max-w-xl flex-col items-center gap-4 rounded-xl border bg-background p-10 text-center shadow-sm">
               <p className="text-sm text-muted-foreground">
-                This file type does not have an inline OfficeKonnect preview yet. The original file
-                is preserved and available for download.
+                This file type does not have an inline OfficeKonnect preview. The original file is
+                preserved and available for download.
               </p>
-              <Button onClick={() => void handleDownload()}>
-                <Download className="mr-2 h-4 w-4" /> Download file
+              <Button asChild>
+                <a href={previewUrl} download={document.title}>
+                  <Download className="mr-2 h-4 w-4" /> Download file
+                </a>
               </Button>
             </div>
           ) : (
