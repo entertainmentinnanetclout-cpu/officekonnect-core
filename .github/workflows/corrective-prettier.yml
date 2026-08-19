@@ -1,0 +1,57 @@
+name: Corrective Prettier
+
+on:
+  push:
+    branches: [fix/corrective-ci-prettier]
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - name: Install dependencies
+        run: bun ci
+      - name: Format only corrective files
+        run: |
+          bunx prettier --write \
+            src/components/document/pdf-viewer.tsx \
+            src/components/document/pdf-workspace.tsx \
+            src/components/document/send-document-dialog.tsx \
+            src/components/resizable-draggable.tsx \
+            src/lib/signatures.functions.ts \
+            src/lib/spreadsheet-pdf-renderer.server.ts \
+            src/lib/spreadsheet-pdf.server.ts \
+            'src/routes/dashboard/signing/$requestId/prepare.tsx' \
+            vite.config.ts
+      - name: Commit formatter-only correction
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No formatter changes required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            src/components/document/pdf-viewer.tsx \
+            src/components/document/pdf-workspace.tsx \
+            src/components/document/send-document-dialog.tsx \
+            src/components/resizable-draggable.tsx \
+            src/lib/signatures.functions.ts \
+            src/lib/spreadsheet-pdf-renderer.server.ts \
+            src/lib/spreadsheet-pdf.server.ts \
+            'src/routes/dashboard/signing/$requestId/prepare.tsx' \
+            vite.config.ts
+          git commit -m "style: apply repository formatter to corrective files [skip ci]"
+          git push
