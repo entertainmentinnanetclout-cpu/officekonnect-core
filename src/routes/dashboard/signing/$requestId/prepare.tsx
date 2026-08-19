@@ -369,7 +369,7 @@ function SigningPrepare() {
         <div className="flex flex-wrap gap-2">
           {canPreSign && (
             <Button variant="outline" asChild>
-              <Link to="/dashboard/signing/$requestId" params={{ requestId }}>
+              <Link to="/dashboard/signing/$requestId/pre-sign" params={{ requestId }}>
                 <PenLine className="mr-2 h-4 w-4" />
                 Sign yourself first
               </Link>

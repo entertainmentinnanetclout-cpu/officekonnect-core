@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getActiveWorkspaceId } from "@/lib/workspace.server";
-import { enqueueJob } from "@/lib/jobs/enqueue.server";
 
 export const saveSignature = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -59,13 +58,12 @@ export const applySignatureToDocument = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const workspaceId = await getActiveWorkspaceId(supabase, userId);
-    return enqueueJob(supabase, {
-      workspaceId,
-      userId,
-      kind: "signature_apply",
-      input: data as unknown as Record<string, unknown>,
-      entityType: "document",
-      entityId: data.documentId,
+    await getActiveWorkspaceId(supabase, userId);
+
+    const { data: result, error } = await supabase.functions.invoke("signature-apply", {
+      body: data,
     });
+    if (error) throw new Error(error.message);
+    if (result?.error) throw new Error(String(result.error));
+    return result;
   });
