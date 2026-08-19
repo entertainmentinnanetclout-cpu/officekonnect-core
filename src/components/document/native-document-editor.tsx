@@ -493,7 +493,7 @@ export function NativeDocumentEditor({ document, onDocumentUpdated }: NativeDocu
         savingRef.current = false;
       }
     },
-    [document.id, onDocumentUpdated, refetchVersions, saveFn, saveState],
+    [document.id, isGuest, onDocumentUpdated, refetchVersions, saveFn, saveState],
   );
 
   useEffect(() => {
