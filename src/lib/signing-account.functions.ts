@@ -30,7 +30,14 @@ export const searchOfficeKonnectDirectory = createServerFn({ method: "POST" })
     return rows ?? [];
   });
 
-export type DraftSenderSigningResult = Record<string, unknown> | null;
+type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+
+/** Payload returned by the `complete_draft_sender_participant` RPC (a jsonb object). */
+export type DraftSenderSigningResult = {
+  request: JsonValue;
+  participant: JsonValue;
+  sourceDocumentVersionId: string | null;
+} | null;
 
 export const completeDraftSenderSigning = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
