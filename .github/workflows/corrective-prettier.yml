@@ -1,20 +1,22 @@
 name: Corrective Prettier
 
 on:
-  push:
-    branches: [fix/corrective-ci-prettier]
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: write
 
 jobs:
   format:
+    if: github.event.pull_request.head.ref == 'fix/corrective-ci-prettier'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout
+      - name: Checkout corrective branch
         uses: actions/checkout@v5
         with:
+          ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -53,5 +55,5 @@ jobs:
             src/lib/spreadsheet-pdf.server.ts \
             'src/routes/dashboard/signing/$requestId/prepare.tsx' \
             vite.config.ts
-          git commit -m "style: apply repository formatter to corrective files [skip ci]"
+          git commit -m "style: apply repository formatter to corrective files"
           git push
