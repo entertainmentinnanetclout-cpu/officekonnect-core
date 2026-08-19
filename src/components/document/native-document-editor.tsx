@@ -447,6 +447,15 @@ export function NativeDocumentEditor({ document, onDocumentUpdated }: NativeDocu
       changeSummary?: string;
     }) => {
       if (savingRef.current || saveState === "conflict") return null;
+      if (isGuest) {
+        // Guest sessions are not persisted server-side; keep edits local instead of erroring.
+        setSaveState("saved");
+        if (!guestNoticeShownRef.current) {
+          guestNoticeShownRef.current = true;
+          toast.info("Guest session — edits stay on this device. Sign in to save your work.");
+        }
+        return null;
+      }
       savingRef.current = true;
       setSaveState("saving");
       const snapshot = latestContentRef.current;
