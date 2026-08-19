@@ -171,7 +171,8 @@ function SigningPrepare() {
     participants.find((participant) => participant.id === selectedParticipantId) ??
     participants.find((participant) => participant.role !== "cc") ??
     null;
-  const myParticipant = participants.find((participant) => participant.user_id === user?.id) ?? null;
+  const myParticipant =
+    participants.find((participant) => participant.user_id === user?.id) ?? null;
   const excludedUserIds = participants.flatMap((participant) =>
     participant.user_id ? [participant.user_id] : [],
   );
@@ -181,19 +182,25 @@ function SigningPrepare() {
   );
   const canPreSign = Boolean(
     request?.status === "draft" &&
-      request?.sender_id === user?.id &&
-      myParticipant?.role === "signer" &&
-      ["pending", "viewed"].includes(myParticipant.status) &&
-      fields.some(
-        (field) =>
-          field.participant_id === myParticipant.id &&
-          field.required &&
-          (field.type === "signature" || field.type === "initial"),
-      ),
+    request?.sender_id === user?.id &&
+    myParticipant?.role === "signer" &&
+    ["pending", "viewed"].includes(myParticipant.status) &&
+    fields.some(
+      (field) =>
+        field.participant_id === myParticipant.id &&
+        field.required &&
+        (field.type === "signature" || field.type === "initial"),
+    ),
   );
 
   const addParticipant = useMutation({
-    mutationFn: async ({ entry, role }: { entry: OfficeKonnectDirectoryEntry; role: ParticipantRole }) =>
+    mutationFn: async ({
+      entry,
+      role,
+    }: {
+      entry: OfficeKonnectDirectoryEntry;
+      role: ParticipantRole;
+    }) =>
       addParticipantFn({
         data: {
           requestId,
@@ -215,7 +222,15 @@ function SigningPrepare() {
   });
 
   const updateParticipant = useMutation({
-    mutationFn: ({ participant, role, orderIndex }: { participant: Participant; role?: ParticipantRole; orderIndex?: number }) =>
+    mutationFn: ({
+      participant,
+      role,
+      orderIndex,
+    }: {
+      participant: Participant;
+      role?: ParticipantRole;
+      orderIndex?: number;
+    }) =>
       updateParticipantFn({
         data: {
           participantId: participant.id,
@@ -301,8 +316,11 @@ function SigningPrepare() {
   });
 
   const saveSettings = useMutation({
-    mutationFn: (input: { title: string; message: string; signingOrder: "parallel" | "sequential" }) =>
-      updateDraftFn({ data: { requestId, ...input } }),
+    mutationFn: (input: {
+      title: string;
+      message: string;
+      signingOrder: "parallel" | "sequential";
+    }) => updateDraftFn({ data: { requestId, ...input } }),
     onSuccess: async () => {
       toast.success("Request settings saved");
       await refresh();
@@ -388,14 +406,19 @@ function SigningPrepare() {
         </div>
       )}
 
-      <RequestSettings request={request} onSave={(input) => saveSettings.mutate(input)} saving={saveSettings.isPending} />
+      <RequestSettings
+        request={request}
+        onSave={(input) => saveSettings.mutate(input)}
+        saving={saveSettings.isPending}
+      />
 
       <div className="grid gap-5 xl:grid-cols-[290px_minmax(0,1fr)_300px]">
         <section className="space-y-4 rounded-xl border bg-card p-4">
           <div>
             <h2 className="font-semibold">People</h2>
             <p className="text-xs text-muted-foreground">
-              Registered OfficeKonnect accounts only. Search is global, not limited to this workspace.
+              Registered OfficeKonnect accounts only. Search is global, not limited to this
+              workspace.
             </p>
           </div>
           <div className="grid grid-cols-3 gap-2">
@@ -434,7 +457,9 @@ function SigningPrepare() {
                     className="w-full text-left"
                     onClick={() => setSelectedParticipantId(participant.id)}
                   >
-                    <p className="truncate text-sm font-medium">{participantDisplayName(participant)}</p>
+                    <p className="truncate text-sm font-medium">
+                      {participantDisplayName(participant)}
+                    </p>
                     <p className="truncate text-xs text-muted-foreground">{participant.email}</p>
                   </button>
                   <div className="mt-2 flex items-center gap-1">
@@ -460,7 +485,10 @@ function SigningPrepare() {
                       className="h-8 w-8"
                       disabled={index === 0 || participant.status === "signed"}
                       onClick={() =>
-                        updateParticipant.mutate({ participant, orderIndex: participant.order_index - 1 })
+                        updateParticipant.mutate({
+                          participant,
+                          orderIndex: participant.order_index - 1,
+                        })
                       }
                     >
                       <ArrowUp className="h-3.5 w-3.5" />
@@ -469,9 +497,14 @@ function SigningPrepare() {
                       size="icon"
                       variant="ghost"
                       className="h-8 w-8"
-                      disabled={index === participants.length - 1 || participant.status === "signed"}
+                      disabled={
+                        index === participants.length - 1 || participant.status === "signed"
+                      }
                       onClick={() =>
-                        updateParticipant.mutate({ participant, orderIndex: participant.order_index + 1 })
+                        updateParticipant.mutate({
+                          participant,
+                          orderIndex: participant.order_index + 1,
+                        })
                       }
                     >
                       <ArrowDown className="h-3.5 w-3.5" />
@@ -496,7 +529,8 @@ function SigningPrepare() {
 
           <div className="border-t pt-4">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Add field for {activeParticipant ? participantDisplayName(activeParticipant) : "participant"}
+              Add field for{" "}
+              {activeParticipant ? participantDisplayName(activeParticipant) : "participant"}
             </p>
             <div className="grid grid-cols-2 gap-2">
               {palette.map((item) => (
@@ -504,7 +538,11 @@ function SigningPrepare() {
                   key={item.type}
                   variant="outline"
                   size="sm"
-                  disabled={!activeParticipant || activeParticipant.role === "cc" || activeParticipant.status === "signed"}
+                  disabled={
+                    !activeParticipant ||
+                    activeParticipant.role === "cc" ||
+                    activeParticipant.status === "signed"
+                  }
                   onClick={() => createField.mutate(item)}
                 >
                   <item.icon className="mr-2 h-3.5 w-3.5" />
@@ -517,11 +555,23 @@ function SigningPrepare() {
 
         <section className="min-w-0 rounded-xl border bg-slate-100 p-3 dark:bg-slate-950">
           <div className="mb-3 flex flex-wrap items-center justify-center gap-2">
-            <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={page <= 1}
+              onClick={() => setPage((value) => value - 1)}
+            >
               Previous
             </Button>
-            <span className="text-xs">Page {page} / {pages}</span>
-            <Button size="sm" variant="outline" disabled={page >= pages} onClick={() => setPage((value) => value + 1)}>
+            <span className="text-xs">
+              Page {page} / {pages}
+            </span>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={page >= pages}
+              onClick={() => setPage((value) => value + 1)}
+            >
               Next
             </Button>
             <Select value={String(zoom)} onValueChange={(value) => setZoom(Number(value))}>
@@ -530,7 +580,9 @@ function SigningPrepare() {
               </SelectTrigger>
               <SelectContent>
                 {[60, 75, 85, 100, 125].map((value) => (
-                  <SelectItem key={value} value={String(value)}>{value}%</SelectItem>
+                  <SelectItem key={value} value={String(value)}>
+                    {value}%
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -557,7 +609,8 @@ function SigningPrepare() {
                 }
                 onFieldGeometryChange={(fieldId, geometry) => {
                   const field = fields.find((candidate) => candidate.id === fieldId);
-                  if (field && field.signed_at === null) updateField.mutate({ field, patch: geometry });
+                  if (field && field.signed_at === null)
+                    updateField.mutate({ field, patch: geometry });
                 }}
               />
             </div>
@@ -584,12 +637,19 @@ function SigningPrepare() {
                 <Label>Assigned account</Label>
                 <Select
                   value={selectedField.participant_id}
-                  onValueChange={(value) => updateField.mutate({ field: selectedField, patch: { participant_id: value } })}
+                  onValueChange={(value) =>
+                    updateField.mutate({ field: selectedField, patch: { participant_id: value } })
+                  }
                 >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     {participants
-                      .filter((participant) => participant.role !== "cc" && participant.status !== "signed")
+                      .filter(
+                        (participant) =>
+                          participant.role !== "cc" && participant.status !== "signed",
+                      )
                       .map((participant) => (
                         <SelectItem key={participant.id} value={participant.id}>
                           {participantDisplayName(participant)}
@@ -602,12 +662,21 @@ function SigningPrepare() {
                 <Label>Field type</Label>
                 <Select
                   value={selectedField.type}
-                  onValueChange={(value) => updateField.mutate({ field: selectedField, patch: { type: value as SigningFieldType } })}
+                  onValueChange={(value) =>
+                    updateField.mutate({
+                      field: selectedField,
+                      patch: { type: value as SigningFieldType },
+                    })
+                  }
                 >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     {palette.map((item) => (
-                      <SelectItem key={item.type} value={item.type}>{fieldTypeLabel(item.type)}</SelectItem>
+                      <SelectItem key={item.type} value={item.type}>
+                        {fieldTypeLabel(item.type)}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -617,7 +686,10 @@ function SigningPrepare() {
                 <Input
                   defaultValue={selectedField.label ?? ""}
                   onBlur={(event) =>
-                    updateField.mutate({ field: selectedField, patch: { label: event.target.value } })
+                    updateField.mutate({
+                      field: selectedField,
+                      patch: { label: event.target.value },
+                    })
                   }
                 />
               </div>
@@ -625,7 +697,10 @@ function SigningPrepare() {
                 <Checkbox
                   checked={selectedField.required}
                   onCheckedChange={(value) =>
-                    updateField.mutate({ field: selectedField, patch: { required: Boolean(value) } })
+                    updateField.mutate({
+                      field: selectedField,
+                      patch: { required: Boolean(value) },
+                    })
                   }
                 />
                 Required field
@@ -663,7 +738,9 @@ function SigningPrepare() {
           <div className="space-y-2">
             <Label>Expires after</Label>
             <Select value={expiryDays} onValueChange={setExpiryDays}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="1">1 day</SelectItem>
                 <SelectItem value="3">3 days</SelectItem>
@@ -674,9 +751,18 @@ function SigningPrepare() {
             </Select>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setSendOpen(false)}>Cancel</Button>
-            <Button onClick={() => send.mutate()} disabled={send.isPending || Boolean(validationError)}>
-              {send.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+            <Button variant="outline" onClick={() => setSendOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => send.mutate()}
+              disabled={send.isPending || Boolean(validationError)}
+            >
+              {send.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="mr-2 h-4 w-4" />
+              )}
               Send
             </Button>
           </DialogFooter>
@@ -692,7 +778,11 @@ function RequestSettings({
   saving,
 }: {
   request: Tables<"signing_requests">;
-  onSave: (input: { title: string; message: string; signingOrder: "parallel" | "sequential" }) => void;
+  onSave: (input: {
+    title: string;
+    message: string;
+    signingOrder: "parallel" | "sequential";
+  }) => void;
   saving: boolean;
 }) {
   const [title, setTitle] = useState(request.title);
@@ -718,16 +808,28 @@ function RequestSettings({
       </div>
       <div className="space-y-2">
         <Label>Signing order</Label>
-        <Select value={signingOrder} onValueChange={(value) => setSigningOrder(value as "parallel" | "sequential")}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
+        <Select
+          value={signingOrder}
+          onValueChange={(value) => setSigningOrder(value as "parallel" | "sequential")}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="parallel">Parallel</SelectItem>
             <SelectItem value="sequential">Sequential</SelectItem>
           </SelectContent>
         </Select>
       </div>
-      <Button onClick={() => onSave({ title, message, signingOrder })} disabled={saving || !title.trim()}>
-        {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+      <Button
+        onClick={() => onSave({ title, message, signingOrder })}
+        disabled={saving || !title.trim()}
+      >
+        {saving ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <Plus className="mr-2 h-4 w-4" />
+        )}
         Save settings
       </Button>
     </section>
