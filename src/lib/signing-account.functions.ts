@@ -41,21 +41,18 @@ export const completeDraftSenderSigning = createServerFn({ method: "POST" })
       consentTextVersion: string;
     }) => data,
   )
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }): Promise<DraftSenderSigningResult> => {
     const rpcClient = context.supabase as typeof context.supabase & {
       rpc: (
         name: string,
         args: Record<string, unknown>,
-      ) => Promise<{ data: unknown; error: { message: string } | null }>;
+      ) => Promise<{ data: DraftSenderSigningResult; error: { message: string } | null }>;
     };
-    const { data: completion, error } = await rpcClient.rpc(
-      "complete_draft_sender_participant",
-      {
-        p_participant_id: data.participantId,
-        p_field_values: data.fieldValues,
-        p_consent_text_version: data.consentTextVersion.trim(),
-      },
-    );
+    const { data: completion, error } = await rpcClient.rpc("complete_draft_sender_participant", {
+      p_participant_id: data.participantId,
+      p_field_values: data.fieldValues,
+      p_consent_text_version: data.consentTextVersion.trim(),
+    });
     if (error) throw new Error(error.message);
-    return completion;
+    return completion ?? null;
   });
