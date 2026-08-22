@@ -1,7 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronLeft, Copy, FileDown, Loader2, Save, RefreshCw } from "lucide-react";
+import {
+  ChevronLeft,
+  Copy,
+  FileDown,
+  FileText,
+  Loader2,
+  Save,
+  RefreshCw,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +25,10 @@ import { SpreadsheetEditor } from "@/components/spreadsheet/spreadsheet-editor";
 import { UploadedDocumentWorkspace } from "@/components/document/uploaded-document-workspace";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-import { saveNativeDocumentAsPdf } from "@/lib/document-save-as.functions";
+import {
+  saveNativeDocumentAsDocx,
+  saveNativeDocumentAsPdf,
+} from "@/lib/document-save-as.functions";
 import { duplicateNativeDocument } from "@/lib/documents.functions";
 import { toastError } from "@/lib/errors";
 
@@ -30,6 +41,7 @@ function DocumentDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const saveAsPdfFn = useServerFn(saveNativeDocumentAsPdf);
+  const saveAsDocxFn = useServerFn(saveNativeDocumentAsDocx);
   const duplicateFn = useServerFn(duplicateNativeDocument);
 
   const {
@@ -59,6 +71,16 @@ function DocumentDetail() {
       await navigate({ to: "/dashboard/documents/$documentId", params: { documentId: saved.id } });
     },
     onError: (saveError) => toastError(saveError, "Could not save PDF copy"),
+  });
+
+  const saveAsDocxMutation = useMutation({
+    mutationFn: () => saveAsDocxFn({ data: { documentId } }),
+    onSuccess: async (saved) => {
+      toast.success("Word document saved to Documents");
+      await queryClient.invalidateQueries({ queryKey: ["documents"] });
+      await navigate({ to: "/dashboard/documents/$documentId", params: { documentId: saved.id } });
+    },
+    onError: (saveError) => toastError(saveError, "Could not save Word document"),
   });
 
   const saveEditableCopyMutation = useMutation({
@@ -113,7 +135,10 @@ function DocumentDetail() {
   }
 
   if (document.document_kind === "native") {
-    const saving = saveAsPdfMutation.isPending || saveEditableCopyMutation.isPending;
+    const saving =
+      saveAsPdfMutation.isPending ||
+      saveAsDocxMutation.isPending ||
+      saveEditableCopyMutation.isPending;
     return (
       <div className="flex h-[calc(100vh-5.5rem)] min-h-[620px] flex-col overflow-hidden rounded-xl border bg-background shadow-sm">
         <div className="flex h-10 shrink-0 items-center gap-2 border-b px-2">
@@ -134,7 +159,7 @@ function DocumentDetail() {
                   Save as
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuContent align="end" className="w-72">
                 <DropdownMenuLabel>Choose saved format</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => saveEditableCopyMutation.mutate()}>
@@ -142,6 +167,15 @@ function DocumentDetail() {
                   <div>
                     <p>OfficeKonnect editable copy</p>
                     <p className="text-xs text-muted-foreground">Keeps native editing features</p>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => saveAsDocxMutation.mutate()}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  <div>
+                    <p>Word document (.docx)</p>
+                    <p className="text-xs text-muted-foreground">
+                      Structured editable Office Open XML document
+                    </p>
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => saveAsPdfMutation.mutate()}>
