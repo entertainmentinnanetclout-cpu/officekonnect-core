@@ -2,9 +2,12 @@ import { existsSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const root = process.cwd();
-// The client bundle directory moved from Nitro's `.output/public` to `dist/client`.
-// Support both so the budget keeps working across build-output layouts.
-const candidates = [join(root, "dist/client/assets"), join(root, ".output/public/assets")];
+// Support the client output layouts used by local/Nitro and canonical Vercel builds.
+const candidates = [
+  join(root, ".vercel/output/static/assets"),
+  join(root, "dist/client/assets"),
+  join(root, ".output/public/assets"),
+];
 const assets = candidates.find((candidate) => existsSync(candidate));
 
 if (!assets) {
@@ -14,6 +17,26 @@ if (!assets) {
   );
   process.exit(1);
 }
+
+if (process.env.VERCEL && !existsSync(join(root, ".vercel/output/config.json"))) {
+  console.error(
+    "Phase 10 production asset budget failed: Vercel build did not emit .vercel/output/config.json.",
+  );
+  process.exit(1);
+}
+
+for (const cloudflareWorker of [
+  join(root, ".output/server/_worker.js"),
+  join(root, "dist/server/_worker.js"),
+]) {
+  if (existsSync(cloudflareWorker)) {
+    console.error(
+      `Phase 10 production asset budget failed: unexpected Cloudflare worker artifact ${relative(root, cloudflareWorker)} in the canonical Vercel build.`,
+    );
+    process.exit(1);
+  }
+}
+
 const limits = {
   ".js": 640 * 1024,
   ".css": 150 * 1024,
