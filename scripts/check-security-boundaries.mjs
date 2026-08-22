@@ -11,11 +11,16 @@ function walk(dir) {
   });
 }
 
+function stripComments(source) {
+  return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|\s)\/\/.*$/gm, "$1");
+}
+
 const findings = [];
 for (const absolute of walk(srcRoot)) {
   if (!/\.(?:ts|tsx|js|jsx)$/.test(absolute)) continue;
   const file = relative(root, absolute).replaceAll("\\", "/");
   const text = readFileSync(absolute, "utf8");
+  const executableText = stripComments(text);
   const isServerOnly = /\.server\.(?:ts|tsx|js|jsx)$/.test(file);
   const checks = [
     ...(!isServerOnly
@@ -36,7 +41,7 @@ for (const absolute of walk(srcRoot)) {
     ],
   ];
   for (const [pattern, label] of checks) {
-    if (pattern.test(text)) findings.push(`${file}: ${label}`);
+    if (pattern.test(executableText)) findings.push(`${file}: ${label}`);
   }
 }
 
@@ -44,7 +49,7 @@ const browserSupabaseClient = readFileSync(
   join(root, "src/integrations/supabase/client.ts"),
   "utf8",
 );
-if (/process\.env\.[A-Z0-9_]+/.test(browserSupabaseClient)) {
+if (/\bprocess\.env\b/.test(stripComments(browserSupabaseClient))) {
   findings.push(
     "client.ts: browser Supabase bootstrap must not depend on process.env because cloned Vite deployments do not provide it",
   );
@@ -62,6 +67,11 @@ if (!publicSupabaseDefaults.includes("DEFAULT_SUPABASE_PUBLISHABLE_KEY")) {
 }
 if (/SERVICE_ROLE|service_role/i.test(publicSupabaseDefaults)) {
   findings.push("defaults.ts: service-role material must never appear in browser-safe defaults");
+}
+
+const viteConfig = readFileSync(join(root, "vite.config.ts"), "utf8");
+if (!/nitro:\s*\{[\s\S]*?preset:\s*["']vercel["']/.test(viteConfig)) {
+  findings.push("vite.config.ts: canonical production Nitro preset must remain Vercel");
 }
 
 const serverAdminClient = readFileSync(
