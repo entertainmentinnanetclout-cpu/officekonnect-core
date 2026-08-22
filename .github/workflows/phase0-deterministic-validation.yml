@@ -43,13 +43,33 @@ jobs:
         run: bun run typecheck
       - name: Unit and integration tests
         run: bun run test
-      - name: Clone-safe production build
+      - name: Clone-safe Vercel production build
         env:
+          VERCEL: "1"
+          VERCEL_ENV: "preview"
           SUPABASE_URL: ""
           SUPABASE_PUBLISHABLE_KEY: ""
           VITE_SUPABASE_URL: ""
           VITE_SUPABASE_PUBLISHABLE_KEY: ""
         run: bun run build
+      - name: Verify Vercel output contract
+        shell: bash
+        run: |
+          test -f .vercel/output/config.json || {
+            echo "Vercel build did not produce .vercel/output/config.json" >&2
+            find . -maxdepth 3 -type f | sort | head -200
+            exit 1
+          }
+          test -d .vercel/output/functions || {
+            echo "Vercel build did not produce a functions directory" >&2
+            find .vercel/output -maxdepth 4 -type f | sort
+            exit 1
+          }
+          test -d .vercel/output/static || {
+            echo "Vercel build did not produce static assets" >&2
+            find .vercel/output -maxdepth 4 -type f | sort
+            exit 1
+          }
       - name: Production asset budget
         run: bun run audit:performance
       - name: Install pinned Playwright test runner

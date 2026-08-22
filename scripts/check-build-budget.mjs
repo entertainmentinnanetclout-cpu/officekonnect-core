@@ -2,9 +2,12 @@ import { existsSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const root = process.cwd();
-// The client bundle directory moved from Nitro's `.output/public` to `dist/client`.
-// Support both so the budget keeps working across build-output layouts.
-const candidates = [join(root, "dist/client/assets"), join(root, ".output/public/assets")];
+// Support the client output layouts used by local/Nitro and Vercel builds.
+const candidates = [
+  join(root, ".vercel/output/static/assets"),
+  join(root, "dist/client/assets"),
+  join(root, ".output/public/assets"),
+];
 const assets = candidates.find((candidate) => existsSync(candidate));
 
 if (!assets) {
