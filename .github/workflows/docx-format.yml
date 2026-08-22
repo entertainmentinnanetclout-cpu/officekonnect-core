@@ -1,0 +1,45 @@
+name: DOCX Formatter
+
+on:
+  push:
+    branches: [fix/docx-fidelity]
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: fix/docx-fidelity
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - run: bun ci
+      - name: Format Word fidelity files
+        run: |
+          bunx prettier --write \
+            src/components/document/docx-workspace.tsx \
+            src/components/document/docx-workspace.css \
+            src/components/document/uploaded-document-workspace.tsx \
+            src/lib/document-save-as.functions.ts \
+            src/lib/native-document-docx.server.ts \
+            src/lib/native-document-docx.server.test.ts \
+            'src/routes/dashboard/documents/$documentId.tsx' \
+            tests/docx-fidelity.contract.test.ts \
+            scripts/check-security-boundaries.mjs
+      - name: Commit formatting
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No formatting changes required"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src tests scripts
+          git commit -m "style: format DOCX fidelity implementation"
+          git push origin HEAD:fix/docx-fidelity
