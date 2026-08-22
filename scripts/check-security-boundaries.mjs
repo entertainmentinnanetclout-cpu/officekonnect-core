@@ -11,6 +11,10 @@ function walk(dir) {
   });
 }
 
+function stripComments(text) {
+  return text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+}
+
 const findings = [];
 for (const absolute of walk(srcRoot)) {
   if (!/\.(?:ts|tsx|js|jsx)$/.test(absolute)) continue;
@@ -44,7 +48,7 @@ const browserSupabaseClient = readFileSync(
   join(root, "src/integrations/supabase/client.ts"),
   "utf8",
 );
-if (/process\.env\.[A-Z0-9_]+/.test(browserSupabaseClient)) {
+if (/process\.env\.[A-Z0-9_]+/.test(stripComments(browserSupabaseClient))) {
   findings.push(
     "client.ts: browser Supabase bootstrap must not depend on process.env because cloned Vite deployments do not provide it",
   );

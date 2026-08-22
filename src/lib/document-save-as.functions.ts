@@ -10,22 +10,32 @@ function safeBaseName(title: string) {
   );
 }
 
+async function requireNativeSource(
+  supabase: Parameters<typeof getActiveWorkspaceId>[0],
+  userId: string,
+  documentId: string,
+) {
+  const workspaceId = await getActiveWorkspaceId(supabase, userId);
+  const { data: source, error: sourceError } = await supabase
+    .from("documents")
+    .select("id,workspace_id,title,document_kind,content,letterhead_id,updated_at")
+    .eq("id", documentId)
+    .single();
+  if (sourceError) throw new Error(sourceError.message);
+  if (source.workspace_id !== workspaceId)
+    throw new Error("Document is outside the active workspace");
+  if (source.document_kind !== "native") {
+    throw new Error("Only editable OfficeKonnect documents can be exported from this editor");
+  }
+  return { source, workspaceId };
+}
+
 export const saveNativeDocumentAsPdf = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { documentId: string; title?: string }) => data)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const workspaceId = await getActiveWorkspaceId(supabase, userId);
-    const { data: source, error: sourceError } = await supabase
-      .from("documents")
-      .select("id,workspace_id,title,document_kind,content,letterhead_id,updated_at")
-      .eq("id", data.documentId)
-      .single();
-    if (sourceError) throw new Error(sourceError.message);
-    if (source.workspace_id !== workspaceId)
-      throw new Error("Document is outside the active workspace");
-    if (source.document_kind !== "native")
-      throw new Error("Only editable OfficeKonnect documents can be saved as PDF");
+    const { source, workspaceId } = await requireNativeSource(supabase, userId, data.documentId);
 
     let letterhead: {
       name: string;
@@ -122,6 +132,74 @@ export const saveNativeDocumentAsPdf = createServerFn({ method: "POST" })
       change_summary: `Saved as PDF from editable document ${source.id}`,
     });
     if (versionError) throw new Error(versionError.message);
+
+    return saved;
+  });
+
+export const saveNativeDocumentAsDocx = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { documentId: string; title?: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { source, workspaceId } = await requireNativeSource(supabase, userId, data.documentId);
+
+    const { buildNativeDocumentDocx } = await import("@/lib/native-document-docx.server");
+    const rendered = await buildNativeDocumentDocx({
+      title: source.title,
+      content: source.content,
+    });
+
+    const documentId = crypto.randomUUID();
+    const baseName = safeBaseName(data.title?.trim() || source.title);
+    const fileName = `${baseName}.docx`;
+    const storagePath = `${workspaceId}/${userId}/documents/${documentId}/${fileName}`;
+    const contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+    const { error: uploadError } = await supabase.storage
+      .from("documents")
+      .upload(storagePath, rendered.bytes, {
+        contentType,
+        upsert: false,
+      });
+    if (uploadError) throw new Error(uploadError.message);
+
+    const { data: saved, error: insertError } = await supabase
+      .from("documents")
+      .insert({
+        id: documentId,
+        workspace_id: workspaceId,
+        created_by: userId,
+        last_saved_by: userId,
+        title: fileName,
+        description: `Word copy saved from ${source.title}`,
+        storage_path: storagePath,
+        file_type: contentType,
+        file_size: rendered.bytes.byteLength,
+        document_kind: "file",
+        document_status: "draft",
+        letterhead_id: source.letterhead_id,
+      })
+      .select("*")
+      .single();
+
+    if (insertError) {
+      await supabase.storage.from("documents").remove([storagePath]);
+      throw new Error(insertError.message);
+    }
+
+    const { error: versionError } = await supabase.from("document_versions").insert({
+      document_id: documentId,
+      version_number: 1,
+      title: fileName,
+      created_by: userId,
+      storage_path: storagePath,
+      change_summary: `Saved as structured DOCX from editable document ${source.id}`,
+    });
+    if (versionError) {
+      await supabase.from("documents").delete().eq("id", documentId);
+      await supabase.storage.from("documents").remove([storagePath]);
+      throw new Error(versionError.message);
+    }
 
     return saved;
   });

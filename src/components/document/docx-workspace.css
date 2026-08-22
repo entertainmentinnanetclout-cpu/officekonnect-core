@@ -1,0 +1,35 @@
+.officekonnect-docx-host .docx-wrapper {
+  background: transparent !important;
+  padding: 0 1rem 3rem !important;
+}
+
+.officekonnect-docx-host .docx-wrapper > section.officekonnect-docx {
+  margin: 0 auto 1.5rem !important;
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.08),
+    0 10px 32px rgb(15 23 42 / 0.12) !important;
+}
+
+.officekonnect-docx-host section.officekonnect-docx {
+  background: white;
+  color: #111827;
+}
+
+@media (max-width: 640px) {
+  .officekonnect-docx-host .docx-wrapper {
+    align-items: flex-start !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+}
+
+@media print {
+  .officekonnect-docx-host .docx-wrapper {
+    padding: 0 !important;
+  }
+
+  .officekonnect-docx-host .docx-wrapper > section.officekonnect-docx {
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+}
