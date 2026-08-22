@@ -5,6 +5,7 @@ import { Download, Loader2, PenTool, Save, Check, X } from "lucide-react";
 import { Rnd } from "react-rnd";
 import { Button } from "@/components/ui/button";
 import { PdfWorkspace } from "@/components/document/pdf-workspace";
+import { DocxWorkspace } from "@/components/document/docx-workspace";
 import { SignatureToolbox, type ToolboxSignature } from "@/components/document/signature-toolbox";
 import type { Tables } from "@/integrations/supabase/types";
 import { applySignatureToDocument } from "@/lib/signatures.functions";
@@ -45,10 +46,26 @@ export function UploadedDocumentWorkspace({
     refetchInterval: 45 * 60 * 1000,
   });
 
-  const isPdf = useMemo(() => {
+  const fileKind = useMemo(() => {
     const type = (document.file_type ?? "").toLowerCase();
-    return type.includes("pdf") || document.title.toLowerCase().endsWith(".pdf");
+    const title = document.title.toLowerCase();
+
+    if (type.includes("pdf") || title.endsWith(".pdf")) return "pdf" as const;
+    if (
+      type.includes("wordprocessingml.document") ||
+      type.includes("wordprocessingml.template") ||
+      title.endsWith(".docx") ||
+      title.endsWith(".docm") ||
+      title.endsWith(".dotx")
+    ) {
+      return "docx" as const;
+    }
+    if (type.includes("msword") || title.endsWith(".doc")) return "legacy-word" as const;
+    return "other" as const;
   }, [document.file_type, document.title]);
+
+  const isPdf = fileKind === "pdf";
+  const isDocx = fileKind === "docx";
 
   const handleDownload = async () => {
     if (!document.storage_path) return;
@@ -124,6 +141,7 @@ export function UploadedDocumentWorkspace({
               ? `${(document.file_size / 1024 / 1024).toFixed(2)} MB`
               : "Size unavailable"}{" "}
             • {document.document_status}
+            {isDocx ? " • Original Word layout" : ""}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -152,7 +170,7 @@ export function UploadedDocumentWorkspace({
             onClick={() => void handleDownload()}
             disabled={!document.storage_path}
           >
-            <Download className="mr-2 h-4 w-4" /> Download
+            <Download className="mr-2 h-4 w-4" /> Download original
           </Button>
           {isPdf && (
             <Button
@@ -247,14 +265,17 @@ export function UploadedDocumentWorkspace({
                 </>
               )}
             />
+          ) : resolvedFile?.url && isDocx ? (
+            <DocxWorkspace url={resolvedFile.url} title={document.title} />
           ) : resolvedFile?.url ? (
             <div className="mx-auto mt-12 flex max-w-xl flex-col items-center gap-4 rounded-xl border bg-background p-10 text-center shadow-sm">
               <p className="text-sm text-muted-foreground">
-                This file type does not have an inline OfficeKonnect preview yet. The original file
-                is preserved and available for download.
+                {fileKind === "legacy-word"
+                  ? "Legacy .doc files are preserved exactly, but this browser preview supports modern .docx Word files. Convert the file to .docx or PDF to preview it here without changing the stored original."
+                  : "This file type does not have an inline OfficeKonnect preview yet. The original file is preserved and available for download."}
               </p>
               <Button onClick={() => void handleDownload()}>
-                <Download className="mr-2 h-4 w-4" /> Download file
+                <Download className="mr-2 h-4 w-4" /> Download original
               </Button>
             </div>
           ) : (
