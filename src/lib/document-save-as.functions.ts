@@ -22,7 +22,8 @@ async function requireNativeSource(
     .eq("id", documentId)
     .single();
   if (sourceError) throw new Error(sourceError.message);
-  if (source.workspace_id !== workspaceId) throw new Error("Document is outside the active workspace");
+  if (source.workspace_id !== workspaceId)
+    throw new Error("Document is outside the active workspace");
   if (source.document_kind !== "native") {
     throw new Error("Only editable OfficeKonnect documents can be exported from this editor");
   }

@@ -1,15 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import {
-  ChevronLeft,
-  Copy,
-  FileDown,
-  FileText,
-  Loader2,
-  Save,
-  RefreshCw,
-} from "lucide-react";
+import { ChevronLeft, Copy, FileDown, FileText, Loader2, Save, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {

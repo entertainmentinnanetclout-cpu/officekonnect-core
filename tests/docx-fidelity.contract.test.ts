@@ -44,7 +44,9 @@ describe("DOCX fidelity contract", () => {
     }
 
     expect(saveAs).toContain("saveNativeDocumentAsDocx");
-    expect(saveAs).toContain("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+    expect(saveAs).toContain(
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    );
     expect(route).toContain("Word document (.docx)");
     expect(route).toContain("Structured editable Office Open XML document");
   });

@@ -64,7 +64,9 @@ export function DocxWorkspace({ url, title }: DocxWorkspaceProps) {
       } catch (error) {
         if (cancelled) return;
         setState("error");
-        setErrorMessage(error instanceof Error ? error.message : "The Word file could not be rendered");
+        setErrorMessage(
+          error instanceof Error ? error.message : "The Word file could not be rendered",
+        );
       }
     }
 
@@ -94,7 +96,11 @@ export function DocxWorkspace({ url, title }: DocxWorkspaceProps) {
             <AlertCircle className="mx-auto h-8 w-8 text-amber-600" />
             <h2 className="mt-3 font-semibold">Word preview unavailable</h2>
             <p className="mt-2 text-sm text-muted-foreground">{errorMessage}</p>
-            <Button className="mt-4" variant="outline" onClick={() => setRenderKey((key) => key + 1)}>
+            <Button
+              className="mt-4"
+              variant="outline"
+              onClick={() => setRenderKey((key) => key + 1)}
+            >
               <RefreshCw className="mr-2 h-4 w-4" /> Retry preview
             </Button>
           </div>

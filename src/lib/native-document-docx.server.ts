@@ -45,7 +45,9 @@ function decodeHtml(value: string) {
     .replace(/&#39;|&#x27;/gi, "'")
     .replace(/&#x2F;/gi, "/")
     .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, code: string) => String.fromCodePoint(Number.parseInt(code, 16)));
+    .replace(/&#x([0-9a-f]+);/gi, (_, code: string) =>
+      String.fromCodePoint(Number.parseInt(code, 16)),
+    );
 }
 
 function normalizeHexColor(value: string | undefined) {
@@ -284,17 +286,19 @@ function blockChildren(block: NativeDocumentBlock, listInstance: number): Array<
         rows: block.rows.map(
           (row) =>
             new TableRow({
-              children: Array.from({ length: columnCount }, (_, index) =>
-                new TableCell({
-                  width: { size: 100 / columnCount, type: WidthType.PERCENTAGE },
-                  margins: { top: 80, right: 100, bottom: 80, left: 100 },
-                  children: [
-                    new Paragraph({
-                      children: inlineChildren(row[index] ?? ""),
-                      spacing: { after: 0 },
-                    }),
-                  ],
-                }),
+              children: Array.from(
+                { length: columnCount },
+                (_, index) =>
+                  new TableCell({
+                    width: { size: 100 / columnCount, type: WidthType.PERCENTAGE },
+                    margins: { top: 80, right: 100, bottom: 80, left: 100 },
+                    children: [
+                      new Paragraph({
+                        children: inlineChildren(row[index] ?? ""),
+                        spacing: { after: 0 },
+                      }),
+                    ],
+                  }),
               ),
             }),
         ),
