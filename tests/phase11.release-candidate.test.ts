@@ -71,3 +71,10 @@ test("Phase 11 route registry exposes every canonical release surface", () => {
     expect(routeTree).toContain(`'${route}'`);
   }
 });
+
+test("canonical clone build targets Vercel rather than a Cloudflare worker preset", () => {
+  const viteConfig = source("vite.config.ts");
+  expect(viteConfig).toContain("nitro:");
+  expect(viteConfig).toContain('preset: "vercel"');
+  expect(viteConfig).not.toContain('preset: "cloudflare_module"');
+});
