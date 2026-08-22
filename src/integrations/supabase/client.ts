@@ -4,7 +4,7 @@ import type { Database } from "./types";
 import { DEFAULT_SUPABASE_PUBLISHABLE_KEY, DEFAULT_SUPABASE_URL } from "./defaults";
 
 function createSupabaseClient() {
-  // Vite only exposes VITE_* variables to browser code. Never reference process.env here:
+  // Vite only exposes VITE_* variables to browser code. Never reference Node server environment APIs here:
   // a cloned deployment without VITE_* variables would otherwise crash before React mounts.
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL;
   const supabasePublishableKey =
