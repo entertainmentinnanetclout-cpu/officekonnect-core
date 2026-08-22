@@ -21,6 +21,7 @@ jobs:
       - run: bun ci
       - name: Format Word fidelity files
         run: |
+          # Format only the files changed by the DOCX fidelity upgrade.
           bunx prettier --write \
             src/components/document/docx-workspace.tsx \
             src/components/document/docx-workspace.css \
